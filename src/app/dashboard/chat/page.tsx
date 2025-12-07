@@ -51,7 +51,16 @@ export default function ChatPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50">
                     {messages.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
-                            <ShieldCheck className="h-16 w-16 text-gray-300 mb-4" />
+                            {/* Speech Bubble */}
+                            <div className="relative mb-6 animate-bounce">
+                                <div className="bg-indigo-600 text-white px-4 py-2 rounded-2xl rounded-bl-none shadow-md text-sm font-medium">
+                                    こんにちは。何かお手伝いしましょうか？
+                                </div>
+                                {/* Triangle arrow for bubble */}
+                                <div className="absolute left-4 bottom-[-6px] w-0 h-0 border-l-[6px] border-l-transparent border-t-[6px] border-t-indigo-600 border-r-[6px] border-r-transparent"></div>
+                            </div>
+
+                            <ShieldCheck className="h-20 w-20 text-indigo-200 mb-4" />
                             <h3 className="text-lg font-semibold text-gray-700 mb-2">法務支援・文書作成アシスタント</h3>
                             <p className="text-sm text-gray-500 max-w-md">
                                 理事会・評議員会の運営、議事録作成、入札・契約手続きなどを<br />
