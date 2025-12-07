@@ -9,6 +9,8 @@ import Link from 'next/link'
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [corporationName, setCorporationName] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,6 +28,10 @@ export default function SignupPage() {
         password,
         options: {
           emailRedirectTo: `${location.origin}/auth/callback`,
+          data: {
+            full_name: fullName,
+            corporation_name: corporationName,
+          }
         },
       })
 
@@ -65,6 +71,36 @@ export default function SignupPage() {
 
         {/* Form */}
         <form onSubmit={handleSignUp} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+              氏名（フルネーム）
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              placeholder="山田 太郎"
+              required
+              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="corporationName" className="text-sm font-medium text-gray-700">
+              社会福祉法人名
+            </label>
+            <input
+              id="corporationName"
+              type="text"
+              placeholder="社会福祉法人○○会"
+              required
+              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              value={corporationName}
+              onChange={(e) => setCorporationName(e.target.value)}
+            />
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium text-gray-700">
               メールアドレス
