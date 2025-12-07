@@ -42,10 +42,13 @@ export default function DashboardLayout({
 
                 <div className="flex-1 px-3 py-4 space-y-1">
                     <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" active={true} />
-                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="AI司法書士 葵さん" active={false} />
-                    <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議（理事会・評議員会）" />
+                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="AI事務員 葵さん" active={false} />
+                    <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
                     <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
-                    <SidebarItem href="/dashboard/documents" icon={FileText} label="書類作成・管理" />
+
+
+                    <SidebarItem href="/dashboard/documents/new" icon={FileText} label="議事録作成" />
+                    <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
                     <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
                 </div>
 

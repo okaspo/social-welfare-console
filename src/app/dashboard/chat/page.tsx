@@ -40,7 +40,7 @@ export default function ChatPage() {
                             <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">社会福祉法人専門 司法書士AI</h1>
+                            <h1 className="font-bold text-gray-900">S級AI事務員 葵さん</h1>
                             <p className="text-xs text-gray-500">Version 4.7 • Legal Compliance Mode</p>
                         </div>
                     </div>
@@ -64,7 +64,7 @@ export default function ChatPage() {
                             <h3 className="text-lg font-semibold text-gray-700 mb-2">法務支援・文書作成アシスタント</h3>
                             <p className="text-sm text-gray-500 max-w-md">
                                 理事会・評議員会の運営、議事録作成、入札・契約手続きなどを<br />
-                                司法書士レベルの専門知識でサポートします。
+                                法務知識に基づきサポートします。
                             </p>
                         </div>
                     )}

@@ -1,4 +1,4 @@
-# GovAI Social Welfare Console (社会福祉法人運営コンソール)
+# Social Welfare Console (社会福祉法人運営コンソール)
 
 A comprehensive dashboard for managing Social Welfare Corporations (社会福祉法人), integrated with AI Judicial Scrivener capabilities and Supabase-backed data persistence.
 

@@ -1,4 +1,4 @@
-import { ShieldCheck, Users, Settings, LogOut } from 'lucide-react'
+import { ShieldCheck, Users, Settings, LogOut, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminLayout({
@@ -16,7 +16,7 @@ export default function AdminLayout({
                             <ShieldCheck className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold">GovAI Admin</h1>
+                            <h1 className="font-bold">Admin Console</h1>
                             <p className="text-xs text-gray-400">System Operations</p>
                         </div>
                     </div>
@@ -29,6 +29,20 @@ export default function AdminLayout({
                     >
                         <Users className="h-4 w-4" />
                         ユーザー管理
+                    </Link>
+                    <Link
+                        href="/admin/dashboard/knowledge"
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        共通知識ライブラリ
+                    </Link>
+                    <Link
+                        href="/admin/dashboard/prompt"
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                        <Settings className="h-4 w-4" />
+                        AIプロンプト管理
                     </Link>
                     <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 rounded-md transition-colors mt-8">
                         <LogOut className="h-4 w-4" />

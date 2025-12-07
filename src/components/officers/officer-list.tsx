@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import { Plus, Edit2, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
-import { Officer, MOCK_OFFICERS, ROLE_LABELS, OfficerRole } from '@/lib/officers/data'
+import { Officer, MOCK_OFFICERS, OfficerRole, getRoleLabel, getTermLimitYears } from '@/lib/officers/data'
 
-export default function OfficerList() {
-    const [officers, setOfficers] = useState<Officer[]>(MOCK_OFFICERS)
+interface OfficerListProps {
+    initialOfficers: Officer[]
+}
+
+export default function OfficerList({ initialOfficers }: OfficerListProps) {
+    const [officers, setOfficers] = useState<Officer[]>(initialOfficers)
     const [filter, setFilter] = useState<OfficerRole | 'all'>('all')
 
     const filteredOfficers = filter === 'all'
@@ -16,10 +20,8 @@ export default function OfficerList() {
     const getStatusBadge = (officer: Officer) => {
         const today = new Date()
         const endDate = new Date(officer.termEndDate)
-        const isExpired = endDate < today // Simple check
+        const isExpired = endDate < today
 
-        // Override mock status if needed, or rely on data props
-        // For this demo, let's calculate dynamic status based on date
         if (isExpired) {
             return (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -50,21 +52,42 @@ export default function OfficerList() {
         )
     }
 
+    // Role Badge Helper
+    const getRoleBadge = (role: OfficerRole) => {
+        const label = getRoleLabel(role)
+        const termLimit = getTermLimitYears(role)
+        return (
+            <div>
+                <div className="font-medium text-gray-900">{label}</div>
+                <div className="text-xs text-gray-400">任期: {termLimit}年</div>
+            </div>
+        )
+    }
+
     return (
         <div className="bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden">
             {/* Header / Filter */}
             <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex gap-2">
-                    {(['all', 'director', 'auditor', 'councilor'] as const).map((role) => (
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filter === 'all'
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                            }`}
+                    >
+                        すべて
+                    </button>
+                    {(['director', 'auditor', 'councilor', 'selection_committee'] as const).map((role) => (
                         <button
                             key={role}
                             onClick={() => setFilter(role)}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filter === role
-                                    ? 'bg-gray-900 text-white'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                ? 'bg-gray-900 text-white'
+                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
-                            {role === 'all' ? 'すべて' : ROLE_LABELS[role]}
+                            {getRoleLabel(role)}
                         </button>
                     ))}
                 </div>
@@ -79,7 +102,8 @@ export default function OfficerList() {
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                         <tr>
-                            <th className="px-6 py-3 font-medium">氏名 / 役職</th>
+                            <th className="px-6 py-3 font-medium">氏名</th>
+                            <th className="px-6 py-3 font-medium">役職 / 任期規定</th>
                             <th className="px-6 py-3 font-medium">任期開始</th>
                             <th className="px-6 py-3 font-medium">任期満了</th>
                             <th className="px-6 py-3 font-medium">状態</th>
@@ -91,7 +115,9 @@ export default function OfficerList() {
                             <tr key={officer.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-gray-900">{officer.name}</div>
-                                    <div className="text-xs text-gray-500">{ROLE_LABELS[officer.role]}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {getRoleBadge(officer.role)}
                                 </td>
                                 <td className="px-6 py-4 text-gray-600">
                                     {officer.termStartDate}

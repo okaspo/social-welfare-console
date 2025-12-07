@@ -60,15 +60,22 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
                             </td>
                             <td className="px-6 py-4">
                                 <div className="font-medium text-gray-900">{user.full_name || '未設定'}</div>
-                                <div className="text-xs text-gray-400">{user.role}</div>
+                                <div className="mt-1">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${user.role === 'admin' || user.role === 'ADMIN'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {user.role}
+                                    </span>
+                                </div>
                             </td>
                             <td className="px-6 py-4 text-gray-600">
                                 {user.organization?.name || '未所属'}
                             </td>
                             <td className="px-6 py-4">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${user.organization?.plan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                        user.organization?.plan === 'STANDARD' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                            'bg-gray-100 text-gray-600 border-gray-200'
+                                    user.organization?.plan === 'STANDARD' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                        'bg-gray-100 text-gray-600 border-gray-200'
                                     }`}>
                                     {user.organization?.plan || 'N/A'}
                                 </span>
