@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GovAI Social Welfare Console (社会福祉法人運営コンソール)
+
+A comprehensive dashboard for managing Social Welfare Corporations (社会福祉法人), integrated with AI Judicial Scrivener capabilities and Supabase-backed data persistence.
+
+## Features
+
+- **Documents & Minutes**: Generate legal meeting minutes (Board of Directors, Councilors) with one click. 
+    - *Plan Exclusive*: Export to Word (.docx) for Standard/Pro users.
+- **Officer Management**: Track terms (Directors: 2 years, Councilors: 4 years) with automatic expiry alerts.
+- **Articles of Incorporation**: Manage strict governance rules and regulations.
+- **Attendance**: Calculate quorums for meetings automatically.
+- **AI Judicial Scrivener (葵さん)**: Chat-based assistant for legal queries and document drafting.
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **AI**: Vercel AI SDK + OpenAI (GPT-4o)
+- **Styling**: Tailwind CSS
+- **Docs**: `docx` for Word export
 
 ## Getting Started
 
-First, run the development server:
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Environment Setup**
+   Copy `.env.example` to `.env.local` and add your keys:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=...
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   OPENAI_API_KEY=...
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Database Setup (Supabase)**
+   Run the SQL found in `supabase/migrations/20251207_init.sql` in your Supabase SQL Editor to create the `organizations` and `profiles` tables.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Access Control & Pricing Plans
 
-## Learn More
+The application implements strict feature gating based on `organizations.plan`:
+- **Free**: View-only, Trial AI functions.
+- **Standard**: Enables Word Export, Archive Search.
+- **Pro**: Bulk Notices, Advanced Legal Checks.
+- **Enterprise**: Full Governance Reports.
 
-To learn more about Next.js, take a look at the following resources:
+*Modify `src/components/documents/minutes-form.tsx` or `src/lib/auth/access-control.ts` to test different tiers during development.*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ready for deployment on Vercel. Ensure all environment variables are set in the Vercel Dashboard project settings.
