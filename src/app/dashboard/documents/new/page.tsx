@@ -1,6 +1,24 @@
 import MinutesForm from "@/components/documents/minutes-form"
+import { createClient } from "@/lib/supabase/server"
 
-export default function NewDocumentPage() {
+export default async function NewDocumentPage() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let corporationName = "〇〇会"
+
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('corporation_name')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.corporation_name) {
+            corporationName = profile.corporation_name
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -12,7 +30,7 @@ export default function NewDocumentPage() {
                 </div>
             </div>
 
-            <MinutesForm />
+            <MinutesForm initialCorporationName={corporationName} />
         </div>
     )
 }

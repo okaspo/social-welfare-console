@@ -9,7 +9,11 @@ import { PricingPlan, canAccess } from '@/lib/auth/access-control'
 // Mock Plan for Demo - Change to 'FREE' to test restrictions
 const CURRENT_PLAN: PricingPlan = 'STANDARD'
 
-export default function MinutesForm() {
+interface MinutesFormProps {
+    initialCorporationName?: string
+}
+
+export default function MinutesForm({ initialCorporationName = '〇〇会' }: MinutesFormProps) {
     const [loading, setLoading] = useState(false)
     const [generatedDoc, setGeneratedDoc] = useState('')
 
@@ -17,7 +21,7 @@ export default function MinutesForm() {
     const [newAgenda, setNewAgenda] = useState({ title: '', content: '' })
 
     const [formData, setFormData] = useState<MinutesData>({
-        corporationName: '〇〇会',
+        corporationName: initialCorporationName,
         date: '',
         startTime: '14:00',
         endTime: '15:00',
@@ -83,12 +87,9 @@ export default function MinutesForm() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">法人名</label>
-                            <input
-                                type="text"
-                                value={formData.corporationName}
-                                onChange={(e) => setFormData({ ...formData, corporationName: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                            />
+                            <div className="w-full px-3 py-2 border border-gray-100 bg-gray-50 rounded-md text-sm font-medium text-gray-900">
+                                {formData.corporationName}
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">開催日</label>
