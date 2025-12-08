@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SettingsForm from './settings-form'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SettingsPage() {
+    console.log('Rendering Settings Page')
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

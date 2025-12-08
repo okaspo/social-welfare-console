@@ -53,7 +53,7 @@ export default function DashboardLayout({
                 </div>
 
                 <div className="p-3 border-t border-gray-100">
-                    <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
+                    <SidebarItem href="/dashboard/account" icon={Settings} label="設定" />
                     <Link
                         href="/login"
                         className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 rounded-md transition-colors mt-1"
