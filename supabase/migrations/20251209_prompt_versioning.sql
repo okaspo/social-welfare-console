@@ -1,11 +1,7 @@
--- Add version control columns to system_prompts
+-- Add versioning columns to system_prompts
 ALTER TABLE public.system_prompts
-ADD COLUMN version integer DEFAULT 1,
-ADD COLUMN description text;
+ADD COLUMN version INTEGER DEFAULT 1,
+ADD COLUMN changelog TEXT;
 
--- Ensure name+version is unique
-ALTER TABLE public.system_prompts
-ADD CONSTRAINT system_prompts_name_version_key UNIQUE (name, version);
-
--- Update existing rows to be version 1
-UPDATE public.system_prompts SET version = 1 WHERE version IS NULL;
+-- Index for efficient version lookup
+CREATE INDEX idx_system_prompts_name_version ON public.system_prompts(name, version);

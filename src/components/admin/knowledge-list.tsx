@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { archiveKnowledgeItem } from '@/lib/actions/knowledge'
 import { Archive, Edit2, Trash2, Tag, BookOpen } from 'lucide-react'
-import { KnowledgeItem } from '@/lib/admin/knowledge-data'
+// ... (imports)
 
 export default function KnowledgeList({ items }: { items: KnowledgeItem[] }) {
     const handleArchive = async (id: string) => {
