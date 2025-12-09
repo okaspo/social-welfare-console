@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Bot, X, Send, MessageSquare, Paperclip, Upload, FileText } from 'lucide-react'
+import { Bot, X, Send, MessageSquare, Paperclip, Upload, FileText, Save, Loader2 } from 'lucide-react'
 import { processUserMessage, learnDocument } from '@/lib/chat/knowledge-base'
 import { processUploadedFile } from '@/lib/actions/document-processing'
+import { createClient } from '@/lib/supabase/client'
 
 interface Message {
     id: string
@@ -19,8 +20,11 @@ export default function AoiChat() {
     const [input, setInput] = useState('')
     const [isTyping, setIsTyping] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const supabase = createClient()
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -91,6 +95,68 @@ export default function AoiChat() {
         }, 1000)
     }
 
+    const handleSaveToKnowledge = async () => {
+        if (messages.length <= 1) return
+        setIsSaving(true)
+
+        try {
+            // 1. Get User Org
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('Not authenticated')
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('organization_id')
+                .eq('id', user.id)
+                .single()
+
+            if (!profile?.organization_id) throw new Error('No organization found')
+
+            // 2. Format as Markdown
+            const dateStr = new Date().toLocaleString('ja-JP')
+            const title = `葵さんとのチャット履歴 (${dateStr})`
+            const markdownContent = messages.map(msg => {
+                const role = msg.role === 'user' ? 'ユーザー' : '葵 (AI)'
+                return `**${role}**: ${msg.text}\n\n`
+            }).join('---\n\n')
+
+            // 3. Create Article (Category: CHAT_LOG)
+            const { data: article, error: articleError } = await supabase
+                .from('articles')
+                .insert({
+                    title,
+                    category: 'CHAT_LOG',
+                    organization_id: profile.organization_id // Strict Individual Knowledge
+                })
+                .select()
+                .single()
+
+            if (articleError) throw articleError
+
+            // 4. Create Version
+            const { error: versionError } = await supabase
+                .from('article_versions')
+                .insert({
+                    article_id: article.id,
+                    version_number: 1,
+                    effective_date: new Date().toISOString().split('T')[0],
+                    file_path: 'chat_log_auto_generated', // Placeholder or virtual
+                    changelog: 'チャット履歴から自動保存',
+                    content: markdownContent
+                })
+
+            if (versionError) throw versionError
+
+            alert('チャット履歴をナレッジとして保存しました。\n「定款・諸規程」一覧の「ナレッジ」カテゴリから確認できます。')
+
+        } catch (error: any) {
+            console.error('Save failed:', error)
+            alert('保存に失敗しました: ' + error.message)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
             {/* Chat Window */}
@@ -124,9 +190,19 @@ export default function AoiChat() {
                                 </div>
                             </div>
                         </div>
-                        <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-                            <X className="h-5 w-5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleSaveToKnowledge}
+                                disabled={isSaving || messages.length <= 1}
+                                className="p-1.5 hover:bg-white/10 rounded-full text-gray-300 hover:text-white transition-colors disabled:opacity-30"
+                                title="会話をナレッジとして保存"
+                            >
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            </button>
+                            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Messages */}
@@ -135,8 +211,8 @@ export default function AoiChat() {
                             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div
                                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                            ? 'bg-gray-900 text-white rounded-br-none'
-                                            : 'bg-white border border-gray-100 text-gray-800 shadow-sm rounded-bl-none'
+                                        ? 'bg-gray-900 text-white rounded-br-none'
+                                        : 'bg-white border border-gray-100 text-gray-800 shadow-sm rounded-bl-none'
                                         }`}
                                 >
                                     {msg.text}

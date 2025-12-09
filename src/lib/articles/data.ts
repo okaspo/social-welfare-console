@@ -1,5 +1,5 @@
 
-export type ArticleCategory = 'basic' | 'rule' | 'manual'
+export type ArticleCategory = 'basic' | 'rule' | 'manual' | 'CHAT_LOG'
 
 export interface ArticleDoc {
     id: string
@@ -12,8 +12,10 @@ export interface ArticleDoc {
 export const ARTICLE_CATEGORIES: Record<ArticleCategory, string> = {
     basic: '定款・基本規程',
     rule: '業務執行規程',
-    manual: 'マニュアル・様式'
+    manual: 'マニュアル・様式',
+    CHAT_LOG: 'ナレッジ（チャットログ）'
 }
+
 
 const SAMPLE_TEIKAN = `
 # 社会福祉法人〇〇会 定款
