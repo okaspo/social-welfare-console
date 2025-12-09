@@ -15,7 +15,7 @@ interface Message {
 export default function AoiChat() {
     const [isOpen, setIsOpen] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
-        { id: 'welcome', role: 'assistant', text: 'こんにちは。S級AI事務員の葵です。何かお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
+        { id: 'welcome', role: 'assistant', text: 'こんにちは。S級AI事務局の葵です。何かお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
     ])
     const [input, setInput] = useState('')
     const [isTyping, setIsTyping] = useState(false)
@@ -183,7 +183,7 @@ export default function AoiChat() {
                                 <Bot className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">S級AI事務員 葵</h3>
+                                <h3 className="font-bold text-sm">S級AI事務局 葵さん</h3>
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                                     <span className="text-xs text-gray-300">Online</span>
