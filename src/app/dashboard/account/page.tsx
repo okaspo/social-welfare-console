@@ -1,7 +1,6 @@
-```typescript
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SettingsForm } from './settings-form'
+import SettingsForm from './settings-form'
 import { AccountHeader } from './account-header'
 
 export default async function AccountPage() {
@@ -16,12 +15,12 @@ export default async function AccountPage() {
     const { data: profile } = await supabase
         .from('profiles')
         .select(`
-full_name,
-    corporation_name,
-    organization: organizations(
-        name,
-        plan
-    )
+            full_name,
+            corporation_name,
+            organization:organizations (
+                name,
+                plan
+            )
         `)
         .eq('id', user.id)
         .single()
@@ -40,4 +39,3 @@ full_name,
         </div>
     )
 }
-```
