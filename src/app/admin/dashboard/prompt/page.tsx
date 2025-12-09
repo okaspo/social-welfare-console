@@ -30,8 +30,8 @@ export default function PromptEditorPage() {
     // Playground Chat Hook
     const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
         api: '/api/chat/test',
-        body: { systemPrompt: prompt } // Send current editor content as system prompt
-    }) as any
+        body: { systemPrompt: prompt }
+    } as any) as any
 
     useEffect(() => {
         loadVersions()
