@@ -11,6 +11,10 @@ import {
     ShieldCheck
 } from 'lucide-react'
 
+import { createClient } from '@/lib/supabase/server'
+
+// ... existing imports ...
+
 // Sidebar Item Component
 function SidebarItem({ href, icon: Icon, label, active = false }: { href: string; icon: any; label: string; active?: boolean }) {
     return (
@@ -27,11 +31,35 @@ function SidebarItem({ href, icon: Icon, label, active = false }: { href: string
     )
 }
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let corporationName = '社会福祉法人 〇〇会'
+    let userInitials = 'AD'
+
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('corporation_name, full_name')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.corporation_name) {
+            corporationName = profile.corporation_name
+        }
+
+        if (profile?.full_name) {
+            // Simple logic to get first 2 chars or specific initials if needed. 
+            // For Japanese names, usually just the first char or so. Adjusting to show first 2 chars for now.
+            userInitials = profile.full_name.slice(0, 2)
+        }
+    }
+
     return (
         <div className="flex min-h-screen bg-white">
             {/* Sidebar */}
@@ -69,11 +97,11 @@ export default function DashboardLayout({
                 {/* Header */}
                 <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
                     <div className="text-sm font-medium text-gray-500">
-                        社会福祉法人 〇〇会
+                        {corporationName}
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
-                            AD
+                            {userInitials}
                         </div>
                     </div>
                 </header>
