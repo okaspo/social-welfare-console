@@ -12,6 +12,7 @@ type PromptVersion = {
     content: string
     description: string | null
     updated_at: string
+    is_active: boolean
 }
 
 export default function PromptEditorPage() {
