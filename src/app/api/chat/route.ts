@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { JUDICIAL_SCRIVENER_PROMPT, MOCK_KNOWLEDGE_BASE } from '@/lib/chat/system-prompt';
+import { createClient } from '@supabase/supabase-js';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -8,37 +9,68 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
     const { messages } = await req.json();
 
-    // 1. Try to fetch active prompt from DB
+    // Default Prompt
     let systemPrompt = JUDICIAL_SCRIVENER_PROMPT
+    let commonKnowledge = ""
 
-    // Check if we have credentials to fetch from DB
+    // Check credentials
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (supabaseUrl && supabaseKey) {
         try {
-            // Fetch prompt from Supabase REST API directly to avoid cookie/server client complexity in this route type for now
-            // or just use createClient from @supabase/supabase-js
-            const { createClient } = require('@supabase/supabase-js')
             const supabase = createClient(supabaseUrl, supabaseKey)
 
-            const { data, error } = await supabase
+            // 1. Fetch System Prompt (Dynamic)
+            const { data: promptData } = await supabase
                 .from('system_prompts')
                 .select('content')
                 .eq('name', 'default')
                 .maybeSingle()
 
-            if (data?.content) {
-                systemPrompt = data.content
+            if (promptData?.content) {
+                systemPrompt = promptData.content
             }
+
+            // 2. Fetch Common Knowledge Library (Active Items)
+            // Limit to recent or important items to avoid context overflow? 
+            // For now, fetching all active items (assuming reasonable size).
+            const { data: knowledgeData } = await supabase
+                .from('knowledge_items')
+                .select('title, content, category')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(20) // Safety limit
+
+            if (knowledgeData && knowledgeData.length > 0) {
+                commonKnowledge = knowledgeData.map(item => {
+                    return `### ${item.title} (${item.category})\n${item.content}`
+                }).join('\n\n')
+            }
+
         } catch (e) {
-            console.warn("Failed to fetch dynamic prompt, using default.", e)
+            console.warn("Failed to fetch dynamic data, using defaults.", e)
         }
     }
 
+    // Construct final system message
+    // We append the Common Knowledge as a Markdown section
+    const finalSystemMessage = `
+${systemPrompt}
+
+【共通知識ライブラリ (Markdown)】
+以下の情報は、あなたが参照すべき最新の組織・業務に関するルールや知識です。
+ユーザーからの質問に回答する際は、以下の情報を優先して参照してください。
+
+${commonKnowledge || '(現在、共通知識はありません)'}
+
+【知識ファイル（法人固有情報）Mock】
+${JSON.stringify(MOCK_KNOWLEDGE_BASE, null, 2)}
+`
+
     const result = await streamText({
         model: openai('gpt-4o'),
-        system: `${systemPrompt}\n\n【知識ファイル（法人固有情報）Mock】\n${JSON.stringify(MOCK_KNOWLEDGE_BASE, null, 2)}`,
+        system: finalSystemMessage,
         messages,
     });
 
