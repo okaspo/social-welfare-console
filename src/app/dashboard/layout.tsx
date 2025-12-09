@@ -65,7 +65,7 @@ export default async function DashboardLayout({
             {/* Sidebar */}
             <aside className="w-64 border-r border-gray-100 flex flex-col bg-white">
                 <div className="p-6 h-14 flex items-center">
-                    <span className="font-semibold text-gray-900 tracking-tight">S級事務局 葵さん</span>
+                    <span className="font-semibold text-gray-900 tracking-tight">S級AI事務局 葵さん</span>
                 </div>
 
                 <div className="flex-1 px-3 py-4 space-y-1">

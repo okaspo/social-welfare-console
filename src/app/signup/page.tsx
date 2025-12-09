@@ -71,7 +71,7 @@ export default function SignupPage() {
             アカウント登録
           </h1>
           <p className="text-sm text-gray-500">
-            S級事務局 葵さん
+            S級AI事務局 葵さん
           </p>
         </div>
 
@@ -226,7 +226,7 @@ export default function SignupPage() {
 
         {/* Legal / Subtle Footer */}
         <div className="pt-8 text-center text-xs text-gray-400">
-          &copy; S級事務局 葵さん
+          &copy; S級AI事務局 葵さん
         </div>
       </div>
     </div>

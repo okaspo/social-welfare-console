@@ -54,7 +54,7 @@ export default function LoginPage() {
                         ログイン
                     </h1>
                     <p className="text-sm text-gray-500">
-                        S級事務局 葵さん
+                        S級AI事務局 葵さん
                     </p>
                 </div>
 
