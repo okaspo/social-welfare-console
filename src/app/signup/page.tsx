@@ -11,6 +11,9 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [corporationName, setCorporationName] = useState('')
+  const [address, setAddress] = useState('')
+  const [establishmentDate, setEstablishmentDate] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +34,9 @@ export default function SignupPage() {
           data: {
             full_name: fullName,
             corporation_name: corporationName,
+            corporation_address: address,
+            establishment_date: establishmentDate,
+            corporation_phone: phone,
           }
         },
       })
@@ -65,41 +71,13 @@ export default function SignupPage() {
             アカウント登録
           </h1>
           <p className="text-sm text-gray-500">
-            S級AI事務員 葵さん
+            S級事務局 葵さん
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSignUp} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-              氏名（フルネーム）
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              placeholder="山田 太郎"
-              required
-              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="corporationName" className="text-sm font-medium text-gray-700">
-              社会福祉法人名
-            </label>
-            <input
-              id="corporationName"
-              type="text"
-              placeholder="社会福祉法人○○会"
-              required
-              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-              value={corporationName}
-              onChange={(e) => setCorporationName(e.target.value)}
-            />
-          </div>
 
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -143,6 +121,80 @@ export default function SignupPage() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label htmlFor="corporationName" className="text-sm font-medium text-gray-700">
+              法人名（正式名称）
+            </label>
+            <input
+              id="corporationName"
+              type="text"
+              placeholder="社会福祉法人○○会"
+              required
+              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              value={corporationName}
+              onChange={(e) => setCorporationName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="address" className="text-sm font-medium text-gray-700">
+              法人所在地
+            </label>
+            <input
+              id="address"
+              type="text"
+              placeholder="東京都..."
+              required
+              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="establishmentDate" className="text-sm font-medium text-gray-700">
+                設立年月日
+              </label>
+              <input
+                id="establishmentDate"
+                type="date"
+                required
+                className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+                value={establishmentDate}
+                onChange={(e) => setEstablishmentDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                電話番号
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                placeholder="03-1234-5678"
+                required
+                className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+              担当者氏名
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              placeholder="山田 太郎"
+              required
+              className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
           {error && (
             <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
               {error}
@@ -174,7 +226,7 @@ export default function SignupPage() {
 
         {/* Legal / Subtle Footer */}
         <div className="pt-8 text-center text-xs text-gray-400">
-          &copy; S級AI事務員 葵さん
+          &copy; S級事務局 葵さん
         </div>
       </div>
     </div>
