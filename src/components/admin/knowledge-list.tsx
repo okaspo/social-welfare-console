@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { archiveKnowledgeItem } from '@/lib/actions/knowledge'
+import { KnowledgeItem } from '@/lib/admin/knowledge-data'
 import { Archive, Edit2, Trash2, Tag, BookOpen } from 'lucide-react'
 // ... (imports)
 
