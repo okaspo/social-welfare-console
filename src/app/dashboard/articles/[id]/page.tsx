@@ -108,6 +108,7 @@ export default function ArticleViewerPage() {
     }
 
     const isPdf = selectedVersion?.file_path.toLowerCase().endsWith('.pdf')
+    const isDownloadable = article.category !== 'CHAT_LOG'
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
@@ -154,7 +155,7 @@ export default function ArticleViewerPage() {
                             </div>
                         </div>
 
-                        {fileUrl && (
+                        {fileUrl && isDownloadable && (
                             <a
                                 href={fileUrl}
                                 target="_blank"
@@ -176,8 +177,8 @@ export default function ArticleViewerPage() {
                                 <button
                                     onClick={() => setViewMode('preview')}
                                     className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === 'preview'
-                                            ? 'bg-white text-gray-900 shadow-sm'
-                                            : 'text-gray-500 hover:text-gray-700'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     <FileType className="h-4 w-4" />
@@ -186,8 +187,8 @@ export default function ArticleViewerPage() {
                                 <button
                                     onClick={() => setViewMode('text')}
                                     className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${viewMode === 'text'
-                                            ? 'bg-white text-gray-900 shadow-sm'
-                                            : 'text-gray-500 hover:text-gray-700'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     <AlignLeft className="h-4 w-4" />
@@ -209,7 +210,7 @@ export default function ArticleViewerPage() {
                                                 <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                                                 <p className="text-gray-600 font-medium mb-1">プレビューできません</p>
                                                 <p className="text-sm text-gray-400 mb-4">このファイル形式はブラウザでのプレビューに対応していません。</p>
-                                                {fileUrl && (
+                                                {fileUrl && isDownloadable && (
                                                     <a
                                                         href={fileUrl}
                                                         target="_blank"
@@ -275,8 +276,8 @@ export default function ArticleViewerPage() {
                                         key={ver.id}
                                         onClick={() => setSelectedVersion(ver)}
                                         className={`w-full text-left p-3 rounded-lg border transition-all ${selectedVersion?.id === ver.id
-                                                ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
-                                                : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+                                            : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start mb-1">
