@@ -31,7 +31,7 @@ export default function PromptEditorPage() {
     const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
         api: '/api/chat/test',
         body: { systemPrompt: prompt } // Send current editor content as system prompt
-    })
+    }) as any
 
     useEffect(() => {
         loadVersions()
