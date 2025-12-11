@@ -1,25 +1,18 @@
 'use client'
 
-import { useChat } from '@ai-sdk/react'
+
 import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Briefcase, AlertTriangle } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
-    const [debugLogs, setDebugLogs] = useState<string[]>([])
-    const addLog = (msg: string) => setDebugLogs(prev => [new Date().toISOString().split('T')[1].split('.')[0] + ' ' + msg, ...prev].slice(0, 5))
-
-    // Decouple input from useChat to ensure responsiveness and avoid "undefined" issues
-    const { messages, append, isLoading, reload, error } = (useChat as any)({
-        api: '/api/chat',
-        initialMessages: [],
-        onError: (err: any) => addLog(`Error: ${err.message}`),
-        onFinish: () => addLog('Finish'),
-        onResponse: (res: any) => addLog(`Response: ${res.status} ${res.statusText}`)
-    })
-
+    const [messages, setMessages] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(false)
     const [localInput, setLocalInput] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [mode, setMode] = useState<number | null>(null)
+
+    const [debugLogs, setDebugLogs] = useState<string[]>([])
+    const addLog = (msg: string) => setDebugLogs(prev => [new Date().toISOString().split('T')[1].split('.')[0] + ' ' + msg, ...prev].slice(0, 5))
 
     const [configError, setConfigError] = useState<string[] | null>(null)
 
@@ -47,14 +40,66 @@ export default function ChatPage() {
         if (!localInput.trim() || isLoading) return
 
         const content = localInput
-        setLocalInput('') // Clear input immediately
+        setLocalInput('')
+
+        // 1. Add User Message
+        const userMsg = { id: Date.now().toString(), role: 'user', content }
+        const newMessages = [...messages, userMsg]
+        setMessages(newMessages)
+        setIsLoading(true)
         addLog(`Sending: ${content.substring(0, 10)}...`)
 
         try {
-            await append({ role: 'user', content })
-            addLog('Append called')
-        } catch (e: any) {
-            addLog(`Append failed: ${e.message}`)
+            // 2. Call API
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: newMessages })
+            })
+
+            addLog(`Response: ${response.status} ${response.statusText}`)
+
+            if (!response.ok) {
+                throw new Error(response.statusText)
+            }
+
+            if (!response.body) {
+                throw new Error('No response body')
+            }
+
+            // 3. Setup Stream Reader
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder()
+            let aiContent = ''
+            const aiMsgId = (Date.now() + 1).toString()
+
+            // Add placeholder AI message
+            setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '' }])
+
+            // 4. Read Loop
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                const chunk = decoder.decode(value, { stream: true })
+                aiContent += chunk
+
+                setMessages(prev => prev.map(msg =>
+                    msg.id === aiMsgId ? { ...msg, content: aiContent } : msg
+                ))
+            }
+            addLog('Finish')
+
+        } catch (error: any) {
+            console.error('Chat error:', error)
+            addLog(`Error: ${error.message}`)
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: '申し訳ありません。エラーが発生しました。時間を置いて再度お試しください。'
+            }])
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -63,6 +108,9 @@ export default function ChatPage() {
         setLocalInput(initialMessage)
         // Optionally auto-submit or let user verify
     }
+
+    // Keep error as null for now as we handle it inline, or adapt UI
+    const error = null;
 
     if (configError) {
         return (
@@ -111,20 +159,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Error Alert */}
-                {error && (
-                    <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
-                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error.message}</span>
-                        </div>
-                        <button
-                            onClick={() => reload()}
-                            className="text-xs text-red-700 underline hover:text-red-800"
-                        >
-                            再試行
-                        </button>
-                    </div>
-                )}
+
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50">
