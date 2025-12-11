@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Briefcase } from 'lucide-react'
+import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Briefcase, AlertTriangle } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
@@ -15,13 +15,23 @@ export default function ChatPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [mode, setMode] = useState<number | null>(null)
 
+    const [configError, setConfigError] = useState<string[] | null>(null)
+
+    useEffect(() => {
+        // Check for missing environment variables on load
+        import('@/app/actions/config').then(({ checkEnvironmentConfig }) => {
+            checkEnvironmentConfig().then((result) => {
+                if (!result.isConfigured) {
+                    setConfigError(result.missing)
+                }
+            })
+        })
+    }, [])
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-
-    useEffect(() => {
-        scrollToBottom()
-    }, [messages])
+    // ... (keep useEffect for messages)
 
     const handleLocalSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault()
@@ -36,6 +46,32 @@ export default function ChatPage() {
         setMode(modeId)
         setLocalInput(initialMessage)
         // Optionally auto-submit or let user verify
+    }
+
+    if (configError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] bg-red-50 rounded-xl border border-red-100 p-8 text-center">
+                <div className="bg-red-100 p-4 rounded-full mb-4">
+                    <AlertTriangle className="h-10 w-10 text-red-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">システム設定エラー</h2>
+                <p className="text-gray-600 mb-6 max-w-md">
+                    環境変数が正しく設定されていません。<br />
+                    Vercelのダッシュボードで以下の環境変数を設定してください。
+                </p>
+                <div className="bg-white p-4 rounded-lg border border-red-200 shadow-sm text-left mb-6 w-full max-w-md">
+                    <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">不足している環境変数:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                        {configError.map((v) => (
+                            <li key={v} className="text-sm font-mono text-red-700 bg-red-50 px-2 py-1 rounded inline-block w-full">{v}</li>
+                        ))}
+                    </ul>
+                </div>
+                <p className="text-xs text-gray-500">
+                    設定後、再デプロイまたは「Redeploy」を行うと反映されます。
+                </p>
+            </div>
+        )
     }
 
     // ... (rendering code remains mostly same, but using localInput)
