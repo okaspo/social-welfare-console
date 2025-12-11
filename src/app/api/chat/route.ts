@@ -2,6 +2,9 @@ import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 
+export const maxDuration = 30; // 30 seconds max duration
+export const dynamic = 'force-dynamic';
+
 // Default Prompt (Fallback)
 export const JUDICIAL_SCRIVENER_PROMPT = `
 【役割定義】社会福祉法人専門 S級AI事務局 葵さん

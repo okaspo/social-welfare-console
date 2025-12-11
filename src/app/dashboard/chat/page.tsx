@@ -5,10 +5,16 @@ import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Br
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
+    const [debugLogs, setDebugLogs] = useState<string[]>([])
+    const addLog = (msg: string) => setDebugLogs(prev => [new Date().toISOString().split('T')[1].split('.')[0] + ' ' + msg, ...prev].slice(0, 5))
+
     // Decouple input from useChat to ensure responsiveness and avoid "undefined" issues
     const { messages, append, isLoading, reload, error } = (useChat as any)({
         api: '/api/chat',
-        initialMessages: []
+        initialMessages: [],
+        onError: (err: any) => addLog(`Error: ${err.message}`),
+        onFinish: () => addLog('Finish'),
+        onResponse: (res: any) => addLog(`Response: ${res.status} ${res.statusText}`)
     })
 
     const [localInput, setLocalInput] = useState('')
@@ -31,7 +37,10 @@ export default function ChatPage() {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-    // ... (keep useEffect for messages)
+
+    useEffect(() => {
+        scrollToBottom()
+    }, [messages])
 
     const handleLocalSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault()
@@ -39,7 +48,14 @@ export default function ChatPage() {
 
         const content = localInput
         setLocalInput('') // Clear input immediately
-        await append({ role: 'user', content })
+        addLog(`Sending: ${content.substring(0, 10)}...`)
+
+        try {
+            await append({ role: 'user', content })
+            addLog('Append called')
+        } catch (e: any) {
+            addLog(`Append failed: ${e.message}`)
+        }
     }
 
     const startMode = (modeId: number, initialMessage: string) => {
@@ -182,6 +198,14 @@ export default function ChatPage() {
                         <p className="text-[10px] text-gray-400">
                             AIは誤った情報を生成する可能性があります。重要な法的判断は専門家にご確認ください。
                         </p>
+                        {/* Debug Logs Toggle */}
+                        <details className="mt-2 text-left">
+                            <summary className="text-[10px] text-gray-300 cursor-pointer hover:text-gray-500">Debug Logs</summary>
+                            <div className="bg-gray-900 text-green-400 p-2 rounded text-[10px] font-mono mt-1 max-h-20 overflow-auto">
+                                {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+                                {debugLogs.length === 0 && <span className="opacity-50">No logs yet</span>}
+                            </div>
+                        </details>
                     </div>
                 </div>
             </div>
