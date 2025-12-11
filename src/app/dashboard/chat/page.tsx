@@ -5,7 +5,7 @@ import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Br
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
-    const { messages, input, handleInputChange, handleSubmit, isLoading, reload, error } = (useChat as any)({
+    const { messages, input = '', handleInputChange, handleSubmit, isLoading, reload, error } = (useChat as any)({
         api: '/api/chat',
         initialMessages: []
     })
@@ -130,7 +130,7 @@ export default function ChatPage() {
                         />
                         <button
                             type="submit"
-                            disabled={isLoading || !input.trim()}
+                            disabled={isLoading || !input?.trim()}
                             className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             <Send className="h-4 w-4" />
