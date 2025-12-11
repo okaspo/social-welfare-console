@@ -21,12 +21,12 @@ function SidebarItem({ href, icon: Icon, label, active = false }: { href: string
     return (
         <Link
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${active
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${active
+                ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
         >
-            <Icon className="h-4 w-4" />
+            <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${active ? 'text-gray-900' : 'text-gray-500'}`} />
             {label}
         </Link>
     )
@@ -64,12 +64,12 @@ export default async function DashboardLayout({
     return (
         <div className="flex min-h-screen bg-white">
             {/* Sidebar */}
-            <aside className="w-64 border-r border-gray-100 flex flex-col bg-white">
-                <div className="p-6 h-14 flex items-center">
-                    <span className="font-semibold text-gray-900 tracking-tight">S級AI事務局 葵さん</span>
+            <aside className="w-64 border-r border-gray-100 flex flex-col bg-white shadow-sm">
+                <div className="p-6 h-16 flex items-center border-b border-gray-50">
+                    <span className="font-bold text-lg text-gray-900 tracking-tight">S級AI事務局 葵さん</span>
                 </div>
 
-                <div className="flex-1 px-3 py-4 space-y-1">
+                <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                     <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" active={true} />
                     <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="S級AI事務局 葵さん" active={false} />
                     <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
@@ -81,14 +81,14 @@ export default async function DashboardLayout({
                     <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
                 </div>
 
-                <div className="p-3 border-t border-gray-100">
+                <div className="p-4 border-t border-gray-100 bg-gray-50/30">
                     <SidebarItem href="/dashboard/account" icon={Settings} label="設定" />
                     <form action={logout}>
                         <button
                             type="submit"
-                            className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 rounded-md transition-colors mt-1"
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 mt-1 group"
                         >
-                            <LogOut className="h-4 w-4" />
+                            <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
                             ログアウト
                         </button>
                     </form>
@@ -96,21 +96,21 @@ export default async function DashboardLayout({
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col min-w-0 bg-white">
+            <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-white to-gray-50/30">
                 {/* Header */}
-                <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="text-sm font-medium text-gray-500">
+                <header className="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+                    <div className="text-sm font-medium text-gray-600">
                         {corporationName}
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-semibold text-gray-700 shadow-sm ring-2 ring-white">
                             {userInitials}
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 p-6 md:p-8 overflow-auto">
+                <div className="flex-1 p-8 md:p-10 overflow-auto">
                     {children}
                 </div>
             </main>

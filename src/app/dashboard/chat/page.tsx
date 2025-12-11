@@ -5,7 +5,11 @@ import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Br
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
-    const { messages = [], input = '', handleInputChange = () => { }, handleSubmit = () => { }, isLoading = false, reload = () => { } } = useChat() as any
+    const { messages, input, handleInputChange, handleSubmit, isLoading, reload } = (useChat as any)({
+        api: '/api/chat',
+        initialMessages: []
+    })
+
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [mode, setMode] = useState<number | null>(null)
 

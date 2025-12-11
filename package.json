@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "knowledge:sync": "npx ts-node scripts/sync-knowledge.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.77",

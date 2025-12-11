@@ -1,0 +1,10 @@
+import DocumentWizard from '@/components/documents/document-wizard'
+
+export default function CreateDocumentPage() {
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-8">文書作成ウィザード</h1>
+            <DocumentWizard />
+        </div>
+    )
+}

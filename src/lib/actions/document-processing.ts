@@ -2,6 +2,7 @@
 
 import mammoth from 'mammoth'
 // import pdf from 'pdf-parse'
+// @ts-ignore
 // const pdf = require('pdf-parse')
 
 export type ProcessResult = {
@@ -23,7 +24,7 @@ export async function processUploadedFile(formData: FormData): Promise<ProcessRe
         if (file.type === 'application/pdf') {
             // const pdfData = await pdf(buffer)
             // text = pdfData.text
-            return { success: false, error: 'PDF parsing is currently disabled due to server compatibility.' }
+            return { success: false, error: 'PDF parsing temporarily disabled.' }
         } else if (
             file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
             file.name.endsWith('.docx')
