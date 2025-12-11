@@ -5,11 +5,13 @@ import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Br
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
-    const { messages, input = '', handleInputChange, handleSubmit, isLoading, reload, error } = (useChat as any)({
+    // Decouple input from useChat to ensure responsiveness and avoid "undefined" issues
+    const { messages, append, isLoading, reload, error } = (useChat as any)({
         api: '/api/chat',
         initialMessages: []
     })
 
+    const [localInput, setLocalInput] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [mode, setMode] = useState<number | null>(null)
 
@@ -21,17 +23,22 @@ export default function ChatPage() {
         scrollToBottom()
     }, [messages])
 
+    const handleLocalSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault()
+        if (!localInput.trim() || isLoading) return
+
+        const content = localInput
+        setLocalInput('') // Clear input immediately
+        await append({ role: 'user', content })
+    }
+
     const startMode = (modeId: number, initialMessage: string) => {
         setMode(modeId)
-        // setInput would be ideal but useChat controls it. 
-        // We might trigger a hidden submit or just prepopulate.
-        // For this demo, let's just let the user know.
-        const fakeEvent = {
-            preventDefault: () => { },
-            target: { value: initialMessage }
-        } as any
-        handleInputChange(fakeEvent)
+        setLocalInput(initialMessage)
+        // Optionally auto-submit or let user verify
     }
+
+    // ... (rendering code remains mostly same, but using localInput)
 
     return (
         <div className="flex h-[calc(100vh-120px)] gap-6">
@@ -56,7 +63,7 @@ export default function ChatPage() {
                     <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
-                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error?.message || '不明なエラー'}</span>
+                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error.message}</span>
                         </div>
                         <button
                             onClick={() => reload()}
@@ -114,23 +121,22 @@ export default function ChatPage() {
 
                 {/* Input */}
                 <div className="p-4 bg-white border-t border-gray-100">
-                    <form onSubmit={handleSubmit} className="relative">
+                    <form onSubmit={handleLocalSubmit} className="relative">
                         <textarea
-                            value={input}
-                            onChange={handleInputChange}
+                            value={localInput}
+                            onChange={(e) => setLocalInput(e.target.value)}
                             placeholder="例：来月の理事会の議案書を作成してください..."
                             className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all resize-none h-[52px] max-h-32"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault()
-                                    // @ts-ignore
-                                    handleSubmit(e)
+                                    handleLocalSubmit()
                                 }
                             }}
                         />
                         <button
                             type="submit"
-                            disabled={isLoading || !input?.trim()}
+                            disabled={isLoading || !localInput.trim()}
                             className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             <Send className="h-4 w-4" />
