@@ -42,16 +42,28 @@ export default async function DashboardLayout({
 
     let corporationName = '社会福祉法人 〇〇会'
     let userInitials = 'AD'
+    let organizationPlan: string | null = null
 
     if (user) {
         const { data: profile } = await supabase
             .from('profiles')
-            .select('corporation_name, full_name')
+            .select(`
+                corporation_name, 
+                full_name,
+                organization:organizations (
+                    plan
+                )
+            `)
             .eq('id', user.id)
             .single()
 
         if (profile?.corporation_name) {
             corporationName = profile.corporation_name
+        }
+
+        if (profile?.organization) {
+            const org = Array.isArray(profile.organization) ? profile.organization[0] : profile.organization
+            organizationPlan = (org as any)?.plan
         }
 
         if (profile?.full_name) {
@@ -99,8 +111,16 @@ export default async function DashboardLayout({
             <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-white to-gray-50/30">
                 {/* Header */}
                 <header className="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-                    <div className="text-sm font-medium text-gray-600">
+                    <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
                         {corporationName}
+                        {organizationPlan && (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${organizationPlan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                organizationPlan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                    'bg-blue-50 text-blue-700 border-blue-100'
+                                }`}>
+                                {organizationPlan}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-semibold text-gray-700 shadow-sm ring-2 ring-white">

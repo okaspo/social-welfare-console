@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import UserList from './user-list'
 
 export default async function AdminDashboardPage() {
@@ -32,7 +32,7 @@ export default async function AdminDashboardPage() {
             }
         ]
     } else {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
 
         // Fetch profiles with organization details
         const { data: profiles, error } = await supabase

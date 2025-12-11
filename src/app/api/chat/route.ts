@@ -69,8 +69,8 @@ export async function POST(req: Request) {
             //     .order('created_at', { ascending: false })
             //     .limit(3)),
 
-            // [System] Custom System Prompt
-            supabase.from('system_prompts').select('content').eq('name', 'default').maybeSingle(),
+            // [System] Custom System Prompt & Persona
+            supabase.from('system_prompts').select('name, content').in('name', ['default', 'aoi_persona']).eq('is_active', true),
 
             // [Individual] Officers
             fetchIfOrg(supabase.from('officers').select('name, role, term_end').eq('organization_id', userProfile.organization_id)),
@@ -105,13 +105,17 @@ export async function POST(req: Request) {
         // Individual: Articles
         const articlesList = articlesRes.data?.map((a: any) => `- ${a.title}`).join('\n') || "なし";
 
-        // System Prompt Base
-        let systemPromptBase = sysPromptRes.data?.content || JUDICIAL_SCRIVENER_PROMPT;
+        // System Prompt Base & Persona
+        const activePrompts = sysPromptRes.data || [];
+        const systemPromptBase = activePrompts.find((p: any) => p.name === 'default')?.content || JUDICIAL_SCRIVENER_PROMPT;
+        const personaContent = activePrompts.find((p: any) => p.name === 'aoi_persona')?.content || "";
 
 
         // 4. Build Final System Message
         const finalSystemMessage = `
 ${systemPromptBase}
+
+${personaContent ? `【葵さんの個人的な性格・設定 (Persona)】\n${personaContent}\n` : ''}
 
 【ユーザー情報】
 - ユーザー名: ${userProfile.full_name}

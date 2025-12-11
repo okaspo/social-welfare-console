@@ -24,6 +24,7 @@ export default function PromptEditorPage() {
     const [mode, setMode] = useState<'editor' | 'playground'>('editor')
     const [changelog, setChangelog] = useState('')
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const [selectedPromptName, setSelectedPromptName] = useState<'default' | 'aoi_persona'>('default')
 
     const supabase = createClient()
 
@@ -35,7 +36,7 @@ export default function PromptEditorPage() {
 
     useEffect(() => {
         loadVersions()
-    }, [])
+    }, [selectedPromptName])
 
     const loadVersions = async () => {
         setIsLoading(true)
@@ -43,7 +44,7 @@ export default function PromptEditorPage() {
             const { data, error } = await supabase
                 .from('system_prompts')
                 .select('*')
-                .eq('name', 'default')
+                .eq('name', selectedPromptName)
                 .order('version', { ascending: false })
 
             if (data && data.length > 0) {
@@ -82,7 +83,7 @@ export default function PromptEditorPage() {
             const { error } = await supabase
                 .from('system_prompts')
                 .insert({
-                    name: 'default',
+                    name: selectedPromptName,
                     content: prompt,
                     version: nextVersion,
                     changelog: changelog,
@@ -109,7 +110,7 @@ export default function PromptEditorPage() {
             await supabase
                 .from('system_prompts')
                 .update({ is_active: false })
-                .eq('name', 'default')
+                .eq('name', selectedPromptName)
 
             // 2. Activate target
             await supabase
@@ -163,7 +164,24 @@ export default function PromptEditorPage() {
             <div className="flex-1 flex flex-col gap-4">
                 {/* Toolbar */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">AIプロンプト管理</h1>
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">AIプロンプト管理</h1>
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setSelectedPromptName('default')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedPromptName === 'default' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                システム
+                            </button>
+                            <button
+                                onClick={() => setSelectedPromptName('aoi_persona')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedPromptName === 'aoi_persona' ? 'bg-white shadow text-pink-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                葵さんペルソナ
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
                             onClick={() => setMode('editor')}
