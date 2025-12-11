@@ -5,7 +5,7 @@ import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Br
 import { useState, useRef, useEffect } from 'react'
 
 export default function ChatPage() {
-    const { messages, input, handleInputChange, handleSubmit, isLoading, reload } = (useChat as any)({
+    const { messages, input, handleInputChange, handleSubmit, isLoading, reload, error } = (useChat as any)({
         api: '/api/chat',
         initialMessages: []
     })
@@ -50,6 +50,22 @@ export default function ChatPage() {
                     </div>
                     {isLoading && <span className="text-xs text-indigo-600 animate-pulse font-medium">回答を生成中...</span>}
                 </div>
+
+                {/* Error Alert */}
+                {error && (
+                    <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
+                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error.message}</span>
+                        </div>
+                        <button
+                            onClick={() => reload()}
+                            className="text-xs text-red-700 underline hover:text-red-800"
+                        >
+                            再試行
+                        </button>
+                    </div>
+                )}
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50">
@@ -196,6 +212,6 @@ export default function ChatPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
