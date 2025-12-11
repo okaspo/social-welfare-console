@@ -56,7 +56,7 @@ export default function ChatPage() {
                     <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
-                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error.message}</span>
+                            <span className="text-sm text-red-600 font-medium">エラーが発生しました: {error?.message || '不明なエラー'}</span>
                         </div>
                         <button
                             onClick={() => reload()}
