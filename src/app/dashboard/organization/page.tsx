@@ -1,8 +1,9 @@
-
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Users, Building2, Calendar, MapPin, Phone } from 'lucide-react'
 import AddMemberModal from '@/components/organization/add-member-modal'
+import OrgEditForm from '@/components/organization/org-edit-form'
+import ProfileEditForm from '@/components/organization/profile-edit-form'
 
 export default async function OrganizationPage() {
     const supabase = await createClient()
@@ -47,56 +48,35 @@ export default async function OrganizationPage() {
         .eq('organization_id', org.id)
         .order('created_at', { ascending: true })
 
+    const orgData = {
+        name: org.name,
+        plan: org.plan,
+        address: org.address,
+        phone: org.phone,
+        establishment_date: org.establishment_date
+    }
+
+    const profileData = {
+        fullName: profile.full_name,
+        email: user.email
+    }
+
     return (
         <div className="max-w-5xl mx-auto space-y-8 p-6">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <Building2 className="h-6 w-6 text-indigo-600" />
-                    組織情報管理
+                    組織・アカウント設定
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">所属する社会福祉法人の情報とメンバーを確認できます。</p>
+                <p className="text-sm text-gray-500 mt-1">所属する社会福祉法人の情報、メンバー、および個人の設定を管理します。</p>
             </div>
 
-            {/* Organization Info Card */}
-            <div className="bg-white border text-gray-800 rounded-xl shadow-sm overflow-hidden">
-                <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-                    <h2 className="font-bold text-lg">{org.name}</h2>
-                    <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-bold border border-indigo-200">
-                        {org.plan} PLAN
-                    </span>
-                </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase">住所</label>
-                                <div className="mt-1">{org.address || '未設定'}</div>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase">電話番号</label>
-                                <div className="mt-1">{org.phone || '未設定'}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                            <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase">設立日</label>
-                                <div className="mt-1">{org.establishment_date || '未設定'}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Organization Info Form (Editable) */}
+            <OrgEditForm initialData={orgData} />
 
             {/* Members List */}
-            <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white border text-gray-800 rounded-xl shadow-sm overflow-hidden">
                 <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h2 className="font-bold flex items-center gap-2">
                         <Users className="h-5 w-5 text-gray-600" />
@@ -144,6 +124,9 @@ export default async function OrganizationPage() {
                     </tbody>
                 </table>
             </div>
+
+            {/* Profile Settings (Editable) */}
+            <ProfileEditForm initialData={profileData} />
         </div>
     )
 }
