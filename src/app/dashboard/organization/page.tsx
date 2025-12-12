@@ -4,9 +4,6 @@ import { Users, Building2, Calendar, MapPin, Phone } from 'lucide-react'
 import AddMemberModal from '@/components/organization/add-member-modal'
 import OrgEditForm from '@/components/organization/org-edit-form'
 import MemberListItem from '@/components/organization/member-list-item'
-import PlanSettings from '@/components/organization/plan-settings'
-import SecuritySettings from '@/components/organization/security-settings'
-import NotificationSettings from '@/components/organization/notification-settings'
 
 export default async function OrganizationPage() {
     const supabase = await createClient()
@@ -111,14 +108,6 @@ export default async function OrganizationPage() {
                 </table>
             </div>
 
-            {/* Plan Settings */}
-            <PlanSettings currentPlan={org.plan || 'FREE'} />
-
-            {/* Notification & Security Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NotificationSettings />
-                <SecuritySettings />
-            </div>
         </div>
     )
 }

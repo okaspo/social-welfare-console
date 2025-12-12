@@ -52,18 +52,22 @@ export default async function DashboardLayout({
                 corporation_name, 
                 full_name,
                 organization:organizations (
+                    id,
+                    name,
                     plan
                 )
             `)
             .eq('id', user.id)
             .single()
 
-        if (profile?.corporation_name) {
-            corporationName = profile.corporation_name
-        }
-
         if (profile?.organization) {
             const org = Array.isArray(profile.organization) ? profile.organization[0] : profile.organization
+            // Use organization name if available
+            if (org?.name) {
+                corporationName = org.name
+            } else if (profile?.corporation_name) {
+                corporationName = profile.corporation_name
+            }
             organizationPlan = (org as any)?.plan
         }
 
@@ -96,7 +100,7 @@ export default async function DashboardLayout({
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50/30">
-                    <SidebarItem href="/dashboard/account" icon={Settings} label="設定" />
+                    <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
                     <form action={logout}>
                         <button
                             type="submit"

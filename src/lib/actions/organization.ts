@@ -109,6 +109,7 @@ export async function updateOrganization(formData: FormData) {
     if (error) return { error: error.message }
 
     revalidatePath('/dashboard/organization')
+    revalidatePath('/dashboard', 'layout') // Update header
     return { success: true }
 }
 
