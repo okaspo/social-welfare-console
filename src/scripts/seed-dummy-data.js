@@ -1,12 +1,38 @@
 
 const { createClient } = require('@supabase/supabase-js')
+const fs = require('fs')
+const path = require('path')
+
+// 0. Load .env.local manually
+try {
+    const envPath = path.resolve(__dirname, '../../.env.local')
+    if (fs.existsSync(envPath)) {
+        console.log('Loading .env.local...')
+        const envConfig = fs.readFileSync(envPath, 'utf8')
+        envConfig.split('\n').forEach(line => {
+            const parts = line.split('=')
+            if (parts.length >= 2) {
+                const key = parts[0].trim()
+                const val = parts.slice(1).join('=').trim().replace(/^["']|["']$/g, '')
+                if (key && !key.startsWith('#')) {
+                    process.env[key] = val
+                }
+            }
+        })
+    } else {
+        console.warn('No .env.local found at:', envPath)
+    }
+} catch (e) {
+    console.warn('Failed to load .env.local', e)
+}
 
 // Service role key needed for admin user creation
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing env vars (SUPABASE_SERVICE_ROLE_KEY required)')
+    console.error('Missing env vars: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+    console.error('Current keys:', Object.keys(process.env).filter(k => k.includes('SUPABASE')))
     process.exit(1)
 }
 
