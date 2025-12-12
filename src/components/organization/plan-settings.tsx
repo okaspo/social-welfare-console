@@ -8,9 +8,9 @@ import { Check, Loader2, CreditCard } from 'lucide-react'
 // Dummy plan data
 const PLANS = [
     { id: 'FREE', name: 'Free', price: '¥0', features: ['基本機能', 'メンバー5人まで', 'データ保存30日'] },
-    { id: 'STANDARD', name: 'Standard', price: '¥1,980', features: ['基本機能', 'メンバー無制限', 'データ保存無制限', '優先サポート'] },
-    { id: 'PRO', name: 'Professional', price: '¥4,980', features: ['全機能', '監査ログ', '専任サポート', 'AI機能無制限'] },
-    { id: 'ENTERPRISE', name: 'Enterprise', price: '要相談', features: ['全機能', 'SLA保証', '専用インフラ', 'カスタマイズ開発'] },
+    { id: 'STANDARD', name: 'Standard', price: '¥24,800', features: ['基本機能', 'メンバー無制限', 'データ保存無制限', '優先サポート'] },
+    { id: 'PRO', name: 'Professional', price: '¥54,800', features: ['全機能', '監査ログ', '専任サポート', 'AI機能無制限'] },
+    { id: 'ENTERPRISE', name: 'Enterprise', price: '¥98,000', features: ['全機能', 'SLA保証', '専用インフラ', 'カスタマイズ開発'] },
 ]
 
 export default function PlanSettings({ currentPlan }: { currentPlan: string }) {
