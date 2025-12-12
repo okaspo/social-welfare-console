@@ -1,9 +1,19 @@
+import { createClient } from "@/lib/supabase/server"
 import KnowledgeList from "@/components/admin/knowledge-list"
 import SearchSimulator from "@/components/admin/search-simulator"
 import KnowledgeUploader from "@/components/admin/knowledge-uploader"
-import { MOCK_KNOWLEDGE_ITEMS } from "@/lib/admin/knowledge-data"
 
-export default function KnowledgePage() {
+export default async function KnowledgePage() {
+    const supabase = await createClient()
+
+    const { data: items } = await supabase
+        .from('knowledge_items')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    // Provide default empty array if null
+    const knowledgeItems = items || []
+
     return (
         <div className="space-y-6">
             <div>
@@ -17,16 +27,15 @@ export default function KnowledgePage() {
                 {/* Left Column: Management & Ingestion (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Ingestion Area */}
-                    <div className="h-48">
-                        <KnowledgeUploader />
-                    </div>
+                    <KnowledgeUploader />
+
                     {/* List Area */}
-                    <KnowledgeList items={MOCK_KNOWLEDGE_ITEMS} />
+                    <KnowledgeList items={knowledgeItems} />
                 </div>
 
                 {/* Right Column: Search Simulator (1/3) */}
                 <div className="lg:col-span-1">
-                    <SearchSimulator items={MOCK_KNOWLEDGE_ITEMS} />
+                    <SearchSimulator items={knowledgeItems} />
                 </div>
             </div>
         </div>
