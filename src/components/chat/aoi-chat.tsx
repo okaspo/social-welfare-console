@@ -217,7 +217,7 @@ export default function AoiChat() {
             {/* Chat Window */}
             {isOpen && (
                 <div
-                    className={`mb-4 w-80 md:w-96 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-200 relative ${isDragging ? 'ring-4 ring-blue-400' : ''}`}
+                    className={`mb-4 w-72 md:w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-200 relative ${isDragging ? 'ring-4 ring-blue-400' : ''}`}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
@@ -232,7 +232,7 @@ export default function AoiChat() {
                     )}
 
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-5 flex items-center justify-between text-white shadow-sm">
+                    <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-3 flex items-center justify-between text-white shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/15 rounded-xl backdrop-blur-sm">
                                 <Bot className="h-5 w-5" />
@@ -261,7 +261,7 @@ export default function AoiChat() {
                     </div>
 
                     {/* Messages */}
-                    <div className="h-96 overflow-y-auto p-5 bg-gradient-to-b from-gray-50/30 to-white space-y-4">
+                    <div className="h-72 overflow-y-auto p-4 bg-gradient-to-b from-gray-50/30 to-white space-y-4">
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div
@@ -289,7 +289,7 @@ export default function AoiChat() {
                     </div>
 
                     {/* Input */}
-                    <form onSubmit={onFormSubmit} className="p-4 bg-white border-t border-gray-100 shadow-inner">
+                    <form onSubmit={onFormSubmit} className="p-3 bg-white border-t border-gray-100 shadow-inner">
                         <div className="relative flex gap-2">
                             <button
                                 type="button"
@@ -329,7 +329,7 @@ export default function AoiChat() {
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="group flex items-center gap-3 bg-gradient-to-r from-gray-800 to-gray-700 text-white px-5 py-3.5 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                    className="group flex items-center gap-3 bg-gradient-to-r from-gray-800 to-gray-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
                     <div className="relative">
                         <Bot className="h-6 w-6" />
