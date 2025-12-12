@@ -1,0 +1,8 @@
+password123。
+
+試行アカウント
+
+demo-free@example.com
+demo-standard@example.com
+demo-pro@example.com
+demo-enterprise@example.com

@@ -8,7 +8,8 @@ import {
     Calendar,
     Settings,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
+    Building2
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -91,6 +92,7 @@ export default async function DashboardLayout({
                     <SidebarItem href="/dashboard/documents/new" icon={FileText} label="議事録作成" />
                     <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
                     <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
+                    <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50/30">
