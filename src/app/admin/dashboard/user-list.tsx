@@ -15,13 +15,31 @@ type UserData = {
     created_at: string
 }
 
+
 export default function UserList({ initialUsers }: { initialUsers: UserData[] }) {
     const [search, setSearch] = useState('')
+    const [loadingId, setLoadingId] = useState<string | null>(null)
 
     const filteredUsers = initialUsers.filter(u =>
         (u.full_name || '').includes(search) ||
         (u.organization?.name || '').includes(search)
     )
+
+    const handlePasswordReset = async (email?: string, id?: string) => {
+        if (!email || !id) return
+        if (!confirm(`${email} にパスワードリセットメールを送信しますか？`)) return
+
+        setLoadingId(id)
+        const { sendPasswordResetEmail } = await import('@/lib/actions/admin')
+        const res = await sendPasswordResetEmail(email)
+        setLoadingId(null)
+
+        if (res.error) {
+            alert('送信失敗: ' + res.error)
+        } else {
+            alert('リセットメールを送信しました')
+        }
+    }
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -68,6 +86,7 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
                                         {user.role}
                                     </span>
                                 </div>
+                                <div className="text-xs text-gray-400 mt-1">{user.email}</div>
                             </td>
                             <td className="px-6 py-4 text-gray-600">
                                 {user.organization?.name || '未所属'}
@@ -85,8 +104,12 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
                                 {new Date(user.created_at).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreVertical className="h-4 w-4" />
+                                <button
+                                    onClick={() => handlePasswordReset(user.email, user.id)}
+                                    disabled={loadingId === user.id}
+                                    className="text-xs border px-2 py-1 rounded hover:bg-gray-50 text-gray-600 disabled:opacity-50"
+                                >
+                                    {loadingId === user.id ? '送信中...' : 'PWリセット'}
                                 </button>
                             </td>
                         </tr>

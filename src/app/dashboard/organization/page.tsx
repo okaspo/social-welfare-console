@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Users, Building2, Calendar, MapPin, Phone } from 'lucide-react'
+import AddMemberModal from '@/components/organization/add-member-modal'
 
 export default async function OrganizationPage() {
     const supabase = await createClient()
@@ -101,9 +102,7 @@ export default async function OrganizationPage() {
                         <Users className="h-5 w-5 text-gray-600" />
                         メンバー一覧
                     </h2>
-                    <button className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition">
-                        新規メンバー招待
-                    </button>
+                    <AddMemberModal />
                 </div>
 
                 <table className="w-full text-left text-sm text-gray-600">
