@@ -28,11 +28,67 @@ export default function PromptEditorPage() {
 
     const supabase = createClient()
 
-    // Playground Chat Hook
-    const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
-        api: '/api/chat/test',
-        body: { systemPrompt: prompt }
-    } as any) as any
+    // Playground State (Manual Fetch)
+    const [messages, setMessages] = useState<any[]>([])
+    const [playgroundInput, setPlaygroundInput] = useState('')
+    const [isPlaygroundLoading, setIsPlaygroundLoading] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages])
+
+    const handlePlaygroundSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!playgroundInput.trim() || isPlaygroundLoading) return
+
+        const userMessage = { role: 'user', content: playgroundInput }
+        setMessages(prev => [...prev, userMessage])
+        setPlaygroundInput('')
+        setIsPlaygroundLoading(true)
+
+        try {
+            const response = await fetch('/api/chat/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [...messages, userMessage],
+                    systemPrompt: prompt // Use current editor content
+                })
+            })
+
+            if (!response.ok) throw new Error('API Error')
+
+            // Stream handling
+            const reader = response.body?.getReader()
+            if (!reader) throw new Error('No reader')
+
+            const decoder = new TextDecoder()
+            let assistantMessage = { role: 'assistant', content: '' }
+            setMessages(prev => [...prev, assistantMessage])
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                const chunk = decoder.decode(value, { stream: true })
+                assistantMessage.content += chunk
+
+                // Update last message
+                setMessages(prev => {
+                    const newMessages = [...prev]
+                    newMessages[newMessages.length - 1] = { ...assistantMessage }
+                    return newMessages
+                })
+            }
+
+        } catch (error) {
+            console.error('Playground Error:', error)
+            setMessages(prev => [...prev, { role: 'assistant', content: 'エラーが発生しました。' }])
+        } finally {
+            setIsPlaygroundLoading(false)
+        }
+    }
 
     useEffect(() => {
         loadVersions()
@@ -224,6 +280,7 @@ export default function PromptEditorPage() {
                                     onChange={(e) => setChangelog(e.target.value)}
                                     placeholder="例: 文言を修正しました"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    disabled={status === 'saving'}
                                 />
                             </div>
                             <button
@@ -255,16 +312,22 @@ export default function PromptEditorPage() {
                                     </div>
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
-                        <form onSubmit={handleSubmit} className="p-4 bg-white border-t border-gray-100 flex gap-2">
+                        <form onSubmit={handlePlaygroundSubmit} className="p-4 bg-white border-t border-gray-100 flex gap-2">
                             <input
-                                value={input}
-                                onChange={handleInputChange}
+                                value={playgroundInput}
+                                onChange={(e) => setPlaygroundInput(e.target.value)}
                                 placeholder="テストメッセージを入力..."
                                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                disabled={isPlaygroundLoading}
                             />
-                            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
-                                送信
+                            <button
+                                type="submit"
+                                disabled={isPlaygroundLoading || !playgroundInput.trim()}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {isPlaygroundLoading ? '...' : '送信'}
                             </button>
                             <button type="button" onClick={() => setMessages([])} className="px-3 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">
                                 クリア
@@ -273,6 +336,6 @@ export default function PromptEditorPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     )
 }
