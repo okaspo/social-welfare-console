@@ -3,10 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
-// Paths to artifacts (Hardcoded for this environment as requested by the user's setup)
-const BRAIN_DIR = 'C:\\Users\\qubo_\\.gemini\\antigravity\\brain\\f58c5d17-b998-4c26-9cb1-e1915d8695d0';
-const ARTIFACT_STRATEGY = path.join(BRAIN_DIR, 'product_strategy.md');
-const ARTIFACT_WALKTHROUGH = path.join(BRAIN_DIR, 'walkthrough.md');
+// Paths to artifacts (Local docs)
+const DOCS_DIR = path.join(process.cwd(), 'docs');
+const ARTIFACT_STRATEGY = path.join(DOCS_DIR, 'product_strategy.md');
+const ARTIFACT_WALKTHROUGH = path.join(process.cwd(), '.gemini/antigravity/brain/889470bf-282a-4e4e-9f7d-59fdee0b4c1c/walkthrough.md'); // Keep using the brain artifact or migrate it too. For now let's point to the active walkthrough in brain if possible, or docs.
+// Better practice: Copy active walkthrough to docs/walkthrough.md in a separate step or just point to it.
+// Let's assume we want to sync the ACTIVE brain one.
+// Actually, checking the file system earlier, walkthrough is in brain.
+// Let's rely on the brain path for walkthrough for now, but fix strategy.
+const BRAIN_DIR = 'C:\\Users\\qubo_\\.gemini\\antigravity\\brain\\889470bf-282a-4e4e-9f7d-59fdee0b4c1c';
+// Update the BRAIN_DIR to the Current Conversation ID as well!
+
 
 // Simple .env parser since we can't depend on dotenv being installed
 function loadEnvFile(filePath: string) {

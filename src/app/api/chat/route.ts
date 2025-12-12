@@ -146,7 +146,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
         // console.log("System Message Preview:", finalSystemMessage.substring(0, 500)); 
 
         const result = await streamText({
-            model: openai('gpt-4o'),
+            model: openai('gpt-4o-mini'),
             system: finalSystemMessage,
             messages: messages,
         });
