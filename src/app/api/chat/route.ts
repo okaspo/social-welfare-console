@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         let commonKnowledgeText = "";
         if (knowledgeRes.data && knowledgeRes.data.length > 0) {
             commonKnowledgeText = knowledgeRes.data
-                .map((k: any) => `### 【${k.category}】${k.title}\n${k.content.substring(0, 500)}...`)
+                .map((k: any) => `### 【${k.category}】${k.title}\n${k.content.substring(0, 3000)}...`)
                 .join('\n\n');
         }
 
