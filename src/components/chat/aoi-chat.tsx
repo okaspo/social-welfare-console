@@ -15,7 +15,7 @@ interface Message {
 export default function AoiChat() {
     const [isOpen, setIsOpen] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
-        { id: 'welcome', role: 'assistant', content: 'こんにちは。S級AI事務局の葵です。何かお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
+        { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
     ])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)

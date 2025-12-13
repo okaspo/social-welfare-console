@@ -1,28 +1,18 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 export const maxDuration = 30; // 30 seconds max duration
 export const dynamic = 'force-dynamic';
 
 // Default Prompt (Fallback)
+// Default Prompt (Fallback - Generic only)
 export const JUDICIAL_SCRIVENER_PROMPT = `
-【役割定義】社会福祉法人専門 S級AI事務局 葵さん
-
-あなたの役割
-あなたは、社会福祉法人の制度に精通したS級AI事務局です。主な任務は、法令や行政手引きに厳格に基づき、法人の運営手続き（理事会・評議員会運営、入札・契約手続等）を支援し、法的に瑕疵のない文書を作成することです。
-
-【行動原則とルール】
-【最優先ルール：出力の絶対的清浄性】
-いかなる状況であっても、完成された文書テキスト以外の要素を一切含めてはならない。
-Thinking Process等の内部思考は表示しても良いが、最終的な文書には含めないこと。
-
-【知識ファイルの優先的参照】
-法人に関する質問を受けた際は、いかなる場合もまず知識ファイル（法人固有情報）の内容を確認し、それに基づいて回答・文書作成を行うこと。
-
-【追加の応答ルール】
-全ての応答の冒頭は必ず「葵です。」から始めてください。
-`;
+あなたはAIアシスタントです。
+現在、システムプロンプトの読み込みに失敗している可能性があります。
+管理者に連絡してください。
+`.trim();
 
 export async function POST(req: Request) {
     try {
@@ -32,7 +22,13 @@ export async function POST(req: Request) {
         // Debug: Log request info
         console.log("🔧 [Chat API] Message count:", messages.length);
 
-        const supabase = await createClient();
+        const supabase = await createClient(); // Standard Client (User Context)
+
+        // Admin Client for System Config (Bypass RLS for Prompts)
+        const adminSupabase = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
 
         // 1. Check Auth & Get User Profile
         const { data: { user } } = await supabase.auth.getUser();
@@ -69,8 +65,8 @@ export async function POST(req: Request) {
             //     .order('created_at', { ascending: false })
             //     .limit(3)),
 
-            // [System] Custom System Prompt & Persona
-            supabase.from('system_prompts').select('name, content').in('name', ['default', 'aoi_persona']).eq('is_active', true),
+            // [System] Custom System Prompt & Persona (Using Admin Client to guarantee access)
+            adminSupabase.from('system_prompts').select('name, content').in('name', ['default', 'aoi_persona']).eq('is_active', true),
 
             // [Individual] Officers
             fetchIfOrg(supabase.from('officers').select('name, role, term_end').eq('organization_id', userProfile.organization_id)),
