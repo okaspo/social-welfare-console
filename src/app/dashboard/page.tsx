@@ -80,7 +80,7 @@ export default function DashboardPage() {
                         href="/dashboard/meetings/new"
                     />
                     <ActionCard
-                        title="議事録を作成する"
+                        title="議案書を作成する"
                         description="録音データやメモから、法務局提出用議事録を生成します。"
                         href="/dashboard/documents/new"
                     />

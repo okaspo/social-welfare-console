@@ -259,7 +259,7 @@ export default function ChatPage() {
                         >
                             <div className="flex items-center gap-2 mb-1 text-gray-700 group-hover:text-indigo-700">
                                 <FileText className="h-4 w-4" />
-                                議事録・議案書作成
+                                議案書作成
                             </div>
                             <span className="text-gray-400 group-hover:text-indigo-400">通常開催の手続き</span>
                         </button>

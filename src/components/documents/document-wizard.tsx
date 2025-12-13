@@ -21,7 +21,7 @@ interface Officer {
 }
 
 const MODES = [
-    { id: '1', name: '議事録・議案書の作成（通常開催）', description: '通常の理事会・評議員会' },
+    { id: '1', name: '議案書の作成（通常開催）', description: '通常の理事会・評議員会' },
     { id: '2', name: '開催スケジュールの提案', description: '日程調整・招集通知の準備' },
     { id: '3', name: '招集手続きの省略による会議開催', description: '全員の同意がある場合' },
     { id: '4', name: '決議の省略（みなし決議）手続き', description: '書面決議を行う場合' },

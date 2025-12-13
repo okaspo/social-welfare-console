@@ -78,7 +78,7 @@ export default function MinutesForm({ initialCorporationName = '〇〇会' }: Mi
             {/* LEFT: Input Form */}
             <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 overflow-y-auto">
                 <div className="mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">議事録・議案書の作成</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">議案書の作成</h2>
                     <p className="text-sm text-gray-500">議案を入力してストックし、議案書や議事録を作成します。</p>
                 </div>
 

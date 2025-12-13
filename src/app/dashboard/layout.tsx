@@ -93,7 +93,7 @@ export default async function DashboardLayout({
                     <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
 
 
-                    <SidebarItem href="/dashboard/documents/new" icon={FileText} label="議事録作成" />
+                    <SidebarItem href="/dashboard/documents/new" icon={FileText} label="議案書の作成" />
                     <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
                     <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
                     <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
