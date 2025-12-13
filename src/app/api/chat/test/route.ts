@@ -1,16 +1,21 @@
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 
-export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
-    const { messages, systemPrompt } = await req.json()
+    try {
+        const { messages, systemPrompt } = await req.json()
 
-    const result = streamText({
-        model: openai('gpt-4o'),
-        messages,
-        system: systemPrompt || 'You are a helpful assistant.',
-    })
+        const result = streamText({
+            model: openai('gpt-4o-mini'),
+            messages,
+            system: systemPrompt || 'You are a helpful assistant.',
+        })
 
-    return result.toDataStreamResponse()
+        return result.toTextStreamResponse()
+    } catch (error: any) {
+        console.error('Test API Error:', error)
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    }
 }
