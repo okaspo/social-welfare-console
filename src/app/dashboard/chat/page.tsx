@@ -151,7 +151,7 @@ export default function ChatPage() {
                             <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">S級AI事務局 葵さん</h1>
+                            <h1 className="font-bold text-gray-900">葵さん</h1>
                             <p className="text-xs text-gray-500">Version 4.7 • Legal Compliance Mode</p>
                         </div>
                     </div>

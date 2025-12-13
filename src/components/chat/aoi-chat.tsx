@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { Bot, X, Send, Paperclip, Upload, Save, Loader2 } from 'lucide-react'
 import { processUploadedFile } from '@/lib/actions/document-processing'
 import { createClient } from '@/lib/supabase/client'
@@ -13,7 +14,12 @@ interface Message {
 }
 
 export default function AoiChat() {
+    const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
+
+    // Hide on the dedicated chat page to avoid redundancy
+    if (pathname === '/dashboard/chat') return null
+
     const [messages, setMessages] = useState<Message[]>([
         { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
     ])
@@ -238,7 +244,7 @@ export default function AoiChat() {
                                 <Bot className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-base">S級AI事務局 葵さん</h3>
+                                <h3 className="font-bold text-base">葵さん</h3>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                     <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-sm"></span>
                                     <span className="text-xs text-gray-200">オンライン</span>

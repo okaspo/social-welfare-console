@@ -88,7 +88,7 @@ export default async function DashboardLayout({
 
                 <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                     <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" active={true} />
-                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="S級AI事務局 葵さん" active={false} />
+                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="葵さん" active={false} />
                     <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
                     <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
 
