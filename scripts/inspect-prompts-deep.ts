@@ -26,22 +26,26 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-async function checkPrompts() {
-    console.log('Checking system_prompts table...');
+async function inspectPrompts() {
+    console.log('Inspecting system_prompts (Active ones)...');
     const { data, error } = await supabase
         .from('system_prompts')
-        .select('*');
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
 
     if (error) {
         console.error('Error:', error);
         return;
     }
 
-    console.log('Prompts found:', data.length);
+    console.log(`Found ${data.length} active prompts.`);
     data.forEach(p => {
-        console.log(`- Name: [${p.name}], Active: ${p.is_active}`);
-        console.log(`  Content Preview: ${p.content.substring(0, 50)}...`);
+        console.log(`\n[Name: ${p.name}] (v${p.version})`);
+        console.log(`  Content Preview:`);
+        console.log(p.content);
+        console.log('-------------------');
     });
 }
 
-checkPrompts();
+inspectPrompts();
