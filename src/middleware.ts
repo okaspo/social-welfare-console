@@ -1,19 +1,16 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-    let response = console.log
-    // @ts-ignore
-    response = await import('next/server').then(mod => mod.NextResponse.next({
+    let response = NextResponse.next({
         request: {
             headers: request.headers,
         },
-    }))
+    })
 
     // Check for required environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        // If config is missing, just proceed without Supabase auth
-        // This allows the app to run in a "mock mode" or show configuration errors on the page
+        // If config is missing, proceed without Supabase auth (Mock mode)
         return response
     }
 
@@ -29,16 +26,16 @@ export async function middleware(request: NextRequest) {
                     cookiesToSet.forEach(({ name, value, options }) =>
                         request.cookies.set(name, value)
                     )
-                    // @ts-ignore
-                    response = import('next/server').then(mod => {
-                        const nextRes = mod.NextResponse.next({
-                            request,
-                        })
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            nextRes.cookies.set(name, value, options)
-                        )
-                        return nextRes
+
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
                     })
+
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        response.cookies.set(name, value, options)
+                    )
                 },
             },
         }
@@ -51,16 +48,19 @@ export async function middleware(request: NextRequest) {
 
     // Route Protection Logic
     const url = request.nextUrl.clone()
+
+    // Protected Routes
     if (!user && (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/admin'))) {
-        // User is not logged in but trying to access protected routes
         url.pathname = '/login'
-        return Response.redirect(url)
+        return NextResponse.redirect(url)
     }
 
-    if (user && (url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/')) {
-        // User is logged in but trying to access public/auth pages
+    // Auth Routes (Redirect to dashboard if logged in)
+    // Note: '/' is landing page, usually we allow public access. 
+    // Only redirect login/signup.
+    if (user && (url.pathname === '/login' || url.pathname === '/signup')) {
         url.pathname = '/dashboard'
-        return Response.redirect(url)
+        return NextResponse.redirect(url)
     }
 
     return response
@@ -73,8 +73,7 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - api/ (API routes - generally managed by their own auth checks, or include if strict)
-         * Use negative lookahead in regex
+         * - api/ (API routes)
          */
         '/((?!_next/static|_next/image|favicon.ico|api/).*)',
     ],

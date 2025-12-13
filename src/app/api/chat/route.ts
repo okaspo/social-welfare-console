@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         const messages = body?.messages || [];
 
         // Debug: Log request info
-        console.log("🔧 [Chat API] Message count:", messages.length);
+
 
         const supabase = await createClient(); // Standard Client (User Context)
 
@@ -139,7 +139,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 - サービスの機能についての質問（例：「議事録の作り方」）には、【共通知識】に含まれるサービスの仕様に基づいて回答してください。
 `;
 
-        // console.log("System Message Preview:", finalSystemMessage.substring(0, 500)); 
+
 
         const result = await streamText({
             model: openai('gpt-4o-mini'),
