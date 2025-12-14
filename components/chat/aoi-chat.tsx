@@ -6,12 +6,10 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-// Removed ScrollArea
-import { Paperclip, Send, AlertCircle, FileText, Loader2 } from 'lucide-react';
+import { Paperclip, Send, AlertCircle, Loader2 } from 'lucide-react';
 import { uploadAndProcessDocument } from '@/app/actions/documents';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { UIMessage } from 'ai';
 
 export function AoiChat() {
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -19,12 +17,26 @@ export function AoiChat() {
     const [isUploading, setIsUploading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const { messages, input, handleInputChange, handleSubmit, isLoading, error, reload } = useChat({
+    // Manual Input State to avoid type error with useChat
+    const [input, setInput] = useState('');
+
+    const { messages, append, isLoading, error } = useChat({
         api: '/api/chat',
         onError: (err: Error) => {
             console.error('Chat error:', err);
         },
     });
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        await append({ role: 'user', content: input });
+        setInput('');
+    };
 
     const onDrop = async (acceptedFiles: File[]) => {
         const file = acceptedFiles[0];
@@ -40,7 +52,6 @@ export function AoiChat() {
             const result = await uploadAndProcessDocument(formData);
 
             setUploadSuccess(`Successfully read "${result.fileName}". Aoi has learned from it.`);
-            // setTimeout(() => setUploadSuccess(null), 5000); 
         } catch (e: any) {
             console.error(e);
             let msg = 'Upload failed.';
@@ -88,7 +99,7 @@ export function AoiChat() {
                     </div>
                 )}
 
-                {messages.map((m: UIMessage) => (
+                {messages.map((m: any) => (
                     <div key={m.id} className={cn("flex w-full", m.role === 'user' ? "justify-end" : "justify-start")}>
                         <div className={cn(
                             "max-w-[80%] rounded-lg px-4 py-2 text-sm shadow-sm",
