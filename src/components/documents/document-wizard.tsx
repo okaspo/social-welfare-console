@@ -337,7 +337,7 @@ ${template.content}
                                             const { data: profile } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single()
                                             if (!profile?.organization_id) throw new Error('Org error')
 
-                                            const { error } = await supabase.from('documents').insert({
+                                            const { error } = await supabase.from('private_documents').insert({
                                                 title: `${meetingType}議事録 (${date})`,
                                                 content: lastMsg.content,
                                                 organization_id: profile.organization_id,

@@ -1,71 +1,52 @@
-import { createAdminClient } from '@/lib/supabase/admin'
 
-const PLAN_LEVELS: Record<string, number> = {
-    'free': 0,
-    'standard': 1,
-    'pro': 2,
-    'enterprise': 3
-}
+import { createClient } from '@/lib/supabase/server';
 
-export async function buildSystemPrompt(userId: string): Promise<string> {
-    const supabase = await createAdminClient()
+/**
+ * Builds the system prompt by stacking layers based on Plan ID.
+ * Layer 1: Persona (Aoi) - Always present (or fetch from DB)
+ * Layer 2: Functional Modules (Dependent on Plan) - e.g. mod_std, mod_pro
+ * 
+ * @param planId 'free' | 'standard' | 'pro' | 'enterprise'
+ */
+export async function buildSystemPrompt(planId: string = 'free'): Promise<string> {
+    const supabase = await createClient();
 
-    // 1. User Plan Lookup
-    // Get profile and linked organization to find the plan_id
-    const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-            full_name,
-            organization:organizations (
-                plan_id
-            )
-        `)
-        .eq('id', userId)
-        .single()
+    // Define Plan Levels
+    const PLAN_LEVELS: Record<string, number> = {
+        'free': 0,
+        'standard': 1,
+        'pro': 2,
+        'enterprise': 3
+    };
+    const currentLevel = PLAN_LEVELS[planId] || 0;
 
-    if (profileError || !profile) {
-        console.error('Error fetching profile for prompt build:', profileError)
-        throw new Error('User profile not found')
-    }
-
-    const org = profile.organization as any
-    // Default to 'free' if no plan found
-    const planId = (org?.plan_id || 'free').toLowerCase()
-    const userLevel = PLAN_LEVELS[planId] ?? 0
-
-    // 2. Module Fetching
-    // Fetch all active modules where required_plan_level <= userLevel
-    const { data: modules, error: modulesError } = await supabase
+    // Fetch necessary modules
+    // We fetch 'mod_persona' + any module where required_plan_level <= currentLevel
+    const { data: modules, error } = await supabase
         .from('prompt_modules')
-        .select('content, required_plan_level')
+        .select('slug, content, required_plan_level')
         .eq('is_active', true)
-        .lte('required_plan_level', userLevel)
-        .order('required_plan_level', { ascending: true })
+        .order('required_plan_level', { ascending: true });
 
-    if (modulesError) {
-        console.error('Error fetching prompt modules:', modulesError)
-        // Fallback or throw? Let's throw for now as this is critical
-        throw new Error('Failed to load prompt modules')
+    if (error) {
+        console.error('Failed to fetch prompt modules:', error);
+        return "System Error: Could not load prompt configuration.";
     }
 
-    if (!modules || modules.length === 0) {
-        return "System prompt could not be loaded."
-    }
+    // Stack them
+    // 1. Persona (Always Top)
+    const persona = modules?.find(m => m.slug === 'mod_persona')?.content || "";
 
-    // 3. Concatenation
-    const combinedContent = modules.map(m => m.content).join('\n\n')
+    // 2. Functional Modules (Filtered by Plan)
+    const functionalModules = modules
+        ?.filter(m => m.slug !== 'mod_persona' && m.required_plan_level <= currentLevel)
+        .map(m => m.content)
+        .join('\n\n') || "";
 
-    // 4. Context Injection
-    const now = new Date().toISOString()
-    const userName = profile.full_name || 'User'
+    // Concatenate
+    return `
+${persona}
 
-    const finalPrompt = `${combinedContent}
-
----
-Context Info:
-Current Time: ${now}
-User Name: ${userName}
-`
-
-    return finalPrompt
+${functionalModules}
+`.trim();
 }

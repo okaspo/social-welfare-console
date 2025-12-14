@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Settings, Shield, Bell, CreditCard } from 'lucide-react'
-import PlanSettings from '@/components/organization/plan-settings'
 import SecuritySettings from '@/components/organization/security-settings'
 import NotificationSettings from '@/components/organization/notification-settings'
 
@@ -43,8 +42,24 @@ export default async function SettingsPage() {
                 <SecuritySettings />
             </div>
 
-            {/* Plan Settings */}
-            <PlanSettings currentPlan={currentPlan} />
+            {/* Plan Settings Link */}
+            <div className="bg-white border rounded-xl p-6 flex items-center justify-between shadow-sm">
+                <div>
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 text-gray-500" />
+                        プランと支払い
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        現在のプラン: <span className="font-bold text-indigo-600">{currentPlan}</span>
+                    </p>
+                </div>
+                <a
+                    href="/dashboard/settings/billing"
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 bg-slate-900 text-white"
+                >
+                    プラン変更・確認
+                </a>
+            </div>
         </div>
     )
 }

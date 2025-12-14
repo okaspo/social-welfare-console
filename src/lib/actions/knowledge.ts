@@ -8,7 +8,7 @@ export async function archiveKnowledgeItem(id: string) {
 
     try {
         const { error } = await supabase
-            .from('knowledge_items')
+            .from('common_knowledge')
             .update({
                 is_active: false,
                 archived_at: new Date().toISOString()

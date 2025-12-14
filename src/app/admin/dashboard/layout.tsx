@@ -1,4 +1,4 @@
-import { ShieldCheck, Users, Settings, LogOut, BookOpen } from 'lucide-react'
+import { ShieldCheck, Users, Settings, LogOut, BookOpen, CreditCard, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '@/lib/actions/auth'
 
@@ -44,6 +44,20 @@ export default function AdminLayout({
                     >
                         <Settings className="h-4 w-4" />
                         AIプロンプト管理
+                    </Link>
+                    <Link
+                        href="/admin/plans"
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                        <CreditCard className="h-4 w-4" />
+                        料金プラン管理
+                    </Link>
+                    <Link
+                        href="/admin/prompts"
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                        <MessageSquare className="h-4 w-4" />
+                        プロンプト設定
                     </Link>
                     <form action={logout}>
                         <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 rounded-md transition-colors mt-8">

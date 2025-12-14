@@ -17,7 +17,7 @@ export default function KnowledgeUploader() {
         setIsLoading(true)
         try {
             const { error } = await supabase
-                .from('knowledge_items')
+                .from('common_knowledge')
                 .insert({
                     title,
                     content,

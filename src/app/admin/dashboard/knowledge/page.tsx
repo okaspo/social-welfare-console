@@ -7,7 +7,7 @@ export default async function KnowledgePage() {
     const supabase = await createClient()
 
     const { data: items } = await supabase
-        .from('knowledge_items')
+        .from('common_knowledge')
         .select('*')
         .order('created_at', { ascending: false })
 
