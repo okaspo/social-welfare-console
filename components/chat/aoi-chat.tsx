@@ -11,7 +11,7 @@ import { Paperclip, Send, AlertCircle, FileText, Loader2 } from 'lucide-react';
 import { uploadAndProcessDocument } from '@/app/actions/documents';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Message } from 'ai';
+import { UIMessage } from 'ai';
 
 export function AoiChat() {
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function AoiChat() {
                     </div>
                 )}
 
-                {messages.map((m: Message) => (
+                {messages.map((m: UIMessage) => (
                     <div key={m.id} className={cn("flex w-full", m.role === 'user' ? "justify-end" : "justify-start")}>
                         <div className={cn(
                             "max-w-[80%] rounded-lg px-4 py-2 text-sm shadow-sm",
