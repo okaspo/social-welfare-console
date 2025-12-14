@@ -20,7 +20,7 @@ export interface PlanFeatures {
     can_use_custom_vectors: boolean;
     can_auto_generate_report: boolean;
     custom_support?: boolean;
-    [key: string]: boolean | undefined;
+    [key: string]: boolean | number | string | undefined;
 }
 
 export interface PlanLimit {
