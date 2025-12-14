@@ -20,12 +20,14 @@ export function AoiChat() {
     // Manual Input State to avoid type error with useChat
     const [input, setInput] = useState('');
 
-    const { messages, append, isLoading, error } = useChat({
+    const chat = useChat({
         api: '/api/chat',
         onError: (err: Error) => {
             console.error('Chat error:', err);
         },
     });
+
+    const { messages, append, isLoading, error } = chat as any;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value);
