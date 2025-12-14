@@ -1,0 +1,52 @@
+
+> retrograde-mariner@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.7 (Turbopack)
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./components/chat/aoi-chat.tsx:4:1
+Module not found: Can't resolve 'ai/react'
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useRef[33m,[39m useState[33m,[39m useEffect } [36mfrom[39m [32m'react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { useChat } [36mfrom[39m [32m'ai/react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { useDropzone } [36mfrom[39m [32m'react-dropzone'[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m'@/components/ui/input'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./components/chat/aoi-chat.tsx
+    ./app/dashboard/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./lib/processing/converter.ts:2:1
+Export default doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m mammoth [36mfrom[39m [32m'mammoth'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m pdf [36mfrom[39m [32m'pdf-parse'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36mexport[39m [36masync[39m [36mfunction[39m convertFileToMarkdown(buffer[33m:[39m [33mBuffer[39m[33m,[39m mimeType[33m:[39m string)[33m:[39m [33mPromise[39m[33m<[39m[33mstring[39m[33m>[39m {
+ [90m 5 |[39m     [36mtry[39m {[0m
+
+The export default was not found in module [project]/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-rsc] (ecmascript).
+Did you mean to import Rectangle?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./lib/processing/converter.ts
+    ./app/actions/documents.ts
+
+
+    at <unknown> (./components/chat/aoi-chat.tsx:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./lib/processing/converter.ts:2:1)

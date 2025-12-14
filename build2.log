@@ -1,0 +1,132 @@
+
+> retrograde-mariner@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.7 (Turbopack)
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 5 errors:
+./app/actions/documents.ts:8:1
+Ecmascript file had an error
+[0m [90m  6 |[39m [36mimport[39m { convertFileToMarkdown } [36mfrom[39m [32m'@/lib/processing/converter'[39m[33m;[39m [90m// Ensure path is correct[39m
+ [90m  7 |[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mexport[39m [36mconst[39m maxDuration [33m=[39m [35m300[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mexport[39m [36mconst[39m dynamic [33m=[39m [32m'force-dynamic'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36mexport[39m [36masync[39m [36mfunction[39m uploadAndProcessDocument(formData[33m:[39m [33mFormData[39m) {[0m
+
+Only async functions are allowed to be exported in a "use server" file.
+
+
+Import traces:
+  Client Component Browser:
+    ./app/actions/documents.ts [Client Component Browser]
+    ./components/chat/aoi-chat.tsx [Client Component Browser]
+    ./components/chat/aoi-chat.tsx [Server Component]
+    ./app/dashboard/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/actions/documents.ts [Client Component SSR]
+    ./components/chat/aoi-chat.tsx [Client Component SSR]
+    ./components/chat/aoi-chat.tsx [Server Component]
+    ./app/dashboard/page.tsx [Server Component]
+
+
+./components/ui/switch.tsx:4:1
+Module not found: Can't resolve '@radix-ui/react-switch'
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mReact[39m [36mfrom[39m [32m"react"[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mSwitchPrimitives[39m [36mfrom[39m [32m"@radix-ui/react-switch"[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+ [90m 6 |[39m
+ [90m 7 |[39m [36mconst[39m [33mSwitch[39m [33m=[39m [33mReact[39m[33m.[39mforwardRef[33m<[39m[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./components/ui/switch.tsx [Client Component Browser]
+    ./components/billing/billing-content.tsx [Client Component Browser]
+    ./components/billing/billing-content.tsx [Server Component]
+    ./app/dashboard/settings/billing/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/ui/switch.tsx [Client Component SSR]
+    ./components/billing/billing-content.tsx [Client Component SSR]
+    ./components/billing/billing-content.tsx [Server Component]
+    ./app/dashboard/settings/billing/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./components/chat/aoi-chat.tsx:4:1
+Module not found: Can't resolve 'ai/react'
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useRef[33m,[39m useState[33m,[39m useEffect } [36mfrom[39m [32m'react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { useChat } [36mfrom[39m [32m'ai/react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { useDropzone } [36mfrom[39m [32m'react-dropzone'[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m'@/components/ui/input'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./components/chat/aoi-chat.tsx
+    ./app/dashboard/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./components/chat/aoi-chat.tsx:13:1
+Export uploadAndProcessDocument doesn't exist in target module
+[0m [90m 11 |[39m [90m// Importing non-existent component will break build.[39m
+ [90m 12 |[39m [36mimport[39m { [33mPaperclip[39m[33m,[39m [33mSend[39m[33m,[39m [33mAlertCircle[39m[33m,[39m [33mFileText[39m[33m,[39m [33mLoader2[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 13 |[39m [36mimport[39m { uploadAndProcessDocument } [36mfrom[39m [32m'@/app/actions/documents'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 14 |[39m [36mimport[39m { cn } [36mfrom[39m [32m'@/lib/utils'[39m[33m;[39m
+ [90m 15 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+ [90m 16 |[39m[0m
+
+The export uploadAndProcessDocument was not found in module [project]/app/actions/documents.ts [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./components/chat/aoi-chat.tsx
+    ./app/dashboard/page.tsx
+
+
+./components/chat/aoi-chat.tsx:13:1
+Export uploadAndProcessDocument doesn't exist in target module
+[0m [90m 11 |[39m [90m// Importing non-existent component will break build.[39m
+ [90m 12 |[39m [36mimport[39m { [33mPaperclip[39m[33m,[39m [33mSend[39m[33m,[39m [33mAlertCircle[39m[33m,[39m [33mFileText[39m[33m,[39m [33mLoader2[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 13 |[39m [36mimport[39m { uploadAndProcessDocument } [36mfrom[39m [32m'@/app/actions/documents'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 14 |[39m [36mimport[39m { cn } [36mfrom[39m [32m'@/lib/utils'[39m[33m;[39m
+ [90m 15 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+ [90m 16 |[39m[0m
+
+The export uploadAndProcessDocument was not found in module [project]/app/actions/documents.ts [app-ssr] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./components/chat/aoi-chat.tsx
+    ./app/dashboard/page.tsx
+
+
+    at <unknown> (./app/actions/documents.ts:8:1)
+    at <unknown> (./components/ui/switch.tsx:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./components/chat/aoi-chat.tsx:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./components/chat/aoi-chat.tsx:13:1)
+    at <unknown> (./components/chat/aoi-chat.tsx:13:1)
