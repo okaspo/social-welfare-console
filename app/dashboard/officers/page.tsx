@@ -54,9 +54,9 @@ export default function OfficersPage() {
 
     const getRoleBadge = (role: string) => {
         switch (role) {
-            case 'director': return <Badge className="bg-blue-600 hover:bg-blue-700">Director</Badge>;
-            case 'auditor': return <Badge className="bg-purple-600 hover:bg-purple-700">Auditor</Badge>;
-            case 'councilor': return <Badge variant="outline" className="border-green-600 text-green-600">Councilor</Badge>;
+            case 'director': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">理事</Badge>;
+            case 'auditor': return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">監事</Badge>;
+            case 'councilor': return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">評議員</Badge>;
             default: return <Badge>{role}</Badge>;
         }
     };
@@ -65,18 +65,18 @@ export default function OfficersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Officer Management</h2>
-                    <p className="text-muted-foreground">Manage directors, auditors, and councilors.</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900">役員管理</h2>
+                    <p className="text-gray-600 mt-1">理事、監事、評議員の管理</p>
                 </div>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Add Officer
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                            <Plus className="mr-2 h-4 w-4" /> 役員を追加
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
-                            <DialogTitle>Add New Officer</DialogTitle>
+                            <DialogTitle>新しい役員を追加</DialogTitle>
                         </DialogHeader>
                         <OfficerForm
                             onSubmit={handleAddSubmit}
@@ -86,33 +86,33 @@ export default function OfficersPage() {
                 </Dialog>
             </div>
 
-            <div className="rounded-md border bg-card shadow-sm">
+            <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Term Start</TableHead>
-                            <TableHead>Term End</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                        <TableRow className="bg-gray-50 hover:bg-gray-50">
+                            <TableHead className="font-semibold text-gray-700">氏名</TableHead>
+                            <TableHead className="font-semibold text-gray-700">役職</TableHead>
+                            <TableHead className="font-semibold text-gray-700">任期開始</TableHead>
+                            <TableHead className="font-semibold text-gray-700">任期終了</TableHead>
+                            <TableHead className="font-semibold text-gray-700">ステータス</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700">操作</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {officers.map((officer) => (
-                            <TableRow key={officer.id}>
-                                <TableCell className="font-medium">{officer.name}</TableCell>
+                            <TableRow key={officer.id} className="hover:bg-gray-50">
+                                <TableCell className="font-medium text-gray-900">{officer.name}</TableCell>
                                 <TableCell>{getRoleBadge(officer.role)}</TableCell>
-                                <TableCell>{officer.term_start}</TableCell>
-                                <TableCell>{officer.term_end}</TableCell>
+                                <TableCell className="text-gray-600">{officer.term_start}</TableCell>
+                                <TableCell className="text-gray-600">{officer.term_end}</TableCell>
                                 <TableCell>
                                     {officer.is_active ?
-                                        <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">Active</Badge>
-                                        : <Badge variant="secondary" className="bg-gray-100 text-gray-500 hover:bg-gray-100">Inactive</Badge>
+                                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">在任中</Badge>
+                                        : <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-100">退任</Badge>
                                     }
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedOfficer(officer)}>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedOfficer(officer)} className="text-gray-600 hover:text-gray-900">
                                         <Pencil className="h-4 w-4" />
                                     </Button>
                                 </TableCell>
@@ -125,7 +125,7 @@ export default function OfficersPage() {
             <Dialog open={!!selectedOfficer} onOpenChange={(open) => !open && setSelectedOfficer(undefined)}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>Edit Officer</DialogTitle>
+                        <DialogTitle>役員情報の編集</DialogTitle>
                     </DialogHeader>
                     {selectedOfficer && (
                         <OfficerForm
@@ -139,3 +139,4 @@ export default function OfficersPage() {
         </div>
     );
 }
+

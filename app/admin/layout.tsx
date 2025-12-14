@@ -7,7 +7,6 @@ export default async function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // Basic Auth Check
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -16,7 +15,7 @@ export default async function AdminLayout({
     }
 
     return (
-        <div className="flex h-screen bg-slate-50">
+        <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
             <div className="hidden md:block h-full">
                 <AdminSidebar user={user} />

@@ -168,38 +168,38 @@ export default function UserManagementClient({ initialUsers }: { initialUsers: a
             </form>
 
             {/* Users Table */}
-            <div className="border rounded-md bg-white overflow-hidden shadow-sm">
+            <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b text-slate-500 font-medium">
+                    <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
-                            <th className="px-4 py-3">User</th>
-                            <th className="px-4 py-3">Organization</th>
-                            <th className="px-4 py-3">Plan</th>
-                            <th className="px-4 py-3">Joined</th>
-                            <th className="px-4 py-3">Action</th>
+                            <th className="px-4 py-3 font-semibold text-gray-700">ユーザー</th>
+                            <th className="px-4 py-3 font-semibold text-gray-700">組織</th>
+                            <th className="px-4 py-3 font-semibold text-gray-700">プラン</th>
+                            <th className="px-4 py-3 font-semibold text-gray-700">登録日</th>
+                            <th className="px-4 py-3 font-semibold text-gray-700">操作</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-gray-100">
                         {initialUsers.map((user) => (
-                            <tr key={user.id} className="hover:bg-slate-50/50">
+                            <tr key={user.id} className="hover:bg-gray-50">
                                 <td className="px-4 py-3">
-                                    <div className="font-medium text-slate-900">{user.full_name || 'No Name'}</div>
-                                    <div className="text-slate-500 text-xs">{user.id}</div>
+                                    <div className="font-medium text-gray-900">{user.full_name || 'No Name'}</div>
+                                    <div className="text-gray-500 text-xs font-mono">{user.id}</div>
                                 </td>
-                                <td className="px-4 py-3">
-                                    {user.organization?.name || <span className="text-slate-400 italic">None</span>}
+                                <td className="px-4 py-3 text-gray-700">
+                                    {user.organization?.name || <span className="text-gray-400 italic">なし</span>}
                                 </td>
                                 <td className="px-4 py-3">
                                     <Badge variant={user.organization?.plan_id === 'pro' ? 'success' : 'default'}>
                                         {user.organization?.plan_id || 'free'}
                                     </Badge>
                                 </td>
-                                <td className="px-4 py-3 text-slate-500">
+                                <td className="px-4 py-3 text-gray-600">
                                     {new Date(user.created_at).toLocaleDateString()}
                                 </td>
                                 <td className="px-4 py-3">
                                     <Button variant="ghost" size="sm" onClick={() => { setSelectedUser(user); setPrivateData(null); }}>
-                                        Manage
+                                        管理
                                         <ChevronRight className="ml-1 w-3 h-3" />
                                     </Button>
                                 </td>
