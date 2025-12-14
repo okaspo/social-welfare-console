@@ -25,7 +25,7 @@ export function AoiChat() {
         onError: (err: Error) => {
             console.error('Chat error:', err);
         },
-    });
+    } as any);
 
     const { messages, append, isLoading, error } = chat as any;
 
