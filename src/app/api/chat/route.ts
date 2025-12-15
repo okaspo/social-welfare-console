@@ -129,8 +129,8 @@ export async function POST(req: Request) {
         // const systemPromptBase = activePrompts.find((p: any) => p.name === 'default')?.content || JUDICIAL_SCRIVENER_PROMPT;
         // const personaContent = activePrompts.find((p: any) => p.name === 'aoi_persona')?.content || "";
 
-        // Dynamic Prompt Builder
-        const systemPromptFull = await buildSystemPrompt(planId);
+        // Dynamic Prompt Builder (with user context)
+        const systemPromptFull = await buildSystemPrompt(planId, user.id);
 
 
         // 4. Build Final System Message

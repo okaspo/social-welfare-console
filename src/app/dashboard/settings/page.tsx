@@ -36,6 +36,25 @@ export default async function SettingsPage() {
                 <p className="text-sm text-gray-500 mt-1">各種設定やプランの変更を行います。</p>
             </div>
 
+            {/* Profile Settings Link */}
+            <div className="bg-white border rounded-xl p-6 flex items-center justify-between shadow-sm">
+                <div>
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                        <Settings className="h-5 w-5 text-gray-500" />
+                        プロフィール設定
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        葵さんの接し方を最適化するため、あなたの情報を設定できます
+                    </p>
+                </div>
+                <a
+                    href="/dashboard/settings/profile"
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 bg-slate-900 text-white"
+                >
+                    プロフィール編集
+                </a>
+            </div>
+
             {/* Notification & Security Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <NotificationSettings />
