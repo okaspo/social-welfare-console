@@ -37,7 +37,7 @@ export async function changePlan(priceId: string) {
     const { error: updateError } = await supabase
         .from('organizations')
         .update({
-            plan: priceData.plan_id,
+            plan_id: priceData.plan_id,
             updated_at: new Date().toISOString()
         })
         .eq('id', profile.organization_id)
@@ -45,6 +45,18 @@ export async function changePlan(priceId: string) {
     if (updateError) {
         console.error("Plan update failed:", updateError)
         return { error: 'Failed to update organization plan' }
+    }
+
+    // 5. Increment Campaign Usage (if applicable)
+    if (priceData.campaign_code) {
+        const { error: rpcError } = await supabase.rpc('increment_campaign_usage', {
+            code_input: priceData.campaign_code
+        })
+
+        if (rpcError) {
+            console.error("Failed to increment campaign usage:", rpcError)
+            // Non-critical error, proceed
+        }
     }
 
     revalidatePath('/dashboard/settings') // covers /dashboard/settings/billing if nested layout

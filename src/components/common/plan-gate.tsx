@@ -95,7 +95,7 @@ function getFeatureDescription(key: string): string {
 function checkPlanFeature(plan: string, feature: string): boolean {
     const hierarchy = ['free', 'standard', 'pro', 'enterprise'];
     const featureMinPlans: Record<string, string> = {
-        email_sending: 'standard',
+        email_sending: 'pro',
         word_export: 'pro',
         long_term_memory: 'standard',
         custom_domain: 'enterprise',

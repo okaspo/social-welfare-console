@@ -1,13 +1,42 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, FileText, Loader2, Download, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, FileText, Loader2, Download, AlertTriangle, Mail } from 'lucide-react'
 import { generateNotice, MeetingData } from '@/lib/generator/notice-template'
 import { exportNoticeToDocx } from '@/lib/generator/docx-exporter'
+import { PlanGate } from '@/components/common/plan-gate'
+import { useUser } from '@/lib/hooks/use-user'
 
 export default function MeetingForm() {
     const [loading, setLoading] = useState(false)
+    const [sendingEmail, setSendingEmail] = useState(false)
     const [generatedDoc, setGeneratedDoc] = useState('')
+    const { profile, subscription } = useUser()
+
+    const handleSendEmail = async () => {
+        if (!generatedDoc) return
+        setSendingEmail(true)
+        try {
+            const response = await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject: `${formData.corporationName} ${formData.type === 'board_of_directors' ? '理事会' : '評議員会'} 開催のお知らせ`,
+                    content: generatedDoc
+                })
+            })
+            if (response.ok) {
+                alert('招集通知メールを送信しました')
+            } else {
+                alert('メール送信に失敗しました')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('エラーが発生しました')
+        } finally {
+            setSendingEmail(false)
+        }
+    }
 
     const [formData, setFormData] = useState<MeetingData>({
         type: 'board_of_directors',
@@ -215,6 +244,17 @@ export default function MeetingForm() {
                             Wordでダウンロード
                         </button>
                     )}
+
+                    <PlanGate featureKey="email_sending" minPlan="pro" currentPlan={subscription?.plan_id || 'free'}>
+                        <button
+                            onClick={handleSendEmail}
+                            disabled={!generatedDoc || sendingEmail}
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                            メールで送信
+                        </button>
+                    </PlanGate>
 
                     <button
                         onClick={handleGenerate}
