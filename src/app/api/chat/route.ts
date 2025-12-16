@@ -133,7 +133,34 @@ export async function POST(req: Request) {
         const systemPromptFull = await buildSystemPrompt(planId, user.id);
 
 
-        // 4. Build Final System Message
+        // 4. Detect Intent and Select Model
+        const lastUserMessage = messages[messages.length - 1]?.content || '';
+        const { detectIntent, mapIntentToFeature } = await import('@/lib/ai/intent-detector');
+        const { getModelForFeature } = await import('@/lib/ai/model-config');
+
+        const detectedIntent = detectIntent(lastUserMessage);
+        const feature = mapIntentToFeature(detectedIntent.intent);
+
+        // Select appropriate model based on plan and intent
+        let selectedModel = 'gpt-4o-mini'; // Default fallback
+        try {
+            selectedModel = getModelForFeature(feature, planId);
+        } catch (error: any) {
+            // If feature requires higher plan, return error
+            if (error.message.includes('require')) {
+                return new Response(
+                    JSON.stringify({
+                        error: 'この機能はProプラン以上で利用可能です',
+                        requiredFeature: feature
+                    }),
+                    { status: 403 }
+                );
+            }
+        }
+
+        console.log(`[Model Router] Intent: ${detectedIntent.intent} → Model: ${selectedModel} (Confidence: ${detectedIntent.confidence})`);
+
+        // 5. Build Final System Message
         const finalSystemMessage = `
 ${systemPromptFull}
 
@@ -166,12 +193,28 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 
 
         const result = await streamText({
-            model: openai('gpt-4o-mini'),
+            model: openai(selectedModel),
             system: finalSystemMessage,
             messages: messages,
-            onFinish: async () => {
+            onFinish: async (completion) => {
                 // Increment Usage
                 if (orgId) await incrementUsage(orgId, 'chat');
+
+                // Log model selection for analytics
+                const adminSupabase = createAdminClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.SUPABASE_SERVICE_ROLE_KEY!
+                );
+
+                await adminSupabase.from('model_router_logs').insert({
+                    organization_id: orgId,
+                    user_id: user.id,
+                    user_message: lastUserMessage.substring(0, 500),
+                    detected_intent: detectedIntent.intent,
+                    selected_tier: detectedIntent.suggestedTier,
+                    selected_model: selectedModel,
+                    was_overridden: false,
+                });
             }
         });
 

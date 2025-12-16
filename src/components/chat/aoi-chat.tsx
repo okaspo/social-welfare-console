@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bot, X, Send, Paperclip, Upload, Save, Loader2 } from 'lucide-react'
+import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
 import { processUploadedFile } from '@/lib/actions/document-processing'
 import { createClient } from '@/lib/supabase/client'
+import { usePrecisionCheck, type PrecisionCheckResult } from '@/hooks/use-precision-check'
 
 // Define explicit Message type
 interface Message {
     id: string
     role: 'user' | 'assistant'
     content: string
+    precisionCheckResult?: PrecisionCheckResult
 }
 
 export default function AoiChat() {
@@ -29,6 +31,10 @@ export default function AoiChat() {
     // ... file upload states ...
     const [isDragging, setIsDragging] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const [showPrecisionResult, setShowPrecisionResult] = useState(false)
+    const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
+
+    const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -269,15 +275,60 @@ export default function AoiChat() {
                     {/* Messages */}
                     <div className="h-72 overflow-y-auto p-4 bg-gradient-to-b from-gray-50/30 to-white space-y-4">
                         {messages.map((msg) => (
-                            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user'
-                                        ? 'bg-gradient-to-br from-gray-800 to-gray-700 text-white rounded-br-md'
-                                        : 'bg-white border border-gray-100 text-gray-800 rounded-bl-md'
-                                        }`}
-                                >
-                                    {msg.content}
+                            <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                <div className="flex items-start gap-2 max-w-[85%]">
+                                    <div
+                                        className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user'
+                                            ? 'bg-gradient-to-br from-gray-800 to-gray-700 text-white rounded-br-md'
+                                            : 'bg-white border border-gray-100 text-gray-800 rounded-bl-md'
+                                            }`}
+                                    >
+                                        {msg.content}
+                                    </div>
+
+                                    {/* Precision Check Button (AI messages only) */}
+                                    {msg.role === 'assistant' && msg.id !== 'welcome' && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setActiveMessageId(msg.id);
+                                                    await checkMessage(msg.id, messages);
+                                                    setShowPrecisionResult(true);
+                                                } catch (error: any) {
+                                                    alert('精密チェックに失敗しました: ' + error.message);
+                                                }
+                                            }}
+                                            disabled={isChecking && activeMessageId === msg.id}
+                                            className="mt-1 p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
+                                            title="🔍 o1で精密チェック"
+                                        >
+                                            {isChecking && activeMessageId === msg.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Search className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* Precision Check Result */}
+                                {msg.precisionCheckResult && (
+                                    <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs max-w-[85%]">
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            {msg.precisionCheckResult.verified ? (
+                                                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                                            ) : (
+                                                <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
+                                            )}
+                                            <span className="font-semibold text-gray-700">
+                                                精密チェック結果 (o1)
+                                            </span>
+                                        </div>
+                                        <p className="text-gray-600 leading-relaxed">
+                                            {msg.precisionCheckResult.explanation}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {isLoading && (

@@ -1,16 +1,24 @@
 
 import { createClient } from '@/lib/supabase/server';
+import { getEntityConfig, type EntityType } from '@/lib/entity/config';
 
 /**
- * Builds the system prompt by stacking layers based on Plan ID.
- * Layer 1: Persona (Aoi) - Always present (or fetch from DB)
- * Layer 2: Functional Modules (Dependent on Plan) - e.g. mod_std, mod_pro
- * Layer 3: User Context - Injected based on user profile
+ * Builds the system prompt by stacking layers based on Plan ID and Entity Type.
+ * Layer 1: Persona (Aoi) - Always present
+ * Layer 2: Entity-Specific Law Module - Based on organization entity_type
+ * Layer 3: Functional Modules - Dependent on Plan
+ * Layer 4: Entity Context - Organization type information
+ * Layer 5: User Context - Injected based on user profile
  * 
  * @param planId 'free' | 'standard' | 'pro' | 'enterprise'
  * @param userId Optional user ID to inject personalization context
+ * @param organizationId Optional organization ID to determine entity type
  */
-export async function buildSystemPrompt(planId: string = 'free', userId?: string): Promise<string> {
+export async function buildSystemPrompt(
+    planId: string = 'free',
+    userId?: string,
+    organizationId?: string
+): Promise<string> {
     const supabase = await createClient();
 
     // Define Plan Levels
@@ -22,12 +30,26 @@ export async function buildSystemPrompt(planId: string = 'free', userId?: string
     };
     const currentLevel = PLAN_LEVELS[planId] || 0;
 
-    // Fetch necessary modules
-    // We fetch 'mod_persona' + any module where required_plan_level <= currentLevel
+    // Determine entity type
+    let entityType: EntityType = 'social_welfare';
+    if (organizationId) {
+        const { data: org } = await supabase
+            .from('organizations')
+            .select('entity_type')
+            .eq('id', organizationId)
+            .single();
+
+        entityType = (org?.entity_type as EntityType) || 'social_welfare';
+    }
+
+    const entityConfig = getEntityConfig(entityType);
+
+    // Fetch necessary modules (with entity awareness)
     const { data: modules, error } = await supabase
         .from('prompt_modules')
-        .select('slug, content, required_plan_level')
+        .select('slug, content, required_plan_level, entity_type')
         .eq('is_active', true)
+        .eq('entity_type', entityType)  // Filter by entity type for variants
         .order('required_plan_level', { ascending: true });
 
     if (error) {
@@ -39,13 +61,30 @@ export async function buildSystemPrompt(planId: string = 'free', userId?: string
     // 1. Persona (Always Top)
     const persona = modules?.find(m => m.slug === 'mod_persona')?.content || "";
 
-    // 2. Functional Modules (Filtered by Plan)
+    // 2. Entity-Specific Law Module
+    const lawModule = modules?.find(m => m.slug === entityConfig.promptModules.lawModule)?.content || "";
+
+    // 3. Functional Modules (Filtered by Plan and Entity Compatibility)
     const functionalModules = modules
-        ?.filter(m => m.slug !== 'mod_persona' && m.required_plan_level <= currentLevel)
+        ?.filter(m =>
+            m.slug !== 'mod_persona' &&
+            !m.slug.startsWith('mod_') || // Exclude law modules
+            (entityConfig.promptModules.functionalModules.includes(m.slug) &&
+                m.required_plan_level <= currentLevel)
+        )
         .map(m => m.content)
         .join('\n\n') || "";
 
-    // 3. User Context (if userId provided)
+    // 4. Entity Context
+    const entityContext = `
+---
+Entity Context:
+- Type: ${entityConfig.name} (${entityConfig.nameEn})
+- Legal Basis: ${entityConfig.legalBasis}
+- Jurisdiction: ${entityConfig.jurisdictionTerm}
+`.trim();
+
+    // 5. User Context (if userId provided)
     let userContext = '';
     if (userId) {
         const { data: profile } = await supabase
@@ -65,10 +104,14 @@ export async function buildSystemPrompt(planId: string = 'free', userId?: string
         }
     }
 
-    // Concatenate
+    // Concatenate all layers
     return `
 ${persona}
 
-${functionalModules}${userContext}
+${lawModule}
+
+${functionalModules}
+
+${entityContext}${userContext}
 `.trim();
 }

@@ -63,6 +63,12 @@ export interface Officer {
     termStartDate: string
     termEndDate: string
     status: OfficerStatus
+    // Personal Information (PII) - for regulatory compliance
+    email?: string
+    address?: string
+    dateOfBirth?: string // ISO date format (YYYY-MM-DD)
+    occupation?: string
+    isRemunerated?: boolean
 }
 
 export const MOCK_OFFICERS: Officer[] = [
