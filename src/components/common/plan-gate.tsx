@@ -1,9 +1,7 @@
-// PlanGate Component - Visual Feature Locking
-'use client';
-
 import { Lock, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useUser } from '@/lib/hooks/use-user'; // Import useUser
 
 interface PlanGateProps {
     featureKey: string;
@@ -16,12 +14,22 @@ export function PlanGate({
     featureKey,
     children,
     minPlan,
-    currentPlan = 'free'
+    currentPlan
 }: PlanGateProps) {
     const router = useRouter();
+    const { subscription } = useUser();
 
-    // Check if user has access
-    const hasAccess = checkPlanFeature(currentPlan, featureKey);
+    // Use prop if provided, otherwise fall back to hook, default to free
+    const effectivePlan = currentPlan || subscription?.plan_id || 'free';
+
+    // Dynamic Feature Check
+    let hasAccess = false;
+    if (subscription?.features) {
+        hasAccess = !!subscription.features[featureKey];
+    } else {
+        // Fallback to hardcoded hierarchy during loading or if no sub
+        hasAccess = checkPlanFeature(effectivePlan, featureKey);
+    }
 
     if (hasAccess) {
         return <>{children}</>;

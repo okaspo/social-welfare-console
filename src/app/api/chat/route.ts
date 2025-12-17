@@ -192,10 +192,35 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 
 
 
+        const { tool } = await import('ai');
+        const { z } = await import('zod');
+
         const result = await streamText({
             model: openai(selectedModel),
             system: finalSystemMessage,
             messages: messages,
+            tools: {
+                submit_feedback: tool({
+                    description: 'ユーザーからの機能要望、バグ報告、その他フィードバックを運営チームに送信・保存します。',
+                    parameters: z.object({
+                        category: z.enum(['bug', 'feature', 'other']).describe('フィードバックの分類: バグ(bug), 要望(feature), その他(other)'),
+                        content: z.string().describe('フィードバックの具体的な内容')
+                    }),
+                    execute: async ({ category, content }) => {
+                        const { error } = await supabase.from('user_feedback').insert({
+                            user_id: user.id,
+                            category,
+                            content
+                        });
+                        if (error) {
+                            console.error('Feedback Error:', error);
+                            return '申し訳ありません。フィードバックの送信中にエラーが発生しました。';
+                        }
+                        return 'フィードバックを送信しました。貴重なご意見ありがとうございます。';
+                    }
+                })
+            },
+            maxSteps: 3, // Allow tool execution and response
             onFinish: async (completion) => {
                 // Increment Usage
                 if (orgId) await incrementUsage(orgId, 'chat');

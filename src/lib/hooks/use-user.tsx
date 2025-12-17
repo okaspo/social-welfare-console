@@ -16,6 +16,7 @@ interface Subscription {
     plan_id: string;
     status: string;
     stripe_customer_id: string | null;
+    features: Record<string, boolean>;
 }
 
 export function useUser() {
@@ -43,7 +44,7 @@ export function useUser() {
                     *,
                     organizations (
                         id,
-                        plan_id,
+                        plan,
                         subscription_status,
                         stripe_customer_id
                     )
@@ -60,17 +61,26 @@ export function useUser() {
                 });
 
                 if (profileData.organizations) {
-                    // Handle array or single object response depending on relationship definition
                     const org = Array.isArray(profileData.organizations)
                         ? profileData.organizations[0]
                         : profileData.organizations;
 
                     if (org) {
+                        // 3. Get Plan Features
+                        // @ts-ignore
+                        const planId = org.plan || 'free';
+                        const { data: planLimit } = await supabase
+                            .from('plan_limits')
+                            .select('features')
+                            .eq('plan_id', planId)
+                            .single();
+
                         setSubscription({
                             id: org.id,
-                            plan_id: org.plan_id || 'free',
+                            plan_id: planId,
                             status: org.subscription_status || 'active',
-                            stripe_customer_id: org.stripe_customer_id
+                            stripe_customer_id: org.stripe_customer_id,
+                            features: (planLimit?.features as Record<string, boolean>) || {}
                         });
                     }
                 }

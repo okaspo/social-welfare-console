@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Loader2, FileText, ArrowRight, Check, AlertCircle } from 'lucide-react'
 import { useChat } from '@ai-sdk/react'
+import { PlanGate } from '@/components/common/plan-gate'
 
 // Types
 interface DocumentTemplate {
@@ -363,6 +364,15 @@ ${template.content}
                                 >
                                     保存する
                                 </button>
+
+                                <div className="ml-2">
+                                    <PlanGate featureKey="word_export" minPlan="pro">
+                                        <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm font-bold flex items-center gap-2">
+                                            <FileText className="h-4 w-4" />
+                                            Word形式(.docx)
+                                        </button>
+                                    </PlanGate>
+                                </div>
                             </div>
                         </div>
                     )}

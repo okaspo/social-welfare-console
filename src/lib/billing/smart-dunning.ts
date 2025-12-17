@@ -122,12 +122,21 @@ export async function sendDunningEmail(
             attemptNumber,
         });
 
-        // TODO: Send email via your email service (SendGrid, Resend, etc.)
-        console.log('=== Dunning Email ===');
-        console.log('To:', customer.email);
-        console.log('Subject: 【GovAI】お支払いについてのご確認');
-        console.log('Body:\n', emailBody);
-        console.log('=====================');
+        import { sendEmail } from '@/lib/email/resend';
+
+        // ... (existing code)
+
+        // Send email via Resend
+        const emailResult = await sendEmail({
+            to: customer.email,
+            subject: '【重要】S級AI事務局 葵より：ご利用料金の決済について確認のお願い',
+            html: emailBody.replace(/\n/g, '<br/>'), // Simple formatting
+        });
+
+        if (!emailResult.success) {
+            console.error('Failed to send dunning email', emailResult.error);
+            return { success: false, error: 'Email sending failed' };
+        }
 
         // Log dunning attempt
         await adminSupabase.from('audit_logs').insert({
@@ -138,6 +147,7 @@ export async function sendDunningEmail(
                 customerId,
                 attemptNumber,
                 amountDue: invoice.amount_due / 100,
+                emailId: emailResult.data?.id
             },
         });
 

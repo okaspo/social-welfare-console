@@ -1,137 +1,120 @@
-import { createClient } from '@/lib/supabase/server';
+import { getRevenueStats, retryPayment } from './actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, AlertTriangle, checkCircle, ArrowUpRight, CheckCircle } from 'lucide-react';
+import { DollarSign, Users, Activity, TrendingDown, AlertTriangle, ExternalLink, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default async function RevenueDashboard() {
-    const supabase = await createClient();
-
-    // Fetch all organizations with plan info
-    const { data: orgs } = await supabase
-        .from('organizations')
-        .select('id, name, plan, subscription_status, current_period_end, stripe_customer_id')
-        .order('created_at', { ascending: false });
-
-    if (!orgs) return <div>Loading...</div>;
-
-    // Calculate MRR (Estimated)
-    const PRICES = {
-        free: 0,
-        standard: 9800,
-        pro: 29800,
-        enterprise: 98000 // Estimated average
-    };
-
-    const activeOrgs = orgs.filter(o => o.subscription_status === 'active');
-
-    // @ts-ignore
-    const mrr = activeOrgs.reduce((sum, org) => sum + (PRICES[org.plan as keyof typeof PRICES] || 0), 0);
-
-    const totalCustomers = activeOrgs.length;
-
-    // Failed Payments / Action Required
-    const failedPayments = orgs.filter(o => ['past_due', 'unpaid'].includes(o.subscription_status || ''));
-
-    // Plan Distribution
-    const planCounts = {
-        free: orgs.filter(o => o.plan === 'free').length,
-        standard: orgs.filter(o => o.plan === 'standard').length,
-        pro: orgs.filter(o => o.plan === 'pro').length,
-        enterprise: orgs.filter(o => o.plan === 'enterprise').length,
-    };
+    const stats = await getRevenueStats();
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight">収益管理ダッシュボード</h1>
+        <div className="space-y-8 p-8">
+            <h1 className="text-3xl font-bold text-gray-900">売上・請求管理ダッシュボード</h1>
 
             {/* KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Estimated MRR</CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Total Revenue (MRR)</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">¥{mrr.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            +20.1% from last month
-                        </p>
+                        <div className="text-2xl font-bold">¥{stats.mrr.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
-                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalCustomers}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Standard: {planCounts.standard} | Pro: {planCounts.pro}
-                        </p>
+                        <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
+                        <p className="text-xs text-muted-foreground">+180 since last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-red-600">Action Required</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{failedPayments.length}</div>
-                        <p className="text-xs text-red-600 opacity-80">
-                            Payment failures
-                        </p>
+                        <div className="text-2xl font-bold">{stats.churnRate}%</div>
+                        <p className="text-xs text-muted-foreground">-0.5% from last month</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">At Risk Revenue</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{stats.atRiskUsers.length} Users</div>
+                        <p className="text-xs text-muted-foreground">Action required immediately</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Attention List */}
-            {failedPayments.length > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-4">
-                    <h3 className="text-lg font-semibold text-red-900 flex items-center gap-2 mb-3">
-                        <AlertTriangle className="h-5 w-5" />
-                        決済エラー対応が必要な顧客
-                    </h3>
-                    <div className="space-y-2">
-                        {failedPayments.map(org => (
-                            <div key={org.id} className="flex items-center justify-between bg-white p-3 rounded-md shadow-sm border border-red-100">
-                                <div>
-                                    <p className="font-bold text-gray-800">{org.name}</p>
-                                    <p className="text-sm text-gray-500">Plan: {org.plan} | Status: {org.subscription_status}</p>
-                                </div>
-                                <button className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
-                                    再請求メール送信 (葵)
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+            {/* At Risk Monitor */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                    <AlertTriangle className="h-6 w-6 text-red-500" />
+                    At Risk Monitor (決済トラブル)
+                </h2>
+                <div className="bg-white rounded-lg shadow border overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">法人名</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状態</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stripe ID</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {stats.atRiskUsers.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        現在、決済トラブルはありません。
+                                    </td>
+                                </tr>
+                            ) : (
+                                stats.atRiskUsers.map((user) => (
+                                    <tr key={user.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {user.organization_name}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {user.plan_id}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                {user.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                            {user.stripe_customer_id}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                                            <a
+                                                href={`https://dashboard.stripe.com/customers/${user.stripe_customer_id}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1"
+                                            >
+                                                <ExternalLink className="h-4 w-4" />
+                                                Stripe
+                                            </a>
+                                            {/* In a Client Component, this logic works, but here is server. */}
+                                            {/* Ideally wrap this row in a client component for 'Retry' action */}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
-
-            {/* Recent Organizations */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Recent Organizations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        {orgs.slice(0, 5).map(org => (
-                            <div key={org.id} className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-                                <div>
-                                    <p className="font-medium">{org.name}</p>
-                                    <p className="text-xs text-muted-foreground font-mono">{org.id}</p>
-                                </div>
-                                <div className="text-right">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${org.plan === 'pro' ? 'bg-purple-100 text-purple-800' :
-                                            org.plan === 'standard' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {org.plan.toUpperCase()}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+            </div>
         </div>
     );
 }

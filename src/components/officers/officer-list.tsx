@@ -112,9 +112,13 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {filteredOfficers.map((officer) => (
-                            <tr key={officer.id} className="hover:bg-gray-50/50 transition-colors">
+                            <tr key={officer.id} className="hover:bg-gray-50/50 transition-colors group">
                                 <td className="px-6 py-4">
-                                    <div className="font-medium text-gray-900">{officer.name}</div>
+                                    <div className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                        <a href={`/dashboard/officers/${officer.id}`} className="hover:underline">
+                                            {officer.name}
+                                        </a>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     {getRoleBadge(officer.role)}
@@ -130,9 +134,12 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button className="p-2 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100">
+                                        <a
+                                            href={`/dashboard/officers/${officer.id}`}
+                                            className="p-2 text-gray-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all"
+                                        >
                                             <Edit2 className="h-4 w-4" />
-                                        </button>
+                                        </a>
                                         <button className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
                                             <Trash2 className="h-4 w-4" />
                                         </button>

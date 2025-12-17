@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Settings, Shield, Bell, CreditCard } from 'lucide-react'
 import SecuritySettings from '@/components/organization/security-settings'
 import NotificationSettings from '@/components/organization/notification-settings'
+import { PlanGate } from '@/components/common/plan-gate'
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -78,6 +79,45 @@ export default async function SettingsPage() {
                 >
                     プラン変更・確認
                 </a>
+            </div>
+
+            {/* Plan Gated Sections */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Audit Logs */}
+                <PlanGate featureKey="audit_logs" minPlan="pro">
+                    <div className="bg-white border rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Shield className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <h2 className="text-lg font-bold">監査ログ</h2>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                            システムの操作履歴、アクセスログを詳細に確認・エクスポートできます。
+                        </p>
+                        <button className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                            ログを表示
+                        </button>
+                    </div>
+                </PlanGate>
+
+                {/* Custom Domain */}
+                <PlanGate featureKey="custom_domain" minPlan="enterprise">
+                    <div className="bg-white border rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-purple-50 rounded-lg">
+                                <Settings className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <h2 className="text-lg font-bold">独自ドメイン</h2>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                            組織のブランディングに合わせて、独自のドメインでシステムを利用できます。
+                        </p>
+                        <button className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                            設定を行う
+                        </button>
+                    </div>
+                </PlanGate>
             </div>
         </div>
     )

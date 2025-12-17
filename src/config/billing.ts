@@ -1,64 +1,50 @@
-// Billing Configuration - Stripe Plan Mapping
-// Maps internal plan IDs to Stripe Price IDs
-
-export const STRIPE_PLANS = {
-    free: {
-        name: 'Free',
-        prices: {
-            monthly: null,
-            yearly: null,
+export const BILLING_CONFIG = {
+    plans: {
+        free: {
+            id: 'free',
+            name: 'Free Plan',
+            description: '基本的な機能をお試しいただけます',
+            priceId: {
+                monthly: '',
+                yearly: ''
+            },
+            features: [
+                'AIチャット (GPT-4o mini)',
+                '会議管理 (月1回まで)',
+                '役員管理 (5名まで)'
+            ]
         },
-    },
-    standard: {
-        name: 'Standard',
-        prices: {
-            monthly: process.env.NEXT_PUBLIC_STRIPE_STANDARD_MONTHLY || '',
-            yearly: process.env.NEXT_PUBLIC_STRIPE_STANDARD_YEARLY || '',
+        standard: {
+            id: 'standard',
+            name: 'Standard Plan',
+            description: '小規模法人向け。基本機能をフル活用',
+            priceId: {
+                monthly: process.env.STRIPE_PRICE_STANDARD_MONTHLY || 'price_standard_monthly_dummy',
+                yearly: process.env.STRIPE_PRICE_STANDARD_YEARLY || 'price_standard_yearly_dummy'
+            },
+            features: [
+                'AIチャット (GPT-4o)',
+                '会議管理 (無制限)',
+                '役員管理 (無制限)',
+                '議事録自動生成',
+                'メールサポート'
+            ]
         },
-        amount: {
-            monthly: 9800, // ¥9,800/月
-            yearly: 98000, // ¥98,000/年 (2ヶ月分お得)
-        },
-    },
-    pro: {
-        name: 'Pro',
-        prices: {
-            monthly: process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY || '',
-            yearly: process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY || '',
-        },
-        amount: {
-            monthly: 29800, // ¥29,800/月
-            yearly: 298000, // ¥298,000/年
-        },
-    },
-    enterprise: {
-        name: 'Enterprise',
-        prices: {
-            monthly: null, // Contact sales
-            yearly: null,
-        },
-        amount: {
-            monthly: null,
-            yearly: null,
-        },
-    },
-} as const;
-
-export type PlanId = keyof typeof STRIPE_PLANS;
-export type BillingInterval = 'monthly' | 'yearly';
-
-export function getPriceId(plan: PlanId, interval: BillingInterval): string | null {
-    return STRIPE_PLANS[plan]?.prices[interval] || null;
-}
-
-export function getAmount(plan: PlanId, interval: BillingInterval): number | null {
-    return STRIPE_PLANS[plan]?.amount?.[interval] || null;
-}
-
-export function formatPrice(amount: number | null): string {
-    if (!amount) return '要相談';
-    return new Intl.NumberFormat('ja-JP', {
-        style: 'currency',
-        currency: 'JPY',
-    }).format(amount);
-}
+        pro: {
+            id: 'pro',
+            name: 'Pro Plan',
+            description: '大規模法人・複数施設向け',
+            priceId: {
+                monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro_monthly_dummy',
+                yearly: process.env.STRIPE_PRICE_PRO_YEARLY || 'price_pro_yearly_dummy'
+            },
+            features: [
+                '専用AIモデル (o1)',
+                '優先サポート',
+                'カスタムドメイン',
+                'APIアクセス',
+                '専任担当者'
+            ]
+        }
+    }
+};

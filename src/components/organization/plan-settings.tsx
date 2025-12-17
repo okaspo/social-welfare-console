@@ -31,18 +31,35 @@ export default function PlanSettings({
     const handlePlanChange = async (priceId: string) => {
         setIsLoading(priceId)
         try {
-            const result = await changePlan(priceId)
-            if (result.error) {
-                alert(result.error)
-            } else {
-                alert(`プランを変更しました: ${result.planName}`)
-                // In a real app we might router.refresh() here, but server action revalidates path.
+            const response = await fetch('/api/billing/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planPriceId: priceId })
+            })
+
+            const data = await response.json()
+
+            if (data.error) {
+                alert(data.error)
+                setIsLoading(null)
+            } else if (data.url) {
+                window.location.href = data.url
             }
         } catch (error) {
             console.error(error)
             alert('エラーが発生しました')
-        } finally {
             setIsLoading(null)
+        }
+    }
+
+    const handlePortal = async () => {
+        try {
+            const response = await fetch('/api/billing/portal', { method: 'POST' })
+            const data = await response.json()
+            if (data.url) window.location.href = data.url
+            else alert('ポータルへのアクセスに失敗しました')
+        } catch (e) {
+            alert('エラーが発生しました')
         }
     }
 
@@ -105,6 +122,12 @@ export default function PlanSettings({
                             <span className="ml-1 text-[10px] text-green-600 font-bold">お得!</span>
                         </button>
                     </div>
+                    {currentPlan !== 'FREE' && (
+                        <Button variant="outline" size="sm" onClick={handlePortal} className="hidden sm:flex items-center gap-1">
+                            <CreditCard className="h-4 w-4" />
+                            支払い情報の管理
+                        </Button>
+                    )}
                     <div className="text-xs text-gray-500 hidden sm:block">
                         現在のプラン: <span className="font-bold text-indigo-600">{currentPlan}</span>
                     </div>

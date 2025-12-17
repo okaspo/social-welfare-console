@@ -9,13 +9,13 @@ import {
     Settings,
     LogOut,
     ShieldCheck,
-    Building2
+    Building2,
+    Coffee,
+    Coins
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/lib/actions/auth'
-
-// ... existing imports ...
 
 // Sidebar Item Component
 function SidebarItem({ href, icon: Icon, label, active = false }: { href: string; icon: any; label: string; active?: boolean }) {
@@ -44,6 +44,7 @@ export default async function DashboardLayout({
     let corporationName = '社会福祉法人 〇〇会'
     let userInitials = 'AD'
     let organizationPlan: string | null = null
+    let isPaymentFailed = false
 
     if (user) {
         const { data: profile } = await supabase
@@ -60,16 +61,14 @@ export default async function DashboardLayout({
             .eq('id', user.id)
             .single()
 
-        if (profile?.organization) {
-            const org = Array.isArray(profile.organization) ? profile.organization[0] : profile.organization
-            // Use organization name if available
-            if (org?.name) {
-                corporationName = org.name
-            } else if (profile?.corporation_name) {
-                corporationName = profile.corporation_name
-            }
+        const org = profile?.organization
+        if (org) {
+            corporationName = org.name || corporationName
             organizationPlan = (org as any)?.plan
         }
+
+        const subscriptionStatus = (org as any)?.subscription_status
+        isPaymentFailed = subscriptionStatus === 'past_due' || subscriptionStatus === 'incomplete_expired'
 
         if (profile?.full_name) {
             // Simple logic to get first 2 chars or specific initials if needed. 
@@ -82,25 +81,40 @@ export default async function DashboardLayout({
         <div className="flex min-h-screen bg-white">
             {/* Sidebar */}
             <aside className="w-64 border-r border-gray-100 flex flex-col bg-white shadow-sm">
+
+                {/* ... existing sidebar content ... */}
                 <div className="p-6 h-16 flex items-center border-b border-gray-50">
                     <span className="font-bold text-lg text-gray-900 tracking-tight">S級AI事務局 葵さん</span>
                 </div>
 
-                <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                    <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" active={true} />
-                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="葵さん" active={false} />
-                    <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
-                    <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
+                <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+                    {/* Group 1: 運営 (Daily) */}
+                    <div className="space-y-1">
+                        <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">運営 (Daily)</div>
+                        <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" active={true} />
+                        <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
+                        <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="葵さん (フル画面)" />
+                        <SidebarItem href="/dashboard/subsidies" icon={Coins} label="おすすめ助成金" />
+                        <SidebarItem href="/dashboard/break-room" icon={Coffee} label="休憩室" />
+                    </div>
 
+                    {/* Group 2: 組織 (Governance) */}
+                    <div className="space-y-1">
+                        <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">組織 (Governance)</div>
+                        <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
+                        <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
+                        <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
+                    </div>
 
-                    <SidebarItem href="/dashboard/documents/new" icon={FileText} label="議案書の作成" />
-                    <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
-                    <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
-                    <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
+                    {/* Group 3: 設定 (System) */}
+                    <div className="space-y-1">
+                        <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">設定 (System)</div>
+                        <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
+                        <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
+                    </div>
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50/30">
-                    <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
                     <form action={logout}>
                         <button
                             type="submit"
@@ -115,15 +129,33 @@ export default async function DashboardLayout({
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-white to-gray-50/30">
+
+                {/* GLOBAL ALERT BAR */}
+                {isPaymentFailed && (
+                    <div className="bg-red-600 text-white px-6 py-3 flex items-center justify-between shadow-md relative z-20">
+                        <div className="flex items-center gap-2 text-sm font-bold">
+                            <ShieldCheck className="h-5 w-5" />
+                            <span>決済が完了していません。サービスが停止する前に、お支払い情報の更新をお願いします。</span>
+                        </div>
+                        <Link
+                            href="/dashboard/settings/billing"
+                            className="bg-white text-red-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-red-50 transition-colors"
+                        >
+                            更新する
+                        </Link>
+                    </div>
+                )}
+
                 {/* Header */}
+
                 <header className="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                     <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
                         {corporationName}
                         {organizationPlan && (
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${organizationPlan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                            <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold border ${organizationPlan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                 organizationPlan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                     'bg-blue-50 text-blue-700 border-blue-100'
-                                }`}>
+                                } `}>
                                 {organizationPlan}
                             </span>
                         )}

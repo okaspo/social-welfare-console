@@ -6,6 +6,8 @@ import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, Al
 import { processUploadedFile } from '@/lib/actions/document-processing'
 import { createClient } from '@/lib/supabase/client'
 import { usePrecisionCheck, type PrecisionCheckResult } from '@/hooks/use-precision-check'
+import { PlanGate } from '@/components/common/plan-gate'
+import { useAssistantAvatar } from '@/lib/hooks/use-assistant-avatar'
 
 // Define explicit Message type
 interface Message {
@@ -35,6 +37,7 @@ export default function AoiChat() {
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
 
     const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
+    const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -131,20 +134,6 @@ export default function AoiChat() {
                 if (done) break
 
                 const chunk = decoder.decode(value, { stream: true })
-                // Simple stream handling (assuming raw text or simple format for now)
-                // If the API returns Vercel AI SDK format (0:"text"), it might need parsing.
-                // But generally /api/chat with streamText returns raw tokens if configured simply,
-                // or Vercel protocol strings.
-
-                // Let's assume standard text stream for robust display, but check for Vercel format.
-                // Vercel protocol often looks like '0:"Hello"\n0:"World"'
-                // For now, let's just append the chunk. If it looks garbage (like 0:".."), we'll refine the parser.
-                // Actually, if we use streamText simply, it streams raw text usually unless using Data Stream Protocol.
-
-                // Temporary robust logic: Accumulate raw text. 
-                // If it contains protocol headers, the user will see them, but at least SOMETHING appears.
-                // We will clean it up if needed.
-
                 aiContent += chunk
 
                 setMessages(prev => prev.map(msg =>
@@ -225,11 +214,12 @@ export default function AoiChat() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
             {/* Chat Window */}
             {isOpen && (
                 <div
-                    className={`mb-4 w-72 md:w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-200 relative ${isDragging ? 'ring-4 ring-blue-400' : ''}`}
+                    className={`mb-4 w-80 md:w-96 bg-[#F5F5F5] rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-200 relative ${isDragging ? 'ring-4 ring-blue-400' : ''}`}
+                    style={{ fontFamily: '"Noto Sans JP", sans-serif' }}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
@@ -243,101 +233,142 @@ export default function AoiChat() {
                         </div>
                     )}
 
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-3 flex items-center justify-between text-white shadow-sm">
+                    {/* Header - Sophisticated Adult Theme (#607D8B) */}
+                    <div className="bg-[#607D8B] p-4 flex items-center justify-between text-white shadow-md">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/15 rounded-xl backdrop-blur-sm">
-                                <Bot className="h-5 w-5" />
+                            <div className="relative">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm overflow-hidden border border-white/30 flex items-center justify-center">
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Bot className="h-6 w-6 text-white" />
+                                    )}
+                                </div>
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-base">葵さん</h3>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-sm"></span>
-                                    <span className="text-xs text-gray-200">オンライン</span>
-                                </div>
+                                <h3 className="font-bold text-base tracking-wide">葵さん</h3>
+                                <p className="text-xs text-blue-50/80 font-light">AI Legal Partner</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                            <div className="mr-1">
+                                <PlanGate featureKey="long_term_memory" minPlan="standard">
+                                    <button
+                                        className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
+                                        title="会話をピン留め (長期記憶)"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pin"><line x1="12" x2="12" y1="17" y2="22" /><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" /></svg>
+                                    </button>
+                                </PlanGate>
+                            </div>
                             <button
                                 onClick={handleSaveToKnowledge}
                                 disabled={isSaving || messages.length <= 1}
-                                className="p-2 hover:bg-white/15 rounded-lg text-gray-200 hover:text-white transition-all disabled:opacity-30"
+                                className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all disabled:opacity-30"
                                 title="会話をナレッジとして保存"
                             >
                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             </button>
-                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/15 rounded-lg text-gray-200 hover:text-white transition-all">
+                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
                     </div>
 
                     {/* Messages */}
-                    <div className="h-72 overflow-y-auto p-4 bg-gradient-to-b from-gray-50/30 to-white space-y-4">
+                    <div className="h-80 overflow-y-auto p-4 space-y-6 bg-[#F5F5F5]">
                         {messages.map((msg) => (
-                            <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className="flex items-start gap-2 max-w-[85%]">
-                                    <div
-                                        className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user'
-                                            ? 'bg-gradient-to-br from-gray-800 to-gray-700 text-white rounded-br-md'
-                                            : 'bg-white border border-gray-100 text-gray-800 rounded-bl-md'
-                                            }`}
-                                    >
-                                        {msg.content}
-                                    </div>
+                            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`flex items-end gap-2 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
 
-                                    {/* Precision Check Button (AI messages only) */}
-                                    {msg.role === 'assistant' && msg.id !== 'welcome' && (
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    setActiveMessageId(msg.id);
-                                                    await checkMessage(msg.id, messages);
-                                                    setShowPrecisionResult(true);
-                                                } catch (error: any) {
-                                                    alert('精密チェックに失敗しました: ' + error.message);
-                                                }
-                                            }}
-                                            disabled={isChecking && activeMessageId === msg.id}
-                                            className="mt-1 p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
-                                            title="🔍 o1で精密チェック"
-                                        >
-                                            {isChecking && activeMessageId === msg.id ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                    {/* Avatar for Assistant Messages */}
+                                    {msg.role === 'assistant' && (
+                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-white flex-shrink-0 mb-1">
+                                            {avatarUrl ? (
+                                                <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                                             ) : (
-                                                <Search className="h-4 w-4" />
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                                    <Bot className="h-5 w-5 text-gray-400" />
+                                                </div>
                                             )}
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Precision Check Result */}
-                                {msg.precisionCheckResult && (
-                                    <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs max-w-[85%]">
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                            {msg.precisionCheckResult.verified ? (
-                                                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                                            ) : (
-                                                <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
-                                            )}
-                                            <span className="font-semibold text-gray-700">
-                                                精密チェック結果 (o1)
-                                            </span>
                                         </div>
-                                        <p className="text-gray-600 leading-relaxed">
-                                            {msg.precisionCheckResult.explanation}
-                                        </p>
+                                    )}
+
+                                    <div className="flex flex-col">
+                                        <div
+                                            className={`px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user'
+                                                    ? 'bg-[#607D8B] text-white rounded-2xl rounded-tr-none'
+                                                    : 'bg-white text-gray-800 rounded-2xl rounded-tl-none border border-gray-100'
+                                                }`}
+                                        >
+                                            {msg.content}
+                                        </div>
+
+                                        {/* Precision Check Button (AI messages only) */}
+                                        {msg.role === 'assistant' && msg.id !== 'welcome' && (
+                                            <div className="flex mt-1">
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            setActiveMessageId(msg.id);
+                                                            await checkMessage(msg.id, messages);
+                                                            setShowPrecisionResult(true);
+                                                        } catch (error: any) {
+                                                            alert('精密チェックに失敗しました: ' + error.message);
+                                                        }
+                                                    }}
+                                                    disabled={isChecking && activeMessageId === msg.id}
+                                                    className="text-xs text-gray-400 hover:text-[#607D8B] flex items-center gap-1 transition-colors disabled:opacity-50 ml-1"
+                                                >
+                                                    {isChecking && activeMessageId === msg.id ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                    ) : (
+                                                        <Search className="h-3 w-3" />
+                                                    )}
+                                                    精密チェック
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Precision Check Result */}
+                                        {msg.precisionCheckResult && (
+                                            <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    {msg.precisionCheckResult.verified ? (
+                                                        <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                                                    ) : (
+                                                        <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
+                                                    )}
+                                                    <span className="font-semibold text-gray-700">
+                                                        精密チェック結果 (o1)
+                                                    </span>
+                                                </div>
+                                                <p className="text-gray-600 leading-relaxed">
+                                                    {msg.precisionCheckResult.explanation}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         ))}
                         {isLoading && (
-                            <div className="flex justify-start">
-                                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                            <div className="flex justify-start items-end gap-2">
+                                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-white flex-shrink-0 mb-1">
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                            <Bot className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
                                     <div className="flex gap-1.5">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
                                     </div>
                                 </div>
                             </div>
@@ -345,15 +376,15 @@ export default function AoiChat() {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input */}
-                    <form onSubmit={onFormSubmit} className="p-3 bg-white border-t border-gray-100 shadow-inner">
+                    {/* Input Area */}
+                    <form onSubmit={onFormSubmit} className="p-3 bg-white border-t border-gray-100">
                         <div className="relative flex gap-2">
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 hover:text-gray-800 transition-all"
+                                className="p-2.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-100 transition-all"
                             >
-                                <Paperclip className="h-4 w-4" />
+                                <Paperclip className="h-5 w-5" />
                             </button>
                             <input
                                 type="file"
@@ -367,32 +398,38 @@ export default function AoiChat() {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="質問や情報を入力..."
-                                className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent transition-all placeholder:text-gray-400"
+                                placeholder="質問を入力..."
+                                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#607D8B] focus:border-[#607D8B] transition-all placeholder:text-gray-400"
                             />
                             <button
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
-                                className="p-3 bg-gradient-to-r from-gray-800 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                className="p-2.5 bg-[#607D8B] text-white rounded-lg hover:bg-[#546E7A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >
-                                <Send className="h-4 w-4" />
+                                <Send className="h-5 w-5" />
                             </button>
                         </div>
                     </form>
                 </div>
             )}
 
-            {/* Toggle Button */}
+            {/* Toggle Button - Sophisticated Adult Theme */}
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="group flex items-center gap-3 bg-gradient-to-r from-gray-800 to-gray-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                    className="group flex items-center gap-3 bg-[#607D8B] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
                     <div className="relative">
-                        <Bot className="h-6 w-6" />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full shadow-sm"></span>
+                        <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center overflow-hidden">
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
+                            ) : (
+                                <Bot className="h-5 w-5" />
+                            )}
+                        </div>
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
                     </div>
-                    <span className="font-bold pr-1">葵さんに質問</span>
+                    <span className="font-bold tracking-wide text-sm pr-1">AOI CHAT</span>
                 </button>
             )}
         </div>

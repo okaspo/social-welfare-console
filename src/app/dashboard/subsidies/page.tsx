@@ -1,296 +1,123 @@
-// Subsidy Matcher Dashboard Page
-// Display AI-matched subsidies for user's organization
+import { createClient } from '@/lib/supabase/server';
+import { refreshMatches } from './actions';
+import { Coins, RefreshCw, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
 
-'use client';
+export default async function SubsidiesPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { matchSubsidies, updateSubsidyStatus } from '@/lib/subsidies/matcher';
-import { Sparkles, TrendingUp, Calendar, Building2, Loader2, CheckCircle, XCircle, Eye } from 'lucide-react';
-import PlanGate from '@/components/billing/plan-gate';
-import { useCurrentPlan } from '@/hooks/use-current-plan';
+    if (!user) return <div>Unauthorized</div>;
 
-interface SubsidyMatch {
-    subsidy_id: string;
-    title: string;
-    provider: string;
-    amount_min: number;
-    amount_max: number;
-    match_score: number;
-    match_reason: string;
-    deadline: string;
-    status?: string;
-}
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
 
-export default function SubsidyMatcherPage() {
-    const { plan, loading: planLoading } = useCurrentPlan();
-    const [matches, setMatches] = useState<SubsidyMatch[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [matching, setMatching] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const orgId = profile?.organization_id;
 
-    useEffect(() => {
-        loadMatches();
-    }, []);
+    if (!orgId) return <div>組織情報が見つかりません</div>;
 
-    async function loadMatches() {
-        try {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                setError('ログインが必要です');
-                return;
-            }
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('organization_id')
-                .eq('id', user.id)
-                .single();
-
-            if (!profile?.organization_id) {
-                setError('組織が見つかりません');
-                return;
-            }
-
-            // Load existing matches
-            const { data: existingMatches } = await supabase
-                .from('organization_subsidies')
-                .select(`
-          subsidy_id,
-          match_score,
-          match_reason,
-          status,
-          subsidies (
-            title,
-            provider,
-            amount_min,
-            amount_max,
-            application_period_end
-          )
+    // Fetch Matches
+    const { data: matches } = await supabase
+        .from('organization_subsidies')
+        .select(`
+            match_score,
+            status,
+            subsidy:subsidies (
+                title,
+                provider,
+                amount_min,
+                amount_max,
+                source_url,
+                application_period_end
+            )
         `)
-                .eq('organization_id', profile.organization_id)
-                .order('match_score', { ascending: false });
+        .eq('organization_id', orgId)
+        .order('match_score', { ascending: false });
 
-            if (existingMatches) {
-                const formatted = existingMatches.map((m: any) => ({
-                    subsidy_id: m.subsidy_id,
-                    // @ts-ignore
-                    title: m.subsidies.title,
-                    // @ts-ignore
-                    provider: m.subsidies.provider,
-                    // @ts-ignore
-                    amount_min: m.subsidies.amount_min,
-                    // @ts-ignore
-                    amount_max: m.subsidies.amount_max,
-                    match_score: m.match_score,
-                    match_reason: m.match_reason,
-                    // @ts-ignore
-                    deadline: m.subsidies.application_period_end,
-                    status: m.status,
-                }));
-                setMatches(formatted);
-            }
-        } catch (e: any) {
-            setError(e.message);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function runMatcher() {
-        setMatching(true);
-        setError(null);
-
-        try {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) return;
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('organization_id')
-                .eq('id', user.id)
-                .single();
-
-            if (!profile?.organization_id) return;
-
-            const result = await matchSubsidies(profile.organization_id);
-
-            if (result.error) {
-                setError(result.error);
-            } else {
-                setMatches(result.matches);
-            }
-        } catch (e: any) {
-            setError(e.message);
-        } finally {
-            setMatching(false);
-        }
-    }
-
-    async function handleStatusChange(subsidyId: string, status: string) {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('organization_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile?.organization_id) return;
-
-        await updateSubsidyStatus(profile.organization_id, subsidyId, status as any);
-        loadMatches();
-    }
-
-    if (planLoading || loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-        );
-    }
+    const hasMatches = matches && matches.length > 0;
 
     return (
-        <PlanGate feature="助成金AIマッチング" requiredPlan="pro" currentPlan={plan}>
-            <div className="p-6 max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Sparkles className="h-8 w-8 text-purple-600" />
-                        <h1 className="text-3xl font-bold text-gray-900">助成金AIマッチング</h1>
-                    </div>
-                    <p className="text-gray-600">
-                        AIが貴法人に最適な助成金・補助金を自動で見つけ出します
+        <div className="max-w-5xl mx-auto space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <Coins className="h-6 w-6 text-yellow-500" />
+                        おすすめ助成金
+                    </h1>
+                    <p className="text-gray-500 mt-1">
+                        あなたの法人にマッチする助成金をAIが厳選しました。
                     </p>
                 </div>
-
-                {/* Action Button */}
-                <div className="mb-6">
-                    <button
-                        onClick={runMatcher}
-                        disabled={matching}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {matching ? (
-                            <>
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                AIが分析中...
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="h-5 w-5" />
-                                最新の助成金を検索
-                            </>
-                        )}
+                <form action={refreshMatches}>
+                    <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-medium">
+                        <RefreshCw className="h-4 w-4" />
+                        AIマッチング実行
                     </button>
+                </form>
+            </div>
+
+            {!hasMatches ? (
+                <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <Coins className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900">まだマッチング結果がありません</h3>
+                    <p className="text-gray-500 mb-6">「AIマッチング実行」ボタンを押して、適合する助成金を探してみましょう。</p>
                 </div>
-
-                {/* Error */}
-                {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                        {error}
-                    </div>
-                )}
-
-                {/* Matches */}
-                {matches.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">
-                            「最新の助成金を検索」ボタンを押して、マッチングを開始してください
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {matches.map((match) => (
-                            <div
-                                key={match.subsidy_id}
-                                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-                            >
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                            {match.title}
-                                        </h3>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <span className="flex items-center gap-1">
-                                                <Building2 className="h-4 w-4" />
-                                                {match.provider}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Calendar className="h-4 w-4" />
-                                                締切: {new Date(match.deadline).toLocaleDateString('ja-JP')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-bold text-purple-600">
-                                            {Math.round(match.match_score * 100)}%
-                                        </div>
-                                        <div className="text-xs text-gray-500">適合度</div>
-                                    </div>
+            ) : (
+                <div className="grid gap-6">
+                    {matches.map((match: any, index: number) => (
+                        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            {/* Match Score Badge */}
+                            <div className="absolute top-0 right-0 p-4">
+                                <div className={`flex items-center gap-1 text-sm font-bold px-3 py-1 rounded-full ${match.match_score >= 0.8 ? 'bg-green-100 text-green-700' :
+                                        match.match_score >= 0.5 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                                    }`}>
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    マッチ度: {Math.round(match.match_score * 100)}%
                                 </div>
+                            </div>
 
-                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <p className="text-sm text-gray-700 flex items-start gap-2">
-                                        <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        <span>{match.match_reason}</span>
-                                    </p>
+                            <div className="pr-32">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                                        {match.subsidy.provider}
+                                    </span>
                                 </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                                    {match.subsidy.title}
+                                </h3>
 
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <TrendingUp className="h-4 w-4 text-green-600" />
-                                        <span className="font-semibold text-gray-700">
-                                            ¥{match.amount_min.toLocaleString('ja-JP')}
-                                            {' ~ '}
-                                            ¥{match.amount_max.toLocaleString('ja-JP')}
+                                <div className="flex items-center gap-6 text-sm text-gray-600 mt-4">
+                                    <div className="flex items-center gap-1">
+                                        <Coins className="h-4 w-4 text-gray-400" />
+                                        <span>
+                                            {(match.subsidy.amount_min / 10000).toLocaleString()}万 ~ {(match.subsidy.amount_max / 10000).toLocaleString()}万円
                                         </span>
                                     </div>
-
-                                    <div className="flex items-center gap-2">
-                                        {!match.status || match.status === 'matched' ? (
-                                            <>
-                                                <button
-                                                    onClick={() => handleStatusChange(match.subsidy_id, 'reviewing')}
-                                                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                    詳細確認
-                                                </button>
-                                                <button
-                                                    onClick={() => handleStatusChange(match.subsidy_id, 'ignored')}
-                                                    className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
-                                                >
-                                                    対象外
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <span className={`px-4 py-2 text-sm font-semibold rounded-lg ${match.status === 'applied' ? 'bg-yellow-100 text-yellow-800' :
-                                                    match.status === 'granted' ? 'bg-green-100 text-green-800' :
-                                                        match.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {match.status === 'reviewing' && '確認中'}
-                                                {match.status === 'applied' && '申請済み'}
-                                                {match.status === 'granted' && '✅ 受給決定'}
-                                                {match.status === 'rejected' && '不採択'}
-                                                {match.status === 'ignored' && '対象外'}
-                                            </span>
-                                        )}
+                                    <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4 text-gray-400" />
+                                        <span>
+                                            締切: {match.subsidy.application_period_end}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </PlanGate>
+
+                            <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-end gap-3">
+                                <a
+                                    href={match.subsidy.source_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                                >
+                                    公式サイトを見る <ExternalLink className="h-3 w-3" />
+                                </a>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }
