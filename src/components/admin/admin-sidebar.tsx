@@ -13,7 +13,15 @@ import {
 } from 'lucide-react'
 import { logout } from '@/lib/actions/auth'
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+    currentUser?: {
+        email: string
+        role: string
+        name?: string
+    }
+}
+
+export function AdminSidebar({ currentUser }: AdminSidebarProps) {
     const pathname = usePathname()
 
     const isActive = (path: string) => pathname === path
@@ -84,9 +92,21 @@ export function AdminSidebar() {
                 </Link>
             </nav>
 
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+                {currentUser && (
+                    <div className="mb-4 px-4 py-2 bg-slate-800 rounded-lg">
+                        <div className="text-xs text-slate-400 font-medium">Logged in as</div>
+                        <div className="text-sm font-bold truncate" title={currentUser.email}>
+                            {currentUser.email}
+                        </div>
+                        <div className="mt-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-900 text-indigo-200 border border-indigo-700">
+                            {currentUser.role === 'super_admin' ? 'Super Admin' : 'Editor'}
+                        </div>
+                    </div>
+                )}
+
                 <form action={logout}>
-                    <button type="submit" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white transition-colors w-full text-left">
+                    <button type="submit" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white transition-colors w-full text-left rounded-lg hover:bg-slate-800">
                         <LogOut className="h-4 w-4" />
                         ログアウト
                     </button>
