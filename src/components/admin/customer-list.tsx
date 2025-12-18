@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { CustomerOrg, updateOrganizationAdmin } from '@/lib/actions/admin-customers'
 import { Button } from '@/components/ui/button'
-import { Search, Building2, ExternalLink, Edit2, Loader2, User, Mail, Calendar } from 'lucide-react'
+import { Search, Building2, ExternalLink, Edit2, Loader2, User, Mail, Calendar, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
