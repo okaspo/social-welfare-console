@@ -1,4 +1,4 @@
-import { getCustomerOrgs } from '@/lib/actions/admin-customers'
+import { getAdminCustomers } from '@/lib/actions/admin-customers'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CustomerList from '@/components/admin/customer-list'
@@ -23,7 +23,7 @@ export default async function AdminCustomersPage() {
         redirect('/dashboard')
     }
 
-    const orgs = await getCustomerOrgs()
+    const orgs = await getAdminCustomers()
 
     return (
         <div className="space-y-6">
