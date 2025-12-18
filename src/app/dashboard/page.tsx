@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { DailyMutter } from '@/components/dashboard/daily-mutter';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 function TodoCard({ title, due, type, href }: { title: string; due: string; type: 'urgent' | 'info'; href: string }) {
     return (
@@ -37,7 +39,88 @@ function TodoCard({ title, due, type, href }: { title: string; due: string; type
     )
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    // Get organization_id
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id, full_name')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.organization_id) {
+        // Handle case where user has no org (shouldn't happen in normal flow)
+        return <div>Organization not found</div>
+    }
+
+    const orgId = profile.organization_id
+
+    // Fetch dashboard data in parallel
+    const now = new Date().toISOString()
+    const nextYear = new Date()
+    nextYear.setFullYear(nextYear.getFullYear() + 1)
+
+    const [eventsRes, officersRes, tasksRes] = await Promise.all([
+        // 1. Next Meeting
+        supabase
+            .from('organization_events')
+            .select('title, event_date')
+            .eq('organization_id', orgId)
+            .gte('event_date', now)
+            .order('event_date', { ascending: true })
+            .limit(1)
+            .single(),
+
+        // 2. Officers Term expiring this year (assuming fiscal year end is March 31, but logic simplified to "this year" for now)
+        // Or better: Logic for "candidates for re-election" -> officers whose term_end is approaching.
+        // Let's count officers whose term_end is within the next 365 days.
+        supabase
+            .from('officers')
+            .select('id, term_end', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .gte('term_end', now)
+            .lte('term_end', nextYear.toISOString()),
+
+        // 3. Pending Tasks (Draft documents)
+        supabase
+            .from('private_documents') // Renamed from documents
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .eq('status', 'DRAFT')
+    ])
+
+    // Process Data
+    // Next Meeting
+    let nextMeetingTitle = "予定なし"
+    let nextMeetingDue = "登録してください"
+    let meetingType: 'urgent' | 'info' = 'info'
+
+    if (eventsRes.data) {
+        const eventDate = new Date(eventsRes.data.event_date)
+        const today = new Date()
+        const diffTime = Math.abs(eventDate.getTime() - today.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        nextMeetingTitle = eventsRes.data.title
+        nextMeetingDue = `${eventDate.getMonth() + 1}月${eventDate.getDate()}日 (残り${diffDays}日)`
+        if (diffDays <= 7) meetingType = 'urgent'
+    }
+
+    // Officers expring
+    const expiringOfficerCount = officersRes.count || 0
+    const officerMsg = expiringOfficerCount > 0 ? "今年度改選対象者がいます" : "当面改選はありません"
+
+    // Pending Tasks
+    const pendingTaskCount = tasksRes.count || 0
+    const taskMsg = pendingTaskCount > 0 ? "未完了のドキュメント" : "すべて完了しています"
+
+
     return (
         <div className="space-y-10 max-w-4xl mx-auto pb-20">
             {/* 1. Daily Engagement Widget */}
@@ -48,7 +131,7 @@ export default function DashboardPage() {
             {/* 2. Main Greeting */}
             <div className="text-center space-y-6">
                 <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-                    こんにちは、葵です。
+                    こんにちは、{profile.full_name?.split(' ')[0] || 'ゲスト'}さん。
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                     本日の業務をサポートします。招集通知の作成、議事録のチェック、<br />
@@ -79,21 +162,21 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <TodoCard
-                        title="定時評議員会の招集通知発送"
-                        due="期限: あと3日"
-                        type="urgent"
+                        title={nextMeetingTitle}
+                        due={nextMeetingDue}
+                        type={meetingType}
                         href="/dashboard/meetings"
                     />
                     <TodoCard
-                        title="理事会議事録の署名確認"
-                        due="保留中: 1件"
-                        type="info"
+                        title={`未処理タスク: ${pendingTaskCount}件`}
+                        due={taskMsg}
+                        type={pendingTaskCount > 0 ? 'urgent' : 'info'}
                         href="/dashboard/documents"
                     />
                     <TodoCard
-                        title="役員任期満了の事前確認"
-                        due="6月改選"
-                        type="info"
+                        title={`役員任期満了: ${expiringOfficerCount}名`}
+                        due={officerMsg}
+                        type={expiringOfficerCount > 0 ? 'info' : 'info'} // Usually info unless very close
                         href="/dashboard/officers"
                     />
                 </div>

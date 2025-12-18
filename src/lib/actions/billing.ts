@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { stripe } from "@/lib/stripe"
+import { headers } from "next/headers"
 
 export async function changePlan(priceId: string) {
     const supabase = await createClient()
@@ -13,61 +15,110 @@ export async function changePlan(priceId: string) {
     // 2. Get User's Organization
     const { data: profile } = await supabase
         .from('profiles')
-        .select('organization_id')
+        .select('organization_id, organization:organizations(id, name, email, stripe_customer_id)')
         .eq('id', user.id)
         .single()
 
     if (!profile?.organization_id) return { error: 'No organization linked to user' }
 
-    // 3. Verify Price & Get Plan
-    const { data: priceData, error: priceError } = await supabase
-        .from('plan_prices')
-        .select('*, plan_limits(name)')
-        .eq('id', priceId)
-        .single()
+    // Type assertion for nested join if needed, or trust supabase types
+    const org = profile.organization as any;
 
-    if (priceError || !priceData) {
-        console.error("Price lookup error:", priceError)
-        return { error: 'Invalid Price ID requested' }
+    // 3. Get or Create Stripe Customer
+    let customerId = org.stripe_customer_id;
+
+    if (!customerId) {
+        const customer = await stripe.customers.create({
+            email: user.email, // Use user email or org email
+            name: org.name,
+            metadata: {
+                organization_id: org.id
+            }
+        });
+        customerId = customer.id;
+
+        // Save customer ID
+        await supabase
+            .from('organizations')
+            .update({ stripe_customer_id: customerId })
+            .eq('id', org.id);
     }
 
-    // 4. Update Organization Plan
-    // In a real system, we would create a Stripe subscription here.
-    // For this prototype, we directly update the plan_id on the organization.
-    const { error: updateError } = await supabase
+    // 4. Create Checkout Session
+    try {
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            mode: 'subscription',
+            payment_method_types: ['card', 'customer_balance'],
+            payment_method_options: {
+                customer_balance: {
+                    funding_type: 'bank_transfer',
+                    bank_transfer: {
+                        type: 'jp_bank_transfer',
+                    },
+                },
+            },
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?canceled=true`,
+            metadata: {
+                organization_id: org.id
+            },
+            client_reference_id: org.id,
+        });
+
+        if (!session.url) {
+            throw new Error('No session URL returned');
+        }
+
+        // Return URL for client-side redirection
+        return {
+            success: true,
+            url: session.url
+        }
+
+    } catch (err: any) {
+        console.error('Stripe Checkout Error:', err);
+        return { error: `Failed to start checkout: ${err.message}` };
+    }
+}
+
+export async function cancelSubscription() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.organization_id) return { error: 'No organization linked' }
+
+    // In real Stripe implementation: stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+    // Here we just update DB
+    const { error } = await supabase
         .from('organizations')
         .update({
-            plan_id: priceData.plan_id,
+            cancel_at_period_end: true,
             updated_at: new Date().toISOString()
         })
         .eq('id', profile.organization_id)
 
-    if (updateError) {
-        console.error("Plan update failed:", updateError)
-        return { error: 'Failed to update organization plan' }
-    }
+    if (error) return { error: error.message }
 
-    // 5. Increment Campaign Usage (if applicable)
-    if (priceData.campaign_code) {
-        const { error: rpcError } = await supabase.rpc('increment_campaign_usage', {
-            code_input: priceData.campaign_code
-        })
-
-        if (rpcError) {
-            console.error("Failed to increment campaign usage:", rpcError)
-            // Non-critical error, proceed
-        }
-    }
-
-    revalidatePath('/dashboard/settings') // covers /dashboard/settings/billing if nested layout
     revalidatePath('/dashboard/settings/billing')
-    revalidatePath('/dashboard') // global nav might change
-
-    return {
-        success: true,
-        planName: priceData.plan_limits?.name || priceData.plan_id
-    }
+    return { success: true }
 }
+
 
 export async function managePrice(formData: FormData) {
     const supabase = await createClient()

@@ -9,6 +9,7 @@ type UserData = {
     email?: string
     role: string
     organization: {
+        id: string
         name: string
         plan: string
     } | null
@@ -38,6 +39,45 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
             alert('送信失敗: ' + res.error)
         } else {
             alert('リセットメールを送信しました')
+        }
+    }
+
+    const handlePlanChange = async (orgId: string, currentPlan: string) => {
+        const newPlan = prompt('新しいプランを入力してください (free, standard, pro):', currentPlan || 'free')
+        if (!newPlan || newPlan === currentPlan) return
+
+        if (!['free', 'standard', 'pro'].includes(newPlan.toLowerCase())) {
+            alert('無効なプラン名です')
+            return
+        }
+
+        if (!confirm(`組織ID: ${orgId} のプランを ${newPlan} に強制変更しますか？`)) return
+
+        setLoadingId(orgId)
+        const { forceUpdatePlan } = await import('@/lib/actions/admin')
+        const res = await forceUpdatePlan(orgId, newPlan.toLowerCase())
+        setLoadingId(null)
+
+        if (res.error) {
+            alert('変更失敗: ' + res.error)
+        } else {
+            alert('プランを変更しました')
+            // Optimistic update or router refresh happens via server action revalidatePath
+        }
+    }
+
+    const handleImpersonate = async (userId: string) => {
+        if (!confirm('このユーザーとしてログインしますか？(現在の管理者セッションは終了します)')) return
+
+        setLoadingId(userId)
+        const { impersonateUser } = await import('@/lib/actions/admin')
+        const res = await impersonateUser(userId)
+        setLoadingId(null)
+
+        if (res.error) {
+            alert('失敗: ' + res.error)
+        } else if (res.url) {
+            window.location.href = res.url
         }
     }
 
@@ -92,24 +132,43 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
                                 {user.organization?.name || '未所属'}
                             </td>
                             <td className="px-6 py-4">
-                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${user.organization?.plan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                    user.organization?.plan === 'STANDARD' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                        user.organization?.plan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                                            'bg-gray-100 text-gray-600 border-gray-200'
-                                    }`}>
-                                    {user.organization?.plan || 'FREE'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${user.organization?.plan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                        user.organization?.plan === 'STANDARD' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                            user.organization?.plan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                                'bg-gray-100 text-gray-600 border-gray-200'
+                                        }`}>
+                                        {user.organization?.plan || 'FREE'}
+                                    </span>
+                                    {user.organization && (
+                                        <button
+                                            onClick={() => handlePlanChange(user.organization!.id, user.organization!.plan)}
+                                            disabled={loadingId === user.organization.id}
+                                            className="text-[10px] text-indigo-600 hover:underline disabled:opacity-50"
+                                        >
+                                            変更
+                                        </button>
+                                    )}
+                                </div>
                             </td>
-                            <td className="px-6 py-4 text-gray-500 text-xs">
+                            <td className="px-6 py-4 text-xs font-mono text-gray-400">
                                 {new Date(user.created_at).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                <button
+                                    onClick={() => handleImpersonate(user.id)}
+                                    disabled={loadingId === user.id}
+                                    className="text-[10px] bg-gray-800 text-white px-2 py-1 rounded hover:bg-gray-700 disabled:opacity-50"
+                                    title="God Mode: Login as User"
+                                >
+                                    Login as
+                                </button>
                                 <button
                                     onClick={() => handlePasswordReset(user.email, user.id)}
                                     disabled={loadingId === user.id}
-                                    className="text-xs border px-2 py-1 rounded hover:bg-gray-50 text-gray-600 disabled:opacity-50"
+                                    className="text-[10px] border px-2 py-1 rounded hover:bg-gray-50 text-gray-600 disabled:opacity-50"
                                 >
-                                    {loadingId === user.id ? '送信中...' : 'PWリセット'}
+                                    PWリセット
                                 </button>
                             </td>
                         </tr>
@@ -117,11 +176,13 @@ export default function UserList({ initialUsers }: { initialUsers: UserData[] })
                 </tbody>
             </table>
 
-            {filteredUsers.length === 0 && (
-                <div className="p-12 text-center text-gray-400 text-sm">
-                    該当するユーザーは見つかりませんでした。
-                </div>
-            )}
-        </div>
+            {
+                filteredUsers.length === 0 && (
+                    <div className="p-12 text-center text-gray-400 text-sm">
+                        該当するユーザーは見つかりませんでした。
+                    </div>
+                )
+            }
+        </div >
     )
 }

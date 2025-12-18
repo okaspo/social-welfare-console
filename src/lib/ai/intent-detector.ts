@@ -38,14 +38,14 @@ export function detectIntent(userMessage: string, conversationContext?: string[]
     const legalKeywords = [
         '法的', '法律', '適法', '違法', '条文', '法令', '規則', '定款',
         '監事', '理事', '評議員', '役員', '兼職', '親族',
-        '監査', 'チェック', '確認', '判定', '適合', '違反',
+        '監査', 'チェック', '確認', '判定', '適合', '違反', '整合性', '矛盾', '抵触',
         '助成金', '補助金', '受給要件', '資格'
     ];
 
     for (const keyword of legalKeywords) {
         if (lower.includes(keyword)) {
             // Check for specific legal check patterns
-            if (lower.includes('適法') || lower.includes('違法') || lower.includes('問題')) {
+            if (lower.includes('適法') || lower.includes('違法') || lower.includes('問題') || lower.includes('矛盾') || lower.includes('整合性')) {
                 return {
                     intent: 'legal_check',
                     confidence: 0.95,

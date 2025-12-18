@@ -69,6 +69,7 @@ export interface Officer {
     dateOfBirth?: string // ISO date format (YYYY-MM-DD)
     occupation?: string
     isRemunerated?: boolean
+    expertise_tags?: string[]
 }
 
 export const MOCK_OFFICERS: Officer[] = [

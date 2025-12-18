@@ -9,32 +9,43 @@ import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import UploadModal from '@/components/articles/upload-modal'
 
-// Mock Plan - Should be dynamic in real app
-const CURRENT_PLAN: PricingPlan = 'STANDARD'
-
 interface Article {
     id: string
     title: string
     category: ArticleCategory
     updated_at: string
-    organization_id: string | null // New field
+    created_at: string
 }
 
-export default function ArticlesPage() {
-
+export default function ArticleListPage() {
     const [search, setSearch] = useState('')
     const [articles, setArticles] = useState<Article[]>([])
     const [loading, setLoading] = useState(true)
+    const [currentPlan, setCurrentPlan] = useState<PricingPlan>('FREE')
     const [isUploadOpen, setIsUploadOpen] = useState(false)
-    const canSearch = canAccess(CURRENT_PLAN, 'archive_search')
+    const canSearch = canAccess(currentPlan, 'archive_search')
     const supabase = createClient()
 
     useEffect(() => {
-        fetchArticles()
+        const init = async () => {
+            setLoading(true)
+
+            // 1. Fetch User Org & Plan
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: profile } = await supabase.from('profiles').select('organization:organizations(plan)').eq('id', user.id).single()
+                if (profile?.organization?.plan) {
+                    setCurrentPlan(profile.organization.plan.toUpperCase() as PricingPlan)
+                }
+            }
+
+            // 2. Fetch Articles
+            await fetchArticles()
+        }
+        init()
     }, [])
 
     const fetchArticles = async () => {
-        setLoading(true)
         const { data, error } = await supabase
             .from('articles')
             .select('*')
@@ -43,7 +54,8 @@ export default function ArticlesPage() {
         if (data) {
             setArticles(data as unknown as Article[])
         }
-        setLoading(false)
+        // setLoading(false) // handled in init
+        if (!data) setLoading(false) // fallback
     }
 
     const filteredArticles = articles.filter(doc =>

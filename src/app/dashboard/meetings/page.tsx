@@ -47,8 +47,32 @@ async function getMeetings() {
     }
 }
 
+// ... imports
+import { checkSubscriptionStatus } from "@/lib/subscription"
+
+// ... getMeetings ...
+
 export default async function MeetingListPage() {
     const meetings = await getMeetings()
+    const supabase = await createClient()
+
+    // Check Subscription Status
+    let readOnly = false
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('organization_id')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.organization_id) {
+            const { status } = await checkSubscriptionStatus(profile.organization_id)
+            if (status === 'canceled') {
+                readOnly = true // Dropped user
+            }
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -58,12 +82,20 @@ export default async function MeetingListPage() {
                     <p className="text-gray-500 text-sm mt-1">
                         理事会・評議員会の開催予定、議事録、出席状況を管理します。
                     </p>
+                    {readOnly && (
+                        <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 text-sm rounded border border-yellow-200 inline-block">
+                            ※ 解約済みのため、新規開催は制限されています。
+                        </div>
+                    )}
                 </div>
-                <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 transition-colors">
-                    <Plus className="h-4 w-4" />
-                    新規開催
-                </button>
+                {!readOnly && (
+                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 transition-colors">
+                        <Plus className="h-4 w-4" />
+                        新規開催
+                    </button>
+                )}
             </div>
+
 
             <div className="bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden">
                 <table className="w-full text-sm text-left">

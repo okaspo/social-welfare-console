@@ -1,36 +1,19 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { streamText, ToolCallPart, ToolResultPart } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { buildSystemPrompt } from '@/lib/prompt-builder';
-import { checkQuota, incrementUsage } from '@/lib/usage-guard';
+import { checkUsageLimit, selectModel, trackUsage, LimitReachedError, TaskComplexity } from '@/lib/ai/cost-control';
 
-export const maxDuration = 30; // 30 seconds max duration
+export const maxDuration = 60; // Increased for o1
 export const dynamic = 'force-dynamic';
-
-// Default Prompt (Fallback)
-// Default Prompt (Fallback - Generic only)
-export const JUDICIAL_SCRIVENER_PROMPT = `
-あなたはAIアシスタントです。
-現在、システムプロンプトの読み込みに失敗している可能性があります。
-管理者に連絡してください。
-`.trim();
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
         const messages = body?.messages || [];
 
-        // Debug: Log request info
-
-
-        const supabase = await createClient(); // Standard Client (User Context)
-
-        // Admin Client for System Config (Bypass RLS for Prompts)
-        const adminSupabase = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabase = await createClient();
 
         // 1. Check Auth & Get User Profile
         const { data: { user } } = await supabase.auth.getUser();
@@ -47,33 +30,32 @@ export async function POST(req: Request) {
                 organization_id,
                 organizations (
                     id,
-                    plan_id
+                    plan_id,
+                    plan
                 )
             `)
             .eq('id', user.id)
             .single();
 
-        const userProfile = profile || { full_name: 'ゲスト', corporation_name: '未設定法人', organization_id: null, organizations: { plan_id: 'free' } };
+        const userProfile = profile || { full_name: 'ゲスト', corporation_name: '未設定法人', organization_id: null, organizations: { plan_id: 'free', plan: 'free' } };
         const orgId = userProfile.organization_id;
         const orgData = userProfile.organizations;
         // @ts-ignore
-        const planId = (Array.isArray(orgData) ? orgData[0]?.plan_id : orgData?.plan_id) || 'free';
+        const plan = (Array.isArray(orgData) ? orgData[0]?.plan : orgData?.plan) || 'free';
 
-        // 2. Quota Check
+        // 2. Cost Control: Check Usage Limit (Initial Check)
         if (orgId) {
-            const quota = await checkQuota(orgId, 'chat');
-            if (!quota.ok) {
-                return new Response(JSON.stringify({ error: quota.message || "Quota Exceeded" }), { status: 403 });
+            try {
+                await checkUsageLimit(orgId);
+            } catch (error: any) {
+                if (error instanceof LimitReachedError) {
+                    return new Response(JSON.stringify({ error: error.message }), { status: 403 });
+                }
+                console.error('Usage check failed:', error);
             }
         }
 
-        // 2. Fetch All Context Data (Parallel)
-        // We use .catch(() => ({ data: null })) pattern or just rely on supabase returning { data, error } without throwing
-        // Supabase select() does not throw by default.
-
-        // 2. Fetch All Context Data (Parallel)
-
-        // Helper to allow conditional execution in Promise.all
+        // 3. Fetch All Context Data (Parallel)
         const fetchIfOrg = (query: any) => userProfile.organization_id ? query : Promise.resolve({ data: [] });
 
         const [knowledgeRes, documentsRes, officersRes, articlesRes] = await Promise.all([
@@ -87,10 +69,6 @@ export async function POST(req: Request) {
                 .order('created_at', { ascending: false })
                 .limit(3)),
 
-            // [System] Custom System Prompt & Persona (Using Admin Client to guarantee access)
-            // adminSupabase.from('system_prompts').select('name, content').in('name', ['default', 'aoi_persona']).eq('is_active', true),
-            // Replaced by buildSystemPrompt below
-
             // [Individual] Officers
             fetchIfOrg(supabase.from('officers').select('name, role, term_end').eq('organization_id', userProfile.organization_id)),
 
@@ -98,11 +76,7 @@ export async function POST(req: Request) {
             fetchIfOrg(supabase.from('articles').select('title').eq('organization_id', userProfile.organization_id).limit(10))
         ]);
 
-
-
-        // 3. Construct Context Strings
-
-        // Common Knowledge
+        // ... Context Construction ...
         let commonKnowledgeText = "";
         if (knowledgeRes.data && knowledgeRes.data.length > 0) {
             commonKnowledgeText = knowledgeRes.data
@@ -110,7 +84,6 @@ export async function POST(req: Request) {
                 .join('\n\n');
         }
 
-        // Individual: Documents
         let documentsText = "";
         if (documentsRes.data && documentsRes.data.length > 0) {
             documentsText = documentsRes.data
@@ -118,47 +91,36 @@ export async function POST(req: Request) {
                 .join('\n\n');
         }
 
-        // Individual: Officers
         const officersText = officersRes.data?.map((o: any) => `- ${o.name} (${o.role}, 任期: ${o.term_end})`).join('\n') || "なし";
-
-        // Individual: Articles
         const articlesList = articlesRes.data?.map((a: any) => `- ${a.title}`).join('\n') || "なし";
 
-        // System Prompt Base & Persona
-        // const activePrompts = sysPromptRes.data || [];
-        // const systemPromptBase = activePrompts.find((p: any) => p.name === 'default')?.content || JUDICIAL_SCRIVENER_PROMPT;
-        // const personaContent = activePrompts.find((p: any) => p.name === 'aoi_persona')?.content || "";
+        const systemPromptFull = await buildSystemPrompt(plan, user.id);
 
-        // Dynamic Prompt Builder (with user context)
-        const systemPromptFull = await buildSystemPrompt(planId, user.id);
-
-
-        // 4. Detect Intent and Select Model
+        // 4. Model Router (Reasoning Integration)
         const lastUserMessage = messages[messages.length - 1]?.content || '';
-        const { detectIntent, mapIntentToFeature } = await import('@/lib/ai/intent-detector');
-        const { getModelForFeature } = await import('@/lib/ai/model-config');
+        const { detectIntent } = await import('@/lib/ai/intent-detector');
 
         const detectedIntent = detectIntent(lastUserMessage);
-        const feature = mapIntentToFeature(detectedIntent.intent);
 
-        // Select appropriate model based on plan and intent
-        let selectedModel = 'gpt-4o-mini'; // Default fallback
-        try {
-            selectedModel = getModelForFeature(feature, planId);
-        } catch (error: any) {
-            // If feature requires higher plan, return error
-            if (error.message.includes('require')) {
-                return new Response(
-                    JSON.stringify({
-                        error: 'この機能はProプラン以上で利用可能です',
-                        requiredFeature: feature
-                    }),
-                    { status: 403 }
-                );
+        let taskComplexity: TaskComplexity = 'simple';
+        if (detectedIntent.suggestedTier === 'advisor') taskComplexity = 'reasoning';
+        else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'complex';
+        // 'processor' maps to 'simple'
+
+        const selectedModel = selectModel(plan, taskComplexity);
+
+        console.log(`[Model Router] Intent: ${detectedIntent.intent} (${detectedIntent.confidence}) -> Plan: ${plan} -> Complexity: ${taskComplexity} -> Model: ${selectedModel}`);
+
+        // Re-check quota including Reasoning Limits
+        if (orgId) {
+            try {
+                await checkUsageLimit(orgId, selectedModel);
+            } catch (error: any) {
+                if (error instanceof LimitReachedError) {
+                    return new Response(JSON.stringify({ error: error.message }), { status: 403 });
+                }
             }
         }
-
-        console.log(`[Model Router] Intent: ${detectedIntent.intent} → Model: ${selectedModel} (Confidence: ${detectedIntent.confidence})`);
 
         // 5. Build Final System Message
         const finalSystemMessage = `
@@ -190,15 +152,21 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 - サービスの機能についての質問（例：「議事録の作り方」）には、【共通知識】に含まれるサービスの仕様に基づいて回答してください。
 `;
 
-
-
-        const { tool } = await import('ai');
+        // const { tool } = await import('ai'); // Already imported
         const { z } = await import('zod');
+
+        // const data = new StreamData();
+        // if (taskComplexity === 'reasoning') {
+        //     data.append({ status: 'thinking' });
+        // }
 
         const result = await streamText({
             model: openai(selectedModel),
             system: finalSystemMessage,
             messages: messages,
+            // onFinish: async () => {
+            //     data.close();
+            // },
             tools: {
                 submit_feedback: tool({
                     description: 'ユーザーからの機能要望、バグ報告、その他フィードバックを運営チームに送信・保存します。',
@@ -206,7 +174,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         category: z.enum(['bug', 'feature', 'other']).describe('フィードバックの分類: バグ(bug), 要望(feature), その他(other)'),
                         content: z.string().describe('フィードバックの具体的な内容')
                     }),
-                    execute: async ({ category, content }) => {
+                    execute: async ({ category, content }: { category: string, content: string }) => {
                         const { error } = await supabase.from('user_feedback').insert({
                             user_id: user.id,
                             category,
@@ -220,30 +188,31 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     }
                 })
             },
-            maxSteps: 3, // Allow tool execution and response
+            maxSteps: 3,
             onFinish: async (completion) => {
-                // Increment Usage
-                if (orgId) await incrementUsage(orgId, 'chat');
-
-                // Log model selection for analytics
-                const adminSupabase = createAdminClient(
-                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                    process.env.SUPABASE_SERVICE_ROLE_KEY!
-                );
-
-                await adminSupabase.from('model_router_logs').insert({
-                    organization_id: orgId,
-                    user_id: user.id,
-                    user_message: lastUserMessage.substring(0, 500),
-                    detected_intent: detectedIntent.intent,
-                    selected_tier: detectedIntent.suggestedTier,
-                    selected_model: selectedModel,
-                    was_overridden: false,
-                });
+                // data.close();
+                if (orgId) {
+                    // Cast usage safely
+                    const usage = completion.usage as any;
+                    await trackUsage(
+                        orgId,
+                        'chat',
+                        selectedModel,
+                        usage.promptTokens || 0,
+                        usage.completionTokens || 0
+                    );
+                }
             }
         });
 
-        return result.toTextStreamResponse();
+        // Use headers to signal reasoning mode
+        const headers = new Headers();
+        if (taskComplexity === 'reasoning') {
+            headers.set('X-Reasoning-Mode', 'true');
+        }
+
+        // return result.toTextStreamResponse({ data });
+        return result.toTextStreamResponse({ headers });
 
     } catch (error: any) {
         console.error("❌ [Chat API] Critical Error:", error);

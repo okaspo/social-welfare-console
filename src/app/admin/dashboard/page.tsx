@@ -43,6 +43,7 @@ export default async function AdminDashboardPage() {
                 role,
                 created_at,
                 organization:organizations (
+                    id,
                     name,
                     plan
                 )
@@ -52,7 +53,7 @@ export default async function AdminDashboardPage() {
         if (error) {
             console.error("Error fetching users:", error)
         }
-        users = profiles || []
+        users = (profiles || []) as any[]
     }
 
     return (
@@ -77,6 +78,74 @@ export default async function AdminDashboardPage() {
                         <span className="block text-xs text-gray-500">今月の新規</span>
                         {/* Mock calculation for demo simplicity */}
                         <span className="font-bold text-xl text-green-600">+{users.filter(u => new Date(u.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Revenue Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl border shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500">推定MRR (月次経常収益)</h3>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-gray-900">
+                            ¥{users.reduce((acc, u) => {
+                                const plan = u.organization?.plan || 'free';
+                                if (plan === 'pro') return acc + 29800;
+                                if (plan === 'standard') return acc + 9800;
+                                return acc;
+                            }, 0).toLocaleString()}
+                        </span>
+                        <span className="text-sm text-gray-500">/月</span>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-xl border shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500">プラン内訳</h3>
+                    <div className="mt-2 space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span>Pro (¥29,800)</span>
+                            <span className="font-bold">{users.filter(u => u.organization?.plan === 'pro').length} 社</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span>Standard (¥9,800)</span>
+                            <span className="font-bold">{users.filter(u => u.organization?.plan === 'standard').length} 社</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-gray-500">
+                            <span>Free</span>
+                            <span>{users.filter(u => (u.organization?.plan || 'free') === 'free').length} 社</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-center">
+                    <div className="text-center">
+                        <span className="block text-xs text-gray-500 mb-1">総ユーザー / 法人数</span>
+                        <span className="font-bold text-2xl">{users.length}</span>
+                        <div className="mt-2 text-xs text-green-600 font-medium bg-green-50 inline-block px-2 py-1 rounded">
+                            今月: +{users.filter(u => new Date(u.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Engagement Tools (Daily Tweets) */}
+            <div className="bg-white p-6 rounded-xl border shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">Engagement Ops</h2>
+                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-bold">Planned</span>
+                </div>
+                <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <h3 className="text-sm font-bold text-gray-700 mb-2">今日のAIツイート (下書き)</h3>
+                        <p className="text-sm text-gray-600 italic">
+                            "【社会福祉法人の皆様へ】2025年のIT導入補助金の公募が開始されました！今年度のポイントは「生産性向上」と「セキュリティ対策」。申請期限は8月末までです。 #社会福祉法人 #補助金 #DX"
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button className="flex-1 bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-sky-600 transition-colors shadow-sm">
+                            Twitterへ投稿
+                        </button>
+                        <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors">
+                            再生成
+                        </button>
                     </div>
                 </div>
             </div>

@@ -3,12 +3,43 @@
 import { useState } from 'react'
 import { Plus, Edit2, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
 import { Officer, MOCK_OFFICERS, OfficerRole, getRoleLabel, getTermLimitYears } from '@/lib/officers/data'
+import NewOfficerDialog from './new-officer-dialog'
+
+// ... imports
 
 interface OfficerListProps {
     initialOfficers: Officer[]
+    readOnly?: boolean
 }
 
-export default function OfficerList({ initialOfficers }: OfficerListProps) {
+function GovernanceAlert({ officers }: { officers: Officer[] }) {
+    const allTags = officers.flatMap(o => o.expertise_tags || [])
+    const hasFinance = allTags.some(t => t.includes('財務') || t.includes('会計') || t.includes('Finance'))
+    const hasLegal = allTags.some(t => t.includes('法務') || t.includes('弁護士') || t.includes('Legal'))
+    const hasWelfare = allTags.some(t => t.includes('福祉') || t.includes('介護') || t.includes('Welfare'))
+
+    if (hasFinance && hasLegal && hasWelfare) return null
+
+    const missing = []
+    if (!hasFinance) missing.push('財務')
+    if (!hasLegal) missing.push('法務')
+    if (!hasWelfare) missing.push('社会福祉')
+
+    return (
+        <div className="mx-4 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div>
+                <h4 className="text-sm font-bold text-yellow-800">ガバナンス・バランス アラート</h4>
+                <p className="text-sm text-yellow-700 mt-1">
+                    現在の役員構成には、以下の専門性が不足している可能性があります:
+                    <span className="font-bold ml-1">{missing.join('・')}</span>
+                </p>
+            </div>
+        </div>
+    )
+}
+
+export default function OfficerList({ initialOfficers, readOnly = false }: OfficerListProps) {
     const [officers, setOfficers] = useState<Officer[]>(initialOfficers)
     const [filter, setFilter] = useState<OfficerRole | 'all'>('all')
 
@@ -69,6 +100,7 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
             {/* Header / Filter */}
             <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex gap-2">
+                    {/* ... filters ... */}
                     <button
                         onClick={() => setFilter('all')}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filter === 'all'
@@ -91,15 +123,18 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
                         </button>
                     ))}
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 transition-colors">
-                    <Plus className="h-4 w-4" />
-                    新規登録
-                </button>
+                {!readOnly && (
+                    <NewOfficerDialog />
+                )}
             </div>
+
+            {/* Governance Balance Alert */}
+            <GovernanceAlert officers={officers} />
 
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
+                    {/* ... thead ... */}
                     <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                         <tr>
                             <th className="px-6 py-3 font-medium">氏名</th>
@@ -107,7 +142,7 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
                             <th className="px-6 py-3 font-medium">任期開始</th>
                             <th className="px-6 py-3 font-medium">任期満了</th>
                             <th className="px-6 py-3 font-medium">状態</th>
-                            <th className="px-6 py-3 font-medium text-right">操作</th>
+                            {!readOnly && <th className="px-6 py-3 font-medium text-right">操作</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -132,23 +167,26 @@ export default function OfficerList({ initialOfficers }: OfficerListProps) {
                                 <td className="px-6 py-4">
                                     {getStatusBadge(officer)}
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <a
-                                            href={`/dashboard/officers/${officer.id}`}
-                                            className="p-2 text-gray-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all"
-                                        >
-                                            <Edit2 className="h-4 w-4" />
-                                        </a>
-                                        <button className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </td>
+                                {!readOnly && (
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <a
+                                                href={`/dashboard/officers/${officer.id}`}
+                                                className="p-2 text-gray-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all"
+                                            >
+                                                <Edit2 className="h-4 w-4" />
+                                            </a>
+                                            <button className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
 
                 {filteredOfficers.length === 0 && (
                     <div className="p-12 text-center text-gray-500">

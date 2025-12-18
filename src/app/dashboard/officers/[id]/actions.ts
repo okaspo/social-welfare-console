@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logAudit } from '@/lib/logger'
 
 export type ConcurrentPost = {
     id: string
@@ -73,4 +74,70 @@ export async function getOfficerDetails(id: string) {
     const supabase = await createClient()
     const { data } = await supabase.from('officers').select('*').eq('id', id).single()
     return data
+}
+
+export async function createOfficer(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    // Get Organization ID
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.organization_id) return { error: 'Organization not found' }
+
+    const rawData = {
+        organization_id: profile.organization_id,
+        name: formData.get('name') as string,
+        role: formData.get('role') as string,
+        term_start_date: formData.get('term_start_date') as string,
+        term_end_date: formData.get('term_end_date') as string,
+        expertise_tags: formData.get('expertise_tags')
+            ? (formData.get('expertise_tags') as string).split(',').map(s => s.trim())
+            : [],
+        email: formData.get('email') as string || null,
+        updated_at: new Date().toISOString()
+    }
+
+    const { error } = await supabase.from('officers').insert(rawData)
+
+    if (error) return { error: error.message }
+
+    // Log Audit
+    await logAudit('OFFICER_CREATE', `Officer created: ${rawData.name} (${rawData.role})`, 'INFO')
+
+    revalidatePath('/dashboard/officers')
+    return { success: true }
+}
+
+export async function updateOfficer(id: string, formData: FormData) {
+    const supabase = await createClient()
+
+    const rawData = {
+        name: formData.get('name') as string,
+        role: formData.get('role') as string,
+        term_start_date: formData.get('term_start_date') as string,
+        term_end_date: formData.get('term_end_date') as string,
+        expertise_tags: formData.get('expertise_tags')
+            ? (formData.get('expertise_tags') as string).split(',').map(s => s.trim())
+            : [],
+        email: formData.get('email') as string || null,
+        updated_at: new Date().toISOString()
+    }
+
+    const { error } = await supabase.from('officers').update(rawData).eq('id', id)
+
+    if (error) return { error: error.message }
+
+    // Log Audit
+    await logAudit('OFFICER_UPDATE', `Officer updated: ${rawData.name}`, 'INFO')
+
+    revalidatePath(`/dashboard/officers/${id}`)
+    revalidatePath('/dashboard/officers')
+    return { success: true }
 }

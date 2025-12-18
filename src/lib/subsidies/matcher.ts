@@ -47,23 +47,12 @@ export async function matchSubsidies(orgId: string) {
 
         // B. Region Check
         if (isEligible) {
-            if (subsidy.target_regions.includes('all')) {
+            if (subsidy.target_regions.includes('nationwide') || subsidy.target_regions.includes('all')) {
                 score += 0.2; // Weak positive for national
             } else if (org.prefecture && subsidy.target_regions.includes(org.prefecture)) {
                 score += 2.0; // Strong positive for regional
             } else {
-                isEligible = false;
-            }
-        }
-
-        // C. Business Type Check
-        if (isEligible) {
-            if (subsidy.target_business_types.includes('all')) {
-                score += 0.1;
-            } else if (org.business_type && subsidy.target_business_types.includes(org.business_type)) {
-                score += 1.5; // Specific industry match
-            } else if (subsidy.target_business_types.length > 0) {
-                // If specific types listed but none match
+                // If subsidy is regional but doesn't match org prefecture
                 isEligible = false;
             }
         }

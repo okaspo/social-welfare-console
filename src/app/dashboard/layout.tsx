@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import AoiChat from '@/components/chat/aoi-chat'
+import { SubscriptionAlert } from '@/components/billing/subscription-alert'
+import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import {
     LayoutDashboard,
     Users,
@@ -52,16 +54,20 @@ export default async function DashboardLayout({
             .select(`
                 corporation_name, 
                 full_name,
-                organization:organizations (
+                organization:organizations!inner (
                     id,
                     name,
-                    plan
+                    plan,
+                    subscription_status,
+                    current_period_end,
+                    cancel_at_period_end,
+                    grace_period_end
                 )
             `)
             .eq('id', user.id)
             .single()
 
-        const org = profile?.organization
+        const org = Array.isArray(profile?.organization) ? profile.organization[0] : profile?.organization
         if (org) {
             corporationName = org.name || corporationName
             organizationPlan = (org as any)?.plan
@@ -111,6 +117,9 @@ export default async function DashboardLayout({
                         <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">設定 (System)</div>
                         <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
                         <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
+                        <div className="px-3">
+                            <FeedbackDialog />
+                        </div>
                     </div>
                 </div>
 
@@ -131,20 +140,7 @@ export default async function DashboardLayout({
             <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-white to-gray-50/30">
 
                 {/* GLOBAL ALERT BAR */}
-                {isPaymentFailed && (
-                    <div className="bg-red-600 text-white px-6 py-3 flex items-center justify-between shadow-md relative z-20">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                            <ShieldCheck className="h-5 w-5" />
-                            <span>決済が完了していません。サービスが停止する前に、お支払い情報の更新をお願いします。</span>
-                        </div>
-                        <Link
-                            href="/dashboard/settings/billing"
-                            className="bg-white text-red-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-red-50 transition-colors"
-                        >
-                            更新する
-                        </Link>
-                    </div>
-                )}
+                <SubscriptionAlert />
 
                 {/* Header */}
 
@@ -152,7 +148,7 @@ export default async function DashboardLayout({
                     <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
                         {corporationName}
                         {organizationPlan && (
-                            <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold border ${organizationPlan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${organizationPlan === 'PRO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                 organizationPlan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                     'bg-blue-50 text-blue-700 border-blue-100'
                                 } `}>
