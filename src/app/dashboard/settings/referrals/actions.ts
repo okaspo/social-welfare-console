@@ -5,7 +5,6 @@ import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 
 // ... imports
-import { revalidatePath } from 'next/cache';
 
 // ... existing getReferralData ...
 export async function getReferralData() {

@@ -7,8 +7,10 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import OpenAI from 'openai';
+import { sendEmail } from '@/lib/email/resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    // @ts-ignore
     apiVersion: '2024-11-20.acacia',
 });
 
@@ -122,7 +124,6 @@ export async function sendDunningEmail(
             attemptNumber,
         });
 
-        import { sendEmail } from '@/lib/email/resend';
 
         // ... (existing code)
 
@@ -147,6 +148,7 @@ export async function sendDunningEmail(
                 customerId,
                 attemptNumber,
                 amountDue: invoice.amount_due / 100,
+                // @ts-ignore
                 emailId: emailResult.data?.id
             },
         });

@@ -1,3 +1,5 @@
+'use client';
+
 import { Lock, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
