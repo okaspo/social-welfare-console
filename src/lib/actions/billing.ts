@@ -95,28 +95,85 @@ export async function cancelSubscription() {
     if (!user) return { error: 'Unauthorized' }
 
     // Get User's Organization
-    const { data: profile } = await supabase
+    const { data: org } = await supabase
         .from('profiles')
-        .select('organization_id')
+        .select('organization:organizations(id, stripe_subscription_id)')
         .eq('id', user.id)
         .single()
 
-    if (!profile?.organization_id) return { error: 'No organization linked' }
+    // @ts-ignore
+    const subscriptionId = org?.organization?.stripe_subscription_id
+    // @ts-ignore
+    const orgId = org?.organization?.id
 
-    // In real Stripe implementation: stripe.subscriptions.update(subId, { cancel_at_period_end: true })
-    // Here we just update DB
-    const { error } = await supabase
-        .from('organizations')
-        .update({
-            cancel_at_period_end: true,
-            updated_at: new Date().toISOString()
+    if (!subscriptionId) return { error: 'No active subscription found' }
+
+    try {
+        // Call Stripe
+        await stripe.subscriptions.update(subscriptionId, {
+            cancel_at_period_end: true
         })
-        .eq('id', profile.organization_id)
 
-    if (error) return { error: error.message }
+        // Update DB
+        const { error } = await supabase
+            .from('organizations')
+            .update({
+                cancel_at_period_end: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orgId)
 
-    revalidatePath('/dashboard/settings/billing')
-    return { success: true }
+        if (error) return { error: error.message }
+
+        revalidatePath('/dashboard/settings/billing')
+        return { success: true }
+    } catch (err: any) {
+        return { error: err.message }
+    }
+}
+
+export async function resumeSubscription() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    // Get User's Organization
+    const { data: org } = await supabase
+        .from('profiles')
+        .select('organization:organizations(id, stripe_subscription_id)')
+        .eq('id', user.id)
+        .single()
+
+    // @ts-ignore
+    const subscriptionId = org?.organization?.stripe_subscription_id
+    // @ts-ignore
+    const orgId = org?.organization?.id
+
+    if (!subscriptionId) return { error: 'No active subscription found' }
+
+    try {
+        // Call Stripe
+        await stripe.subscriptions.update(subscriptionId, {
+            cancel_at_period_end: false
+        })
+
+        // Update DB
+        const { error } = await supabase
+            .from('organizations')
+            .update({
+                cancel_at_period_end: false,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orgId)
+
+        if (error) return { error: error.message }
+
+        revalidatePath('/dashboard/settings/billing')
+        return { success: true }
+    } catch (err: any) {
+        return { error: err.message }
+    }
 }
 
 

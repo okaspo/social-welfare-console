@@ -20,7 +20,8 @@ export default async function BillingPage({
         .from('profiles')
         .select(`
             organization:organizations (
-                plan
+                plan,
+                cancel_at_period_end
             )
         `)
         .eq('id', user.id)
@@ -28,6 +29,7 @@ export default async function BillingPage({
 
     const org = Array.isArray(profile?.organization) ? profile?.organization[0] : profile?.organization
     const currentPlan = org?.plan || 'FREE'
+    const isCanceled = org?.cancel_at_period_end || false
 
     // Fetch Prices
     // Logic: is_public OR campaign_code == promo
@@ -84,7 +86,7 @@ export default async function BillingPage({
                 )}
             </div>
 
-            <PlanSettings currentPlan={currentPlan} prices={formattedPrices} />
+            <PlanSettings currentPlan={currentPlan} prices={formattedPrices} isCanceled={isCanceled} />
         </div>
     )
 }
