@@ -13,14 +13,30 @@ export default async function AdminStaffPage() {
     }
 
     // Verify Admin Access
-    const { data: adminRole } = await supabase
+    const { data: adminRole, error: roleError } = await supabase
         .from('admin_roles')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
     if (!adminRole) {
-        redirect('/dashboard') // Not an admin
+        // Debugging: Show why access is denied instead of redirecting
+        return (
+            <div className="p-8 max-w-2xl mx-auto">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h1 className="text-xl font-bold text-red-800 mb-4">Access Denied (Debug Info)</h1>
+                    <div className="space-y-2 text-sm text-red-700 font-mono">
+                        <p><strong>User ID:</strong> {user.id}</p>
+                        <p><strong>Email:</strong> {user.email}</p>
+                        <p><strong>DB Error:</strong> {roleError ? JSON.stringify(roleError) : 'No error, but no data returned'}</p>
+                        <p><strong>RLS Check:</strong> Please verify 'admin_roles' table policies.</p>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-red-200">
+                        <p className="text-xs text-red-600">この画面はデバッグ用です。問題を特定し次第、元の挙動に戻します。</p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     const staff = await getAdminStaff()
