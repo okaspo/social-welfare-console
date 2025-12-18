@@ -3,14 +3,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Loader2, Mail, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
-    const [showPassword, setShowPassword] = useState(false)
+    const [sent, setSent] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
     const supabase = createClient()
@@ -21,27 +20,50 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabase.auth.signInWithOtp({
                 email,
-                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                },
             })
 
             if (error) {
                 throw error
             }
 
-            router.push('/dashboard')
+            setSent(true)
         } catch (err) {
-            // Graceful fallback if env vars are missing (mock mode)
-            if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-                console.warn("Supabase credentials missing, simulating success for UI demo.")
-                router.push('/dashboard?mock=true')
-            } else {
-                setError((err as Error).message)
-            }
+            setError((err as Error).message)
         } finally {
             setLoading(false)
         }
+    }
+
+    if (sent) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="w-full max-w-[400px] p-8 space-y-6 text-center">
+                    <div className="flex justify-center">
+                        <CheckCircle className="h-12 w-12 text-green-500" />
+                    </div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+                        メールを確認してください
+                    </h1>
+                    <p className="text-gray-500">
+                        <span className="font-bold text-gray-800">{email}</span> 宛にログイン用のリンクを送信しました。<br />
+                        届いたリンクをクリックしてログインしてください。
+                    </p>
+                    <div className="pt-4">
+                        <button
+                            onClick={() => setSent(false)}
+                            className="text-sm text-gray-500 hover:text-gray-900 underline underline-offset-4"
+                        >
+                            メールアドレスを再入力する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -55,6 +77,8 @@ export default function LoginPage() {
                     </h1>
                     <p className="text-sm text-gray-500">
                         S級AI事務局 葵さん
+                        <br />
+                        <span className="text-xs text-gray-400">マジックリンク認証</span>
                     </p>
                 </div>
 
@@ -64,50 +88,17 @@ export default function LoginPage() {
                         <label htmlFor="email" className="text-sm font-medium text-gray-700">
                             メールアドレス
                         </label>
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            required
-                            className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                                パスワード
-                            </label>
-                            <Link
-                                href="/forgot-password"
-                                className="text-xs text-gray-500 hover:text-gray-900 underline-offset-4 hover:underline transition-colors"
-                            >
-                                パスワードをお忘れですか？
-                            </Link>
-                        </div>
-
                         <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
+                                id="email"
+                                type="email"
+                                placeholder="name@example.com"
                                 required
-                                className="w-full h-10 px-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all pr-10"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full h-10 pl-9 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-md ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-4 w-4" />
-                                ) : (
-                                    <Eye className="h-4 w-4" />
-                                )}
-                            </button>
                         </div>
                     </div>
 
@@ -125,7 +116,7 @@ export default function LoginPage() {
                         {loading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                            "ログイン"
+                            "ログインリンクを送信"
                         )}
                     </button>
                 </form>
@@ -136,7 +127,7 @@ export default function LoginPage() {
                         href="/signup"
                         className="text-gray-500 hover:text-gray-900 underline-offset-4 hover:underline transition-colors"
                     >
-                        アカウント作成（新規登録）
+                        アカウントをお持ちでない方（新規登録）
                     </Link>
                 </div>
             </div>
