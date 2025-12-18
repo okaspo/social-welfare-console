@@ -2,11 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, Save, Check, Shield } from 'lucide-react';
+import { Loader2, Save, Check, Shield, Info, Database, MessageSquare, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface PlanLimit {
     plan_id: string;
     features: Record<string, boolean>;
+    monthly_price_jpy: number;
+    description: string;
+    max_users: number;
+    max_monthly_chat: number;
+    storage_limit_mb: number;
 }
 
 export default function PlanFeaturesPage() {
@@ -34,10 +41,9 @@ export default function PlanFeaturesPage() {
         const { data } = await supabase
             .from('plan_limits')
             .select('*')
-            .order('plan_id'); // free, standard, pro, enterprise order (approx)
+            .order('plan_id');
 
         if (data) {
-            // Sort manually to ensure Free -> Standard -> Pro -> Enterprise
             const order = ['free', 'standard', 'pro', 'enterprise'];
             const sorted = data.sort((a, b) => order.indexOf(a.plan_id) - order.indexOf(b.plan_id));
             setPlans(sorted as PlanLimit[]);
@@ -45,7 +51,7 @@ export default function PlanFeaturesPage() {
         setLoading(false);
     };
 
-    const handleToggle = (planIndex: number, featureKey: string) => {
+    const handleFeatureToggle = (planIndex: number, featureKey: string) => {
         const newPlans = [...plans];
         const current = newPlans[planIndex].features[featureKey];
         newPlans[planIndex].features = {
@@ -56,13 +62,28 @@ export default function PlanFeaturesPage() {
         setMessage('変更を保存してください');
     };
 
+    const handleValueChange = (planIndex: number, field: keyof PlanLimit, value: any) => {
+        const newPlans = [...plans];
+        // @ts-ignore
+        newPlans[planIndex][field] = value;
+        setPlans(newPlans);
+        setMessage('変更を保存してください');
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
             for (const plan of plans) {
                 const { error } = await supabase
                     .from('plan_limits')
-                    .update({ features: plan.features })
+                    .update({
+                        features: plan.features,
+                        monthly_price_jpy: plan.monthly_price_jpy,
+                        description: plan.description,
+                        max_users: plan.max_users,
+                        max_monthly_chat: plan.max_monthly_chat,
+                        storage_limit_mb: plan.storage_limit_mb
+                    })
                     .eq('plan_id', plan.plan_id);
                 if (error) throw error;
             }
@@ -78,14 +99,14 @@ export default function PlanFeaturesPage() {
     if (loading) return <div className="p-10 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>;
 
     return (
-        <div className="max-w-6xl mx-auto p-8 space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Shield className="h-6 w-6 text-indigo-600" />
-                        プラン機能マトリクス
+                        プラン管理 (Pricing & Limits)
                     </h1>
-                    <p className="text-gray-500 mt-1">各プランで利用可能な機能を制御します。</p>
+                    <p className="text-gray-500 mt-1">価格、クォータ（制限）、機能フラグを一元管理します。</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -103,55 +124,102 @@ export default function PlanFeaturesPage() {
                 </div>
             )}
 
-            <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
-                            <th className="p-4 text-left font-medium text-gray-500">機能名</th>
-                            {plans.map(p => (
-                                <th key={p.plan_id} className="p-4 text-center font-bold text-gray-900 uppercase text-sm w-32">
-                                    {p.plan_id}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {FEATURES.map(feature => (
-                            <tr key={feature.key} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="p-4 font-medium text-gray-700 border-r border-gray-100 bg-gray-50/30">
-                                    {feature.label}
-                                    <div className="text-xs text-gray-400 font-mono font-normal mt-0.5">{feature.key}</div>
-                                </td>
-                                {plans.map((p, idx) => (
-                                    <td key={p.plan_id} className="p-4 text-center">
-                                        <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {plans.map((plan, idx) => (
+                    <div key={plan.plan_id} className="bg-white border rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
+                            <h2 className="font-bold text-lg uppercase">{plan.plan_id}</h2>
+                            {plan.plan_id === 'enterprise' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Custom</span>}
+                        </div>
+
+                        <div className="p-4 space-y-6 flex-1 overflow-y-auto max-h-[800px]">
+                            {/* 1. Basic Info */}
+                            <section className="space-y-3">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Info className="h-3 w-3" /> Basic Info
+                                </h3>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-600">月額料金 (JPY)</label>
+                                    <Input
+                                        type="number"
+                                        value={plan.monthly_price_jpy}
+                                        onChange={(e) => handleValueChange(idx, 'monthly_price_jpy', parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-600">説明文</label>
+                                    <Textarea
+                                        className="h-20 text-xs"
+                                        value={plan.description || ''}
+                                        onChange={(e) => handleValueChange(idx, 'description', e.target.value)}
+                                        placeholder="プランの概要..."
+                                    />
+                                </div>
+                            </section>
+
+                            {/* 2. Quotas */}
+                            <section className="space-y-3">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Database className="h-3 w-3" /> Quotas
+                                </h3>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-600 flex justify-between">
+                                        最大ユーザー数 <Users className="h-3 w-3 text-gray-400" />
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={plan.max_users}
+                                        onChange={(e) => handleValueChange(idx, 'max_users', parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-600 flex justify-between">
+                                        月間チャット上限 <MessageSquare className="h-3 w-3 text-gray-400" />
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={plan.max_monthly_chat}
+                                        onChange={(e) => handleValueChange(idx, 'max_monthly_chat', parseInt(e.target.value) || 0)}
+                                    />
+                                    <span className="text-[10px] text-gray-400">-1 for unlimited</span>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-600 flex justify-between">
+                                        ストレージ (MB) <Database className="h-3 w-3 text-gray-400" />
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={plan.storage_limit_mb}
+                                        onChange={(e) => handleValueChange(idx, 'storage_limit_mb', parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </section>
+
+                            {/* 3. Capabilities */}
+                            <section className="space-y-3">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Check className="h-3 w-3" /> Capabilities
+                                </h3>
+                                <div className="space-y-2">
+                                    {FEATURES.map(feature => (
+                                        <div key={feature.key} className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-700">{feature.label}</span>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     className="sr-only peer"
-                                                    checked={!!p.features[feature.key]}
-                                                    onChange={() => handleToggle(idx, feature.key)}
+                                                    checked={!!plan.features[feature.key]}
+                                                    onChange={() => handleFeatureToggle(idx, feature.key)}
                                                 />
-                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                                             </label>
                                         </div>
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-sm text-blue-800">
-                <h3 className="font-bold flex items-center gap-2 mb-2">
-                    <Shield className="h-4 w-4" />
-                    管理者メモ
-                </h3>
-                <p>
-                    ここでの設定変更は即座に全てのユーザーセッションに反映されます（リロード後）。<br />
-                    PlanGateコンポーネントを使用している箇所が対象です。
-                </p>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

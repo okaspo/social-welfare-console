@@ -86,6 +86,7 @@ export default function CustomerList({ initialOrgs }: CustomerListProps) {
                             <th className="px-6 py-3 min-w-[200px]">Representative</th>
                             <th className="px-6 py-3">Plan</th>
                             <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3">Usage</th>
                             <th className="px-6 py-3">Last Active</th>
                             <th className="px-6 py-3 text-right">Action</th>
                         </tr>
@@ -144,6 +145,15 @@ export default function CustomerList({ initialOrgs }: CustomerListProps) {
                                     <Badge variant={org.status === 'active' ? 'default' : 'destructive'} className="text-[10px] px-2 py-0.5 h-5">
                                         {org.status || 'Active'}
                                     </Badge>
+                                </td>
+
+                                {/* Usage */}
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                                        <span className="font-medium text-gray-900">{org.member_count}</span>
+                                        <span className="text-gray-400">members</span>
+                                    </div>
                                 </td>
 
                                 {/* Activity */}

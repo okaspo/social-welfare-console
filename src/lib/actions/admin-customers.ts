@@ -14,6 +14,7 @@ export interface CustomerOrg {
     owner_email?: string
     last_sign_in_at?: string
     custom_domain?: string | null
+    member_count: number
 }
 
 /**
@@ -50,7 +51,24 @@ export async function getAdminCustomers() {
         .select('id, full_name, email, updated_at') // updated_at as proxy for activity? or we need auth.users
         .in('id', userIds)
 
-    // 4. Merge Data
+    // 4. Counts members per org
+    const memberCounts: Record<string, number> = {}
+
+    // We can fetch all members to do a local count or do a group by query. 
+    // Given potentially many members, let's do a separate count query or assumption.
+    // For now, let's fetch all members IDs (lighter weight) or just trust we can do it.
+    // Better optimized: Get all members for these orgs.
+    const { data: allMembers } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .in('organization_id', orgIds)
+
+    allMembers?.forEach(m => {
+        memberCounts[m.organization_id] = (memberCounts[m.organization_id] || 0) + 1
+    })
+
+
+    // 5. Merge Data
     return orgs.map(org => {
         const ownerMember = owners?.find(m => m.organization_id === org.id)
         const profile = profiles?.find(p => p.id === ownerMember?.user_id)
@@ -65,7 +83,8 @@ export async function getAdminCustomers() {
             owner_name: profile?.full_name || 'Unknown',
             owner_email: profile?.email || 'Unknown',
             last_sign_in_at: profile?.updated_at, // Using updated_at as a proxy for now
-            custom_domain: org.custom_domain
+            custom_domain: org.custom_domain,
+            member_count: memberCounts[org.id] || 0
         }
     }) as CustomerOrg[]
 }
