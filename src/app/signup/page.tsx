@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { getURL } from '@/lib/get-url'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -30,7 +31,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
+          emailRedirectTo: `${getURL()}/auth/callback`,
           data: {
             full_name: fullName,
             corporation_name: corporationName,

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Loader2, Mail, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import { getURL } from '@/lib/get-url'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -23,7 +24,7 @@ export default function LoginPage() {
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    emailRedirectTo: `${getURL()}/auth/callback`,
                 },
             })
 
@@ -137,7 +138,7 @@ export default function LoginPage() {
                             await supabase.auth.signInWithOAuth({
                                 provider: 'google',
                                 options: {
-                                    redirectTo: `${window.location.origin}/auth/callback`,
+                                    redirectTo: `${getURL()}/auth/callback`,
                                     queryParams: {
                                         access_type: 'offline',
                                         prompt: 'consent',
@@ -174,7 +175,7 @@ export default function LoginPage() {
                             await supabase.auth.signInWithOAuth({
                                 provider: 'azure',
                                 options: {
-                                    redirectTo: `${window.location.origin}/auth/callback`,
+                                    redirectTo: `${getURL()}/auth/callback`,
                                     scopes: 'email profile openid',
                                 },
                             })
@@ -196,7 +197,7 @@ export default function LoginPage() {
                             await supabase.auth.signInWithOAuth({
                                 provider: 'line' as any, // Cast to any because 'line' might be missing from the strict Provider type in some versions but is supported
                                 options: {
-                                    redirectTo: `${window.location.origin}/auth/callback`,
+                                    redirectTo: `${getURL()}/auth/callback`,
                                     scopes: 'profile openid email',
                                 },
                             })
