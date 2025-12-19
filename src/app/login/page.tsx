@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Mail, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { getURL } from '@/lib/get-url'
+import { login } from './actions'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -21,15 +22,13 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    emailRedirectTo: `${getURL()}/auth/callback?next=/dashboard`,
-                },
-            })
+            const formData = new FormData()
+            formData.append('email', email)
 
-            if (error) {
-                throw error
+            const result = await login(formData)
+
+            if (result?.error) {
+                throw new Error(result.error)
             }
 
             setSent(true)
@@ -195,7 +194,7 @@ export default function LoginPage() {
                         type="button"
                         onClick={async () => {
                             await supabase.auth.signInWithOAuth({
-                                provider: 'line' as any, // Cast to any because 'line' might be missing from the strict Provider type in some versions but is supported
+                                provider: 'line' as any,
                                 options: {
                                     redirectTo: `${getURL()}/auth/callback?next=/dashboard`,
                                     scopes: 'profile openid email',
