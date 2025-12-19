@@ -83,6 +83,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    // 4. Root Path (Redirect to dashboard if logged in)
+    if (user && url.pathname === '/') {
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+    }
+
     return response
 }
 

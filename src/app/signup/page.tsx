@@ -31,7 +31,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${getURL()}/auth/callback`,
+          emailRedirectTo: `${getURL()}/auth/callback?next=/dashboard`,
           data: {
             full_name: fullName,
             corporation_name: corporationName,

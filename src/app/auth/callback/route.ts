@@ -11,7 +11,10 @@ export async function GET(request: Request) {
         const supabase = await createClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
-            return NextResponse.redirect(`${origin}${next}`)
+            // The `next` param is already extracted above, so we can check if it exists and is clean.
+            // Ensure `next` starts with / to avoid open redirect vulnerabilities
+            const redirectUrl = next.startsWith('/') ? next : '/dashboard'
+            return NextResponse.redirect(`${origin}${redirectUrl}`)
         }
     }
 
