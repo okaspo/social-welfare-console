@@ -1,140 +1,120 @@
-import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
-import { getAdminClient } from '@/lib/supabase/admin';
+import { headers } from 'next/headers'
+import { stripe } from '@/lib/stripe/client'
+import { createClient } from '@/lib/supabase/server'
+import Stripe from 'stripe'
 
 export async function POST(req: Request) {
-    const body = await req.text();
-    const signature = (await headers()).get('Stripe-Signature') as string;
+    const body = await req.text()
+    const signature = (await headers()).get('Stripe-Signature') as string
 
-    let event: Stripe.Event;
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        throw new Error('STRIPE_WEBHOOK_SECRET not set')
+    }
+
+    let event: Stripe.Event
 
     try {
         event = stripe.webhooks.constructEvent(
             body,
             signature,
-            process.env.STRIPE_WEBHOOK_SECRET!
-        );
+            process.env.STRIPE_WEBHOOK_SECRET
+        )
     } catch (error: any) {
-        console.error(`Webhook signature verification failed: ${error.message}`);
-        return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
+        console.error(`Webhook signature verification failed: ${error.message}`)
+        return new Response(`Webhook Error: ${error.message}`, { status: 400 })
     }
 
-    const supabase = getAdminClient();
-    const session = event.data.object as Stripe.Checkout.Session;
-    const subscription = event.data.object as Stripe.Subscription;
-    const invoice = event.data.object as Stripe.Invoice;
-
-    // Common function to update organization subscription
-    const updateSubscription = async (
-        customerId: string,
-        subscriptionId: string,
-        status: string,
-        currentPeriodEnd: number | null
-    ) => {
-        // 1. Find organization by stripe_customer_id
-        const { data: orgs, error: findError } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('stripe_customer_id', customerId)
-            .limit(1);
-
-        if (findError || !orgs || orgs.length === 0) {
-            console.error(`Organization not found for customer: ${customerId}`);
-            return;
-        }
-
-        const orgId = orgs[0].id;
-
-        // 2. Update status
-        // Note: 'currentPeriodEnd' from Stripe is unix timestamp (seconds). Postgres timestamp is usually ISO string or similar.
-        // Supabase/Postgres handles ISO strings well.
-        const periodEndIso = currentPeriodEnd
-            ? new Date(currentPeriodEnd * 1000).toISOString()
-            : null;
-
-        const { error: updateError } = await supabase
-            .from('organizations')
-            .update({
-                stripe_subscription_id: subscriptionId,
-                subscription_status: status,
-                current_period_end: periodEndIso,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', orgId);
-
-        if (updateError) {
-            console.error(`Failed to update organization ${orgId}: ${updateError.message}`);
-        } else {
-            console.log(`Updated organization ${orgId} subscription to ${status}`);
-        }
-    };
+    const supabase = await createClient()
 
     try {
         switch (event.type) {
-            case 'checkout.session.completed':
-                // Initial subscription creation usually happens here or in 'customer.subscription.created'
-                // But we need to link customer_id if not already linked (e.g. if we created customer during checkout)
-                const checkoutSession = event.data.object as Stripe.Checkout.Session;
-                if (checkoutSession.mode === 'subscription') {
-                    const clientReferenceId = checkoutSession.client_reference_id; // orgId passed from Client
-                    const customerId = checkoutSession.customer as string;
-                    const subscriptionId = checkoutSession.subscription as string;
+            case 'checkout.session.completed': {
+                const session = event.data.object as any
 
-                    if (clientReferenceId) {
-                        await supabase.from('organizations').update({
-                            stripe_customer_id: customerId,
-                            stripe_subscription_id: subscriptionId
-                        }).eq('id', clientReferenceId);
-                    }
+                // Retrieve subscription to get status
+                const subscriptionId = session.subscription as string
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any
+
+                const organizationId = session.metadata?.organization_id
+                const planPriceId = session.metadata?.plan_price_id
+
+                if (!organizationId) {
+                    console.error('Missing organization_id in metadata')
+                    break;
                 }
-                break;
 
-            case 'invoice.payment_succeeded':
-                // Cast to any to handle Stripe v20 type updates
-                const invoiceObj = invoice as any;
-                if (invoiceObj.subscription) {
-                    const subId = invoiceObj.subscription as string;
-                    const sub = await stripe.subscriptions.retrieve(subId);
-                    const subAny = sub as any; // Handle Response wrapper type issues
-                    await updateSubscription(
-                        invoiceObj.customer as string,
-                        subId,
-                        subAny.status,
-                        subAny.current_period_end
-                    );
+                // Get Plan ID from Price ID (if needed, or assume metadata carries it)
+                // We need to look up the plan_id from plan_prices
+                let planId = 'STANDARD' // Default
+                if (planPriceId) {
+                    const { data: priceData } = await supabase.from('plan_prices').select('plan_id').eq('id', planPriceId).single()
+                    if (priceData) planId = priceData.plan_id
                 }
-                break;
 
-            case 'customer.subscription.updated':
-                // Explicitly cast to any to avoid type mismatch if library version differs
-                const subObj = subscription as any;
-                await updateSubscription(
-                    subObj.customer as string,
-                    subObj.id,
-                    subObj.status,
-                    subObj.current_period_end
-                );
-                break;
+                await supabase.from('organizations').update({
+                    stripe_subscription_id: subscription.id,
+                    stripe_customer_id: session.customer as string,
+                    subscription_status: subscription.status,
+                    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    cancel_at_period_end: subscription.cancel_at_period_end,
+                    plan: planId // Upgrade plan
+                }).eq('id', organizationId)
 
-            case 'customer.subscription.deleted':
-                // handle subscription cancellation automatically
-                await updateSubscription(
-                    subscription.customer as string,
-                    subscription.id,
-                    'canceled', // or subscription.status which should be 'canceled'
-                    null // Period end is irrelevant if canceled immediately, or keep it? usually keep history or null.
-                );
-                break;
+                break
+            }
 
-            default:
-                console.log(`Unhandled event type ${event.type}`);
+            case 'customer.subscription.updated': {
+                const subscription = event.data.object as any
+
+                // Find organization by subscription ID or customer ID
+                // Ideally Stripe Customer ID is unique to organization
+
+                await supabase.from('organizations').update({
+                    subscription_status: subscription.status,
+                    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    cancel_at_period_end: subscription.cancel_at_period_end,
+                }).eq('stripe_subscription_id', subscription.id)
+
+                break
+            }
+
+            case 'customer.subscription.deleted': {
+                const subscription = event.data.object as any
+
+                // Use simple query without table alias to avoid Postgrest errors
+                // If existing implementation uses aliases in JOIN, plain UPDATE is different.
+
+                await supabase.from('organizations').update({
+                    subscription_status: 'canceled',
+                    plan: 'FREE', // Downgrade
+                    cancel_at_period_end: false
+                }).eq('stripe_subscription_id', subscription.id)
+
+                break
+            }
+
+            case 'invoice.payment_succeeded': {
+                const invoice = event.data.object as any
+                // invoice.subscription can be string or object. Cast to string if ID.
+                const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id
+
+                // If Bank Transfer, this event confirms payment
+                // Status sync is handled by subscription.updated usually, but good to ensure
+
+                if (subscriptionId) {
+                    const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any
+                    await supabase.from('organizations').update({
+                        subscription_status: subscription.status,
+                        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    }).eq('stripe_subscription_id', subscriptionId)
+                }
+                break
+            }
         }
     } catch (error: any) {
-        console.error(`Error handling webhook: ${error.message}`);
-        return new NextResponse('Webhook handler failed', { status: 500 });
+        console.error(`Webhook handler failed: ${error.message}`)
+        return new Response(`Webhook Error: ${error.message}`, { status: 500 })
     }
 
-    return new NextResponse('Webhook received', { status: 200 });
+    return new Response(null, { status: 200 })
 }

@@ -10,7 +10,6 @@ export async function middleware(request: NextRequest) {
 
     // Check for required environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        // If config is missing, proceed without Supabase auth (Mock mode)
         return response
     }
 
@@ -49,15 +48,36 @@ export async function middleware(request: NextRequest) {
     // Route Protection Logic
     const url = request.nextUrl.clone()
 
-    // Protected Routes
-    if (!user && (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/admin'))) {
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+    // 1. Admin Routes Protection
+    if (url.pathname.startsWith('/admin')) {
+        if (!user) {
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
+
+        // Check if user has admin role
+        const { data: adminRole } = await supabase
+            .from('admin_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+
+        if (!adminRole) {
+            // Unauthorized access to admin area
+            url.pathname = '/dashboard'
+            return NextResponse.redirect(url)
+        }
     }
 
-    // Auth Routes (Redirect to dashboard if logged in)
-    // Note: '/' is landing page, usually we allow public access. 
-    // Only redirect login/signup.
+    // 2. Dashboard Routes Protection
+    if (url.pathname.startsWith('/dashboard')) {
+        if (!user) {
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
+    }
+
+    // 3. Auth Routes (Redirect to dashboard if logged in)
     if (user && (url.pathname === '/login' || url.pathname === '/signup')) {
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

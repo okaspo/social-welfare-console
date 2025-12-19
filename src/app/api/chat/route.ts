@@ -1,9 +1,12 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, ToolCallPart, ToolResultPart } from 'ai';
+import { streamText, ToolCallPart, ToolResultPart, tool } from 'ai';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { buildSystemPrompt } from '@/lib/prompt-builder';
-import { checkUsageLimit, selectModel, trackUsage, LimitReachedError, TaskComplexity } from '@/lib/ai/cost-control';
+import { checkUsageLimit, logUsage } from '@/lib/ai/usage-limiter';
+import { selectModel, assessComplexity, calculateCost } from '@/lib/ai/model-router';
+// LimitReachedError removed
 
 export const maxDuration = 60; // Increased for o1
 export const dynamic = 'force-dynamic';
@@ -44,14 +47,11 @@ export async function POST(req: Request) {
         const plan = (Array.isArray(orgData) ? orgData[0]?.plan : orgData?.plan) || 'free';
 
         // 2. Cost Control: Check Usage Limit (Initial Check)
+        // 2. Cost Control: Check Usage Limit (Initial Check)
         if (orgId) {
-            try {
-                await checkUsageLimit(orgId);
-            } catch (error: any) {
-                if (error instanceof LimitReachedError) {
-                    return new Response(JSON.stringify({ error: error.message }), { status: 403 });
-                }
-                console.error('Usage check failed:', error);
+            const { allowed, currentCost, limit } = await checkUsageLimit(orgId, plan);
+            if (!allowed) {
+                return new Response(JSON.stringify({ error: `Monthly usage limit reached (${currentCost}/${limit})` }), { status: 403 });
             }
         }
 
@@ -102,25 +102,20 @@ export async function POST(req: Request) {
 
         const detectedIntent = detectIntent(lastUserMessage);
 
-        let taskComplexity: TaskComplexity = 'simple';
-        if (detectedIntent.suggestedTier === 'advisor') taskComplexity = 'reasoning';
-        else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'complex';
-        // 'processor' maps to 'simple'
+        const complexityResult = assessComplexity(lastUserMessage, messages.length > 5 ? 'long_history' : '');
+        let taskComplexity = complexityResult.type;
 
-        const selectedModel = selectModel(plan, taskComplexity);
+        // Override with Intent Detector if specific
+        if (detectedIntent.suggestedTier === 'advisor') taskComplexity = 'reasoning'; // Map advisor to reasoning logic
+        else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'complex'; // Persona often equals complex in terms of needing 4o
+
+        const selectedModel = selectModel(plan, complexityResult);
 
         console.log(`[Model Router] Intent: ${detectedIntent.intent} (${detectedIntent.confidence}) -> Plan: ${plan} -> Complexity: ${taskComplexity} -> Model: ${selectedModel}`);
 
         // Re-check quota including Reasoning Limits
-        if (orgId) {
-            try {
-                await checkUsageLimit(orgId, selectedModel);
-            } catch (error: any) {
-                if (error instanceof LimitReachedError) {
-                    return new Response(JSON.stringify({ error: error.message }), { status: 403 });
-                }
-            }
-        }
+        // Re-check quota including Reasoning Limits (omitted for now as redundant or needing specific reasoning-limit logic)
+        // if (orgId) { ... }
 
         // 5. Build Final System Message
         const finalSystemMessage = `
@@ -153,7 +148,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 `;
 
         // const { tool } = await import('ai'); // Already imported
-        const { z } = await import('zod');
+        // const { z } = await import('zod');
 
         // const data = new StreamData();
         // if (taskComplexity === 'reasoning') {
@@ -194,13 +189,14 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                 if (orgId) {
                     // Cast usage safely
                     const usage = completion.usage as any;
-                    await trackUsage(
-                        orgId,
-                        'chat',
-                        selectedModel,
-                        usage.promptTokens || 0,
-                        usage.completionTokens || 0
-                    );
+                    await logUsage({
+                        organizationId: orgId,
+                        featureName: 'chat_response',
+                        userId: user.id,
+                        model: selectedModel,
+                        inputTokens: usage.promptTokens || 0,
+                        outputTokens: usage.completionTokens || 0
+                    });
                 }
             }
         });

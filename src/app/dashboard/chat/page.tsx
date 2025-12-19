@@ -20,23 +20,27 @@ export default async function ChatPage() {
         .single()
 
     let knowledge: KnowledgeData | undefined
+    let persona: import('@/lib/ai/persona').PersonaDefinition | undefined
 
     if (profile?.organization_id) {
-        // Fetch organization name
+        // Fetch organization name and entity_type
         const { data: org } = await supabase
             .from('organizations')
-            .select('name')
+            .select('name, entity_type')
             .eq('id', profile.organization_id)
             .single()
+
+        // Get Persona based on entity type
+        const { getPersonaForEntity } = await import('@/lib/ai/persona')
+        persona = getPersonaForEntity(org?.entity_type || 'social_welfare')
 
         // Fetch officer counts
         // Note: We run these in parallel for performance
         const [directorRes, auditorRes, councilorRes] = await Promise.all([
             supabase.from('officers').select('*', { count: 'exact', head: true }).eq('organization_id', profile.organization_id).eq('role', 'director'),
             supabase.from('officers').select('*', { count: 'exact', head: true }).eq('organization_id', profile.organization_id).eq('role', 'auditor'),
-            supabase.from('officers').select('*', { count: 'exact', head: true }).eq('organization_id', profile.organization_id).eq('role', 'councilor') // Use 'councilor' not 'council_member' as per form dropdown? Wait, form had 'councilor' value.
+            supabase.from('officers').select('*', { count: 'exact', head: true }).eq('organization_id', profile.organization_id).eq('role', 'councilor')
         ])
-        // Checked form: <option value="councilor">評議員</option>. So 'councilor' is correct.
 
         knowledge = {
             corporationName: org?.name || '未設定',
@@ -80,7 +84,7 @@ export default async function ChatPage() {
                 </div>
             }
         >
-            <ChatInterface knowledge={knowledge} />
+            <ChatInterface knowledge={knowledge} persona={persona} />
         </PlanGate>
     )
 }

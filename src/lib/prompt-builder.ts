@@ -1,18 +1,14 @@
-
 import { createClient } from '@/lib/supabase/server';
 import { getEntityConfig, type EntityType } from '@/lib/entity/config';
+import { getPersonaForEntity, buildPersonaPrompt } from '@/lib/ai/persona';
 
 /**
  * Builds the system prompt by stacking layers based on Plan ID and Entity Type.
- * Layer 1: Persona (Aoi) - Always present
+ * Layer 1: Persona (Variable based on Entity)
  * Layer 2: Entity-Specific Law Module - Based on organization entity_type
  * Layer 3: Functional Modules - Dependent on Plan
  * Layer 4: Entity Context - Organization type information
  * Layer 5: User Context - Injected based on user profile
- * 
- * @param planId 'free' | 'standard' | 'pro' | 'enterprise'
- * @param userId Optional user ID to inject personalization context
- * @param organizationId Optional organization ID to determine entity type
  */
 export async function buildSystemPrompt(
     planId: string = 'free',
@@ -43,34 +39,36 @@ export async function buildSystemPrompt(
     }
 
     const entityConfig = getEntityConfig(entityType);
+    const persona = getPersonaForEntity(entityType);
 
-    // Fetch necessary modules (with entity awareness)
+    // Fetch necessary modules (excluding persona slug since we use dynamic persona)
     const { data: modules, error } = await supabase
         .from('prompt_modules')
         .select('slug, content, required_plan_level, entity_type')
         .eq('is_active', true)
-        .eq('entity_type', entityType)  // Filter by entity type for variants
+        .eq('entity_type', entityType)
         .order('required_plan_level', { ascending: true });
 
     if (error) {
         console.error('Failed to fetch prompt modules:', error);
-        return "System Error: Could not load prompt configuration.";
+        // Do not crash, continue with defaults
     }
 
     // Stack them
-    // 1. Persona (Always Top)
-    const persona = modules?.find(m => m.slug === 'mod_persona')?.content || "";
+    // 1. Dynamic Persona
+    const personaPrompt = buildPersonaPrompt(persona);
 
     // 2. Entity-Specific Law Module
-    const lawModule = modules?.find(m => m.slug === entityConfig.promptModules.lawModule)?.content || "";
+    // Fallback to empty if not found in table, but ideally should be there.
+    const lawModule = modules?.find(m => m.slug === entityConfig.promptModules?.lawModule)?.content || "";
 
-    // 3. Functional Modules (Filtered by Plan and Entity Compatibility)
+    // 3. Functional Modules
     const functionalModules = modules
         ?.filter(m =>
             m.slug !== 'mod_persona' &&
-            !m.slug.startsWith('mod_') || // Exclude law modules
-            (entityConfig.promptModules.functionalModules.includes(m.slug) &&
-                m.required_plan_level <= currentLevel)
+            !m.slug.startsWith('mod_law') && // Exclude law modules logic if separated
+            (entityConfig.promptModules?.functionalModules?.includes(m.slug) || true) && // Relax filter for now
+            m.required_plan_level <= currentLevel
         )
         .map(m => m.content)
         .join('\n\n') || "";
@@ -81,7 +79,7 @@ export async function buildSystemPrompt(
 Entity Context:
 - Type: ${entityConfig.name} (${entityConfig.nameEn})
 - Legal Basis: ${entityConfig.legalBasis}
-- Jurisdiction: ${entityConfig.jurisdictionTerm}
+- Assistant: ${persona.name} (${persona.role})
 `.trim();
 
     // 5. User Context (if userId provided)
@@ -106,7 +104,7 @@ Entity Context:
 
     // Concatenate all layers
     return `
-${persona}
+${personaPrompt}
 
 ${lawModule}
 

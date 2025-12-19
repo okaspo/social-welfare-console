@@ -23,7 +23,7 @@ export const MODEL_PRICING = {
 export type ModelName = keyof typeof MODEL_PRICING;
 
 export interface TaskComplexity {
-    type: 'simple' | 'moderate' | 'complex';
+    type: 'simple' | 'moderate' | 'complex' | 'reasoning';
     reason?: string;
 }
 
@@ -95,6 +95,10 @@ export function selectModel(
 
     if (complexity.type === 'complex') {
         return 'gpt-4o'; // Best model for important tasks
+    }
+
+    if (complexity.type === 'reasoning') {
+        return 'o1-preview';
     }
 
     // Moderate: Use mini to save cost

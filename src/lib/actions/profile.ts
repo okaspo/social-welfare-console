@@ -14,7 +14,6 @@ export async function updateProfile(formData: FormData) {
 
     // Extract form data
     const full_name = formData.get('full_name') as string
-    const corporation_name = formData.get('corporation_name') as string
     const job_title = formData.get('job_title') as string
     const age_group = formData.get('age_group') as string | null
     const gender = formData.get('gender') as string | null
@@ -29,7 +28,6 @@ export async function updateProfile(formData: FormData) {
         .from('profiles')
         .update({
             full_name,
-            corporation_name,
             job_title,
             age_group: age_group || null,
             gender: gender || null,

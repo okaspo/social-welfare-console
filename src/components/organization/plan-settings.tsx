@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Check, Loader2, CreditCard, AlertTriangle, RefreshCw } from 'lucide-react'
 import { changePlan, cancelSubscription, resumeSubscription } from '@/lib/actions/billing'
+import { createCheckoutSession, createPortalSession } from '@/lib/stripe/actions'
 
 type Price = {
     id: string
@@ -31,38 +32,38 @@ export default function PlanSettings({
     const [interval, setInterval] = useState<'month' | 'year'>('month')
     const [isActionLoading, setIsActionLoading] = useState(false)
 
+    // ... inside component ...
+
     const handlePlanChange = async (priceId: string) => {
         setIsLoading(priceId)
         try {
-            const response = await fetch('/api/billing/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planPriceId: priceId })
-            })
+            // Direct call to server action
+            const result = await createCheckoutSession(priceId, window.location.href)
 
-            const data = await response.json()
-
-            if (data.error) {
-                alert(data.error)
+            if (result.url) {
+                window.location.href = result.url
+            } else {
+                alert('エラー: チェックアウトURLが取得できませんでした')
                 setIsLoading(null)
-            } else if (data.url) {
-                window.location.href = data.url
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            alert('エラーが発生しました')
+            alert('エラーが発生しました: ' + (error.message || 'Unknown error'))
             setIsLoading(null)
         }
     }
 
     const handlePortal = async () => {
         try {
-            const response = await fetch('/api/billing/portal', { method: 'POST' })
-            const data = await response.json()
-            if (data.url) window.location.href = data.url
-            else alert('ポータルへのアクセスに失敗しました')
-        } catch (e) {
-            alert('エラーが発生しました')
+            const result = await createPortalSession(window.location.href)
+            if (result.url) {
+                window.location.href = result.url
+            } else {
+                alert('ポータルへのアクセスに失敗しました')
+            }
+        } catch (e: any) {
+            console.error(e)
+            alert('エラーが発生しました: ' + (e.message || 'Unknown error'))
         }
     }
 

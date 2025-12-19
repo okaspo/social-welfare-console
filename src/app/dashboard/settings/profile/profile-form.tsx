@@ -6,7 +6,6 @@ import { User } from 'lucide-react'
 
 interface ProfileData {
     full_name: string | null
-    corporation_name: string | null
     job_title: string | null
     age_group: string | null
     gender: string | null
@@ -73,21 +72,6 @@ export default function ProfileSettingsForm({ profile }: { profile: ProfileData 
                             required
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="例: 田中 太郎"
-                        />
-                    </div>
-
-                    {/* Corporation Name */}
-                    <div>
-                        <label htmlFor="corporation_name" className="block text-sm font-medium text-gray-700 mb-2">
-                            法人名
-                        </label>
-                        <input
-                            type="text"
-                            id="corporation_name"
-                            name="corporation_name"
-                            defaultValue={profile?.corporation_name || ''}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="例: 社会福祉法人 〇〇会"
                         />
                     </div>
 

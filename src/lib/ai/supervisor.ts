@@ -38,9 +38,16 @@ export interface LegalCheckResult {
 export async function executeLegalCheck(
     request: LegalCheckRequest
 ): Promise<LegalCheckResult> {
+    // Phase 0: Auto-retrieve context if missing
+    let context = request.context;
+    if (!context || context.trim().length === 0) {
+        const { retrieveKnowledge } = await import('./rag-engine');
+        context = await retrieveKnowledge(request.userInput);
+    }
+
     // Phase 1: Reasoning with o1
     const reasoningModel = getModelForFeature(request.feature, request.userPlan);
-    const reasoningPrompt = buildReasoningPrompt(request);
+    const reasoningPrompt = buildReasoningPrompt({ ...request, context });
 
     const reasoningResponse = await callAI({
         model: reasoningModel,
@@ -205,17 +212,19 @@ async function callAI(params: {
 /**
  * Calculate cost using pricing from model-router.ts
  */
+import { MODEL_PRICING, calculateCost as calcCost } from './model-router';
+
+/**
+ * Calculate cost using pricing from model-router.ts
+ */
 function calculateCost(
     model: string,
     inputTokens: number,
     outputTokens: number
 ): number {
-    // Import pricing from model-router
-    const { MODEL_PRICING, calculateCost: calcCost } = require('./model-router');
-
     // Check if model exists in pricing table
     if (model in MODEL_PRICING) {
-        return calcCost(model as any, inputTokens, outputTokens);
+        return calcCost(model as keyof typeof MODEL_PRICING, inputTokens, outputTokens);
     }
 
     // Fallback for o1-preview/o1-mini not in pricing table yet

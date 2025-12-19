@@ -1,9 +1,11 @@
 'use client'
 
-import { Send, Bot, User, RefreshCcw, ShieldCheck, FileText, Calendar, Gavel, Briefcase, AlertTriangle, BrainCircuit } from 'lucide-react'
+import { Send, Bot, User, ShieldCheck, Gavel, AlertTriangle, BrainCircuit } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { checkEnvironmentConfig } from '@/app/actions/config'
+
+import { PersonaDefinition } from '@/lib/ai/persona'
 
 export interface KnowledgeData {
     corporationName: string
@@ -12,10 +14,26 @@ export interface KnowledgeData {
     councilorCount: number
 }
 
-export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData }) {
+interface ChatInterfaceProps {
+    knowledge?: KnowledgeData
+    persona?: PersonaDefinition
+}
+
+export default function ChatInterface({ knowledge, persona }: ChatInterfaceProps) {
     const [isReasoning, setIsReasoning] = useState(false);
     const [configError, setConfigError] = useState<string[] | null>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Default to Aoi if no persona provided
+    const currentPersona = persona || {
+        name: '葵 (Aoi)',
+        role: '法務・社会福祉法人専門アドバイザー',
+        description: '知的で落ち着いた30代女性。社会福祉法に精通。',
+        tone: '丁寧、専門的、共感的',
+        firstPerson: '私',
+        knowledgeFocus: ['社会福祉法', '理事会運営', '会計基準'],
+        avatarCode: 'aoi_blue',
+    };
 
     // @ts-ignore - useChat types are mismatching in this env but runtime is correct
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
@@ -36,6 +54,29 @@ export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData
             setIsReasoning(false);
         }
     } as any)
+
+    // Precision Check Logic
+    const [checkResult, setCheckResult] = useState<any | null>(null)
+    const [isChecking, setIsChecking] = useState(false)
+
+    const handlePrecisionCheck = async (messageId: string, content: string) => {
+        setIsChecking(true)
+        setCheckResult(null)
+        try {
+            const res = await fetch('/api/chat/precision-check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messageId, content, history: messages })
+            })
+            const data = await res.json()
+            setCheckResult(data)
+        } catch (error) {
+            console.error('Precision check failed', error)
+            alert('精密チェックに失敗しました')
+        } finally {
+            setIsChecking(false)
+        }
+    }
 
     // Derived state for thinking
     const isThinking = isLoading && isReasoning;
@@ -119,12 +160,12 @@ export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData
                 {/* Header */}
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white shadow-sm">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white shadow-sm ${currentPersona.id === 'aki' ? 'bg-gradient-to-br from-orange-400 to-red-500' : currentPersona.id === 'ami' ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-indigo-600 to-indigo-700'}`}>
                             <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">葵さん</h1>
-                            <p className="text-xs text-gray-500">Version 4.7 • Legal Compliance Mode</p>
+                            <h1 className="font-bold text-gray-900">{currentPersona.name}</h1>
+                            <p className="text-xs text-gray-500">{currentPersona.role}</p>
                         </div>
                     </div>
                     {isLoading && !isThinking && <span className="text-xs text-indigo-600 animate-pulse font-medium">回答を生成中...</span>}
@@ -152,7 +193,7 @@ export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData
 
                     {messages.map((m) => (
                         // @ts-ignore - type mismatch suppression
-                        <div key={m.id} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={m.id} className={`flex gap-4 group ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             {m.role !== 'user' && (
                                 <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-1">
                                     <Bot className="h-4 w-4 text-indigo-600" />
@@ -163,8 +204,19 @@ export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData
                                 : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
                                 }`}>
                                 {/* @ts-ignore */}
-                                {m.content}
+                                {(m as any).content}
                             </div>
+
+                            {/* Precision Check Button (Only for Assistant) */}
+                            {m.role === 'assistant' && (
+                                <button
+                                    onClick={() => handlePrecisionCheck(m.id, (m as any).content)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-indigo-600 self-center"
+                                    title="精密法的チェック (o1)"
+                                >
+                                    <ShieldCheck className="h-4 w-4" />
+                                </button>
+                            )}
                             {m.role === 'user' && (
                                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
                                     <User className="h-4 w-4 text-gray-500" />
@@ -186,6 +238,61 @@ export default function ChatInterface({ knowledge }: { knowledge?: KnowledgeData
                     )}
 
                     <div ref={messagesEndRef} />
+
+                    {/* Check Result Modal/Overlay */}
+                    {checkResult && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border-l-4 border-indigo-600">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
+                                        <ShieldCheck className="h-6 w-6 text-indigo-600" />
+                                        精密法的チェック結果
+                                    </h3>
+                                    <button onClick={() => setCheckResult(null)} className="text-gray-400 hover:text-gray-600">×</button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className={`p-4 rounded-lg flex items-center gap-3 ${checkResult.reasoning.conclusion === 'compliant' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                        <span className="font-bold text-lg">
+                                            {checkResult.reasoning.conclusion === 'compliant' ? '法的に問題ありません ✅' : '注意が必要です ⚠️'}
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="font-bold text-gray-700 mb-2">💡 詳細解説 (o1推論)</h4>
+                                        <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+                                            {checkResult.translation.userFriendlyExplanation}
+                                        </div>
+                                    </div>
+
+                                    {checkResult.reasoning.citations && checkResult.reasoning.citations.length > 0 && (
+                                        <div>
+                                            <h4 className="font-bold text-gray-700 mb-2">📜 参照条文</h4>
+                                            <ul className="list-disc list-inside text-xs text-gray-600 bg-gray-50 p-3 rounded">
+                                                {checkResult.reasoning.citations.map((c: string, i: number) => (
+                                                    <li key={i}>{c}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    <div className="text-right text-xs text-gray-400 pt-4 border-t">
+                                        Powered by OpenAI o1-preview • Checked at {new Date().toLocaleTimeString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isChecking && (
+                        <div className="fixed inset-0 bg-white/50 z-40 flex items-center justify-center">
+                            <div className="bg-white p-6 rounded-xl shadow-xl border border-indigo-100 flex flex-col items-center">
+                                <BrainCircuit className="h-10 w-10 text-indigo-600 animate-pulse mb-3" />
+                                <p className="font-bold text-indigo-900">精密チェックを実行中...</p>
+                                <p className="text-xs text-gray-500">数分かかる場合があります (o1モデル稼働中)</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Input */}
