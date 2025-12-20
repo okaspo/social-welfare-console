@@ -75,6 +75,7 @@ export default function FeaturesPage() {
     // Group features by tier (cumulative model)
     const featuresByTier = useMemo(() => {
         const tiers: Record<string, typeof FEATURES> = {
+            free: [],
             standard: [],
             pro: [],
             enterprise: [],
@@ -111,6 +112,7 @@ export default function FeaturesPage() {
         if (tierFeatures.length === 0) return null;
 
         const tierLabels: Record<string, string> = {
+            free: 'Freeプランから利用可能',
             standard: 'Standardプランから利用可能',
             pro: 'Proプランから利用可能',
             enterprise: 'Enterpriseプランから利用可能',
@@ -185,6 +187,7 @@ export default function FeaturesPage() {
                 <p className="text-gray-500 mt-1">各プランで利用可能な機能を管理します（積み上げ式）</p>
             </div>
 
+            {renderTierSection('free', featuresByTier.free)}
             {renderTierSection('standard', featuresByTier.standard)}
             {renderTierSection('pro', featuresByTier.pro)}
             {renderTierSection('enterprise', featuresByTier.enterprise)}
