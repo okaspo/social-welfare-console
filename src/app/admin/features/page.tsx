@@ -5,12 +5,33 @@ import { createClient } from '@/lib/supabase/client';
 import { Shield, Check, X, Loader2 } from 'lucide-react';
 
 const FEATURES = [
-    { key: 'email_sending', label: 'Eメール一斉送信', description: '役員へのメール一括送信' },
+    // Communication & Output
+    { key: 'email_sending', label: 'Eメール一斉送信', description: '役員へのメール一括送信機能' },
     { key: 'word_export', label: 'Word出力', description: '議事録をWord形式でエクスポート' },
-    { key: 'long_term_memory', label: '長期記憶 (Pin)', description: 'チャット履歴のピン留め' },
+    { key: 'pdf_export', label: 'PDF出力', description: 'ドキュメントをPDF形式で出力' },
+
+    // AI & Advanced Features
+    { key: 'long_term_memory', label: '長期記憶 (Pin)', description: 'チャット履歴のピン留め・保存' },
+    { key: 'precision_check', label: '精度チェック', description: 'o1モデルによる回答の再検証' },
+    { key: 'legal_advisor', label: '法令チェック', description: 'o1による法令遵守チェック' },
+    { key: 'advanced_ai_models', label: '高度AIモデル', description: 'gpt-4oや o1 モデルへのアクセス' },
+    { key: 'custom_prompts', label: 'カスタムプロンプト', description: 'ペルソナのカスタマイズ' },
+
+    // Templates & Documents
+    { key: 'document_templates', label: 'ドキュメントテンプレート', description: 'プロ向けテンプレートの利用' },
+    { key: 'auto_report_generation', label: '自動レポート生成', description: '現況報告書等の自動生成' },
+
+    // Administration & Security
     { key: 'audit_logs', label: '監査ログ閲覧', description: '操作履歴の詳細確認' },
     { key: 'custom_domain', label: '独自ドメイン', description: 'カスタムドメインの設定' },
     { key: 'priority_support', label: '優先サポート', description: '専任担当者による対応' },
+    { key: 'sso_integration', label: 'SSO統合', description: 'シングルサインオン（SAML/OAuth）' },
+    { key: 'api_access', label: 'API アクセス', description: '外部システムとの連携API' },
+
+    // Advanced Features (Future)
+    { key: 'bulk_operations', label: '一括操作', description: 'データの一括インポート/エクスポート' },
+    { key: 'advanced_analytics', label: '高度な分析', description: 'カスタムダッシュボード・レポート' },
+    { key: 'white_label', label: 'ホワイトラベル', description: 'ブランドカスタマイズ' },
 ];
 
 const PLAN_ORDER = ['free', 'standard', 'pro', 'enterprise'];
