@@ -89,19 +89,18 @@ export function useUser() {
                     });
                 }
             }
+
+            setLoading(false);
         }
 
-        setLoading(false);
-    }
-
         fetchUser();
-}, []);
+    }, []);
 
-return {
-    user,
-    profile,
-    subscription,
-    loading,
-    isAdmin: profile?.role === 'admin'
-};
+    return {
+        user,
+        profile,
+        subscription,
+        loading,
+        isAdmin: profile?.role === 'admin'
+    };
 }
