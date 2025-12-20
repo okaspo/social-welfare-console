@@ -259,14 +259,16 @@ export default function MeetingForm() {
                         </button>
                     )}
 
-                    <button
-                        onClick={handleSendEmail}
-                        disabled={!generatedDoc || sendingEmail}
-                        className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
-                    >
-                        {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                        メールで送信
-                    </button>
+                    <PlanGate featureKey="email_sending" minPlan="pro" currentPlan={(subscription?.plan_id || 'free').toLowerCase()}>
+                        <button
+                            onClick={handleSendEmail}
+                            disabled={!generatedDoc || sendingEmail}
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                            メールで送信
+                        </button>
+                    </PlanGate>
 
                     <button
                         onClick={handleGenerate}
