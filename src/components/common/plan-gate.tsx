@@ -24,18 +24,22 @@ export function PlanGate({
     // Use prop if provided, otherwise fall back to hook, default to free
     const effectivePlan = currentPlan || subscription?.plan_id || 'free';
 
-    // Dynamic Feature Check
+    // Database-Driven Feature Check (Priority)
     let hasAccess = false;
     if (subscription?.features) {
+        // Use database features (from plan_limits)
         hasAccess = !!subscription.features[featureKey];
     } else {
-        // Fallback to hardcoded hierarchy during loading or if no sub
+        // Fallback to hierarchy check during loading
         hasAccess = checkPlanFeature(effectivePlan, featureKey);
     }
 
     if (hasAccess) {
         return <>{children}</>;
     }
+
+    // Determine which plan unlocks this feature
+    const unlockPlan = getUnlockPlan(featureKey);
 
     // Locked state - Minimal inline design
     return (
@@ -53,9 +57,9 @@ export function PlanGate({
                         <Lock className="h-5 w-5 text-white" />
                     </div>
 
-                    {/* Message */}
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                        {getPlanName(minPlan)}限定
+                    {/* Dynamic unlock message */}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        {unlockPlan}プランから利用可能
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                         {getFeatureDescription(featureKey)}
@@ -108,4 +112,17 @@ function checkPlanFeature(plan: string, feature: string): boolean {
     const requiredLevel = hierarchy.indexOf(featureMinPlans[feature] || 'pro');
 
     return currentLevel >= requiredLevel;
+}
+
+function getUnlockPlan(featureKey: string): string {
+    // Fallback mapping for determining unlock plan
+    const unlockPlans: Record<string, string> = {
+        email_sending: 'Pro',
+        word_export: 'Pro',
+        long_term_memory: 'Standard',
+        custom_domain: 'Enterprise',
+        audit_logs: 'Pro',
+        priority_support: 'Enterprise',
+    };
+    return unlockPlans[featureKey] || 'Pro';
 }
