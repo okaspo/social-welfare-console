@@ -89,10 +89,13 @@ export default async function MeetingListPage() {
                     )}
                 </div>
                 {!readOnly && (
-                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 transition-colors">
+                    <Link
+                        href="/dashboard/meetings/new"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 transition-colors"
+                    >
                         <Plus className="h-4 w-4" />
                         新規開催
-                    </button>
+                    </Link>
                 )}
             </div>
 
