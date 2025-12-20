@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, FileText, Loader2, Download, AlertTriangle, Mail } from 'lucide-react'
 import { generateNotice, MeetingData } from '@/lib/generator/notice-template'
 import { exportNoticeToDocx } from '@/lib/generator/docx-exporter'
@@ -12,6 +12,28 @@ export default function MeetingForm() {
     const [sendingEmail, setSendingEmail] = useState(false)
     const [generatedDoc, setGeneratedDoc] = useState('')
     const { profile, subscription } = useUser()
+
+    const [formData, setFormData] = useState<MeetingData>({
+        type: 'board_of_directors',
+        date: '',
+        time: '14:00',
+        venue: '当法人 本部会議室',
+        agendas: [{ title: '' }],
+        corporationName: '',
+        representativeName: ''
+    })
+
+
+    // Load organization data from profile
+    useEffect(() => {
+        if (profile?.organization_name) {
+            setFormData(prev => ({
+                ...prev,
+                corporationName: profile.organization_name || '',
+                representativeName: profile.full_name || ''
+            }))
+        }
+    }, [profile])
 
     const handleSendEmail = async () => {
         if (!generatedDoc) return
@@ -38,15 +60,7 @@ export default function MeetingForm() {
         }
     }
 
-    const [formData, setFormData] = useState<MeetingData>({
-        type: 'board_of_directors',
-        date: '',
-        time: '14:00',
-        venue: '当法人 本部会議室',
-        agendas: [{ title: '' }],
-        corporationName: '社会福祉法人 〇〇会',
-        representativeName: '福祉 太郎'
-    })
+
 
     const updateAgenda = (index: number, value: string) => {
         const newAgendas = [...formData.agendas]
@@ -148,7 +162,7 @@ export default function MeetingForm() {
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                             />
                         </div>
                         <div>
@@ -157,7 +171,7 @@ export default function MeetingForm() {
                                 type="time"
                                 value={formData.time}
                                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                             />
                         </div>
                     </div>
@@ -168,7 +182,7 @@ export default function MeetingForm() {
                             type="text"
                             value={formData.venue}
                             onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                         />
                     </div>
 
@@ -191,7 +205,7 @@ export default function MeetingForm() {
                                         placeholder={`第${index + 1}号議案`}
                                         value={agenda.title}
                                         onChange={(e) => updateAgenda(index, e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                        className="flex-1 px-4 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                                     />
                                     {formData.agendas.length > 1 && (
                                         <button onClick={() => removeAgenda(index)} className="p-2 text-gray-400 hover:text-red-500">

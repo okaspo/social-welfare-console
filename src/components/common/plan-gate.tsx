@@ -37,44 +37,36 @@ export function PlanGate({
         return <>{children}</>;
     }
 
-    // Locked state
+    // Locked state - Minimal inline design
     return (
         <div className="relative">
-            {/* Blurred content */}
-            <div className="pointer-events-none select-none">
-                <div className="blur-sm opacity-40">
-                    {children}
-                </div>
+            {/* Slightly blurred content */}
+            <div className="pointer-events-none select-none opacity-30 blur-[2px]">
+                {children}
             </div>
 
-            {/* Lock overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50/90 to-blue-50/90 dark:from-gray-900/90 dark:to-blue-900/90 backdrop-blur-sm rounded-lg">
-                <div className="text-center p-8 max-w-md">
+            {/* Compact lock badge overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xs text-center">
                     {/* Lock icon */}
-                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                        <Lock className="h-8 w-8 text-white" />
-                    </div>
-
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-sm font-semibold mb-4 shadow-md">
-                        <Sparkles className="h-4 w-4" />
-                        {minPlan.toUpperCase()} PLAN
+                    <div className="mx-auto w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-2">
+                        <Lock className="h-5 w-5 text-white" />
                     </div>
 
                     {/* Message */}
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        この機能は{getPlanName(minPlan)}限定です
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                        {getPlanName(minPlan)}限定
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                         {getFeatureDescription(featureKey)}
                     </p>
 
                     {/* CTA */}
                     <button
                         onClick={() => router.push('/dashboard/settings/billing')}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md text-xs font-medium hover:shadow-md transition-all hover:scale-105 active:scale-95"
                     >
-                        プランをアップグレードする
+                        プランを確認
                     </button>
                 </div>
             </div>
