@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Image, Upload, Trash2, Copy, Check, FolderOpen } from 'lucide-react';
+import { useState } from 'react';
+import { Image, Upload, Copy, Check, FolderOpen } from 'lucide-react';
 
 interface Asset {
     name: string;
@@ -80,8 +79,8 @@ export default function AssetsPage() {
                         key={tab.value}
                         onClick={() => setFilter(tab.value as any)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === tab.value
-                                ? 'bg-gray-900 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {tab.label}

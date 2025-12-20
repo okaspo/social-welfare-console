@@ -3,51 +3,46 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+// Static avatar paths as fallback
+const STATIC_AVATARS: Record<string, string> = {
+    aoi: '/assets/avatars/aoi_face_icon.jpg',
+    aki: '/assets/avatars/aki_face_icon.jpg',
+    ami: '/assets/avatars/ami_face_icon.jpg',
+};
+
 export function useAssistantAvatar(assistantCode: string = 'aoi') {
-    const [avatarUrl, setAvatarUrl] = useState<string>(''); // removed null init to avoid flicker if possible, or handle loading
+    // Initialize with static fallback immediately to avoid flicker
+    const [avatarUrl, setAvatarUrl] = useState<string>(STATIC_AVATARS[assistantCode] || '/assets/avatars/aoi_face_icon.jpg');
+    const [fullBodyUrl, setFullBodyUrl] = useState<string>('/assets/avatars/aoi_full_body.jpg');
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
     useEffect(() => {
         async function fetchAvatar() {
             setLoading(true);
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-            // 1. Try to find a specific seasonal/event avatar active TODAY
-            const { data: activeAvatars } = await supabase
-                .from('assistant_avatars')
-                .select('image_url, condition_type')
-                .eq('assistant_code', assistantCode)
-                .or(`condition_type.eq.season,condition_type.eq.emotion`)
-                .lte('active_period_start', today)
-                .gte('active_period_end', today)
-                .limit(1);
-
-            if (activeAvatars && activeAvatars.length > 0) {
-                setAvatarUrl(activeAvatars[0].image_url);
-                setLoading(false);
-                return;
-            }
-
-            // 2. Fallback to Default
-            const { data: defaultAvatar } = await supabase
-                .from('assistant_avatars')
-                .select('image_url')
-                .eq('assistant_code', assistantCode)
-                .eq('condition_type', 'default')
+            // Fetch from assistant_profiles table (managed via admin console)
+            const { data: profile, error } = await supabase
+                .from('assistant_profiles')
+                .select('avatar_url, full_body_url')
+                .eq('code', assistantCode)
                 .single();
 
-            if (defaultAvatar) {
-                setAvatarUrl(defaultAvatar.image_url);
-            } else {
-                // Hard fallback if DB empty
-                setAvatarUrl('/avatars/aoi_default.png');
+            if (profile && !error) {
+                if (profile.avatar_url) {
+                    setAvatarUrl(profile.avatar_url);
+                }
+                if (profile.full_body_url) {
+                    setFullBodyUrl(profile.full_body_url);
+                }
             }
+            // If DB fails, keep static fallback (already set in useState)
+
             setLoading(false);
         }
 
         fetchAvatar();
     }, [assistantCode]);
 
-    return { avatarUrl, loading };
+    return { avatarUrl, fullBodyUrl, loading };
 }
