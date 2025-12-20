@@ -78,11 +78,23 @@ export async function getPersonaFromDB(entityType: EntityType | string): Promise
 
     try {
         const supabase = await createClient();
-        const { data } = await supabase
+
+        // Try by entity_type first
+        let { data } = await supabase
             .from('assistant_profiles')
             .select('name, description, tone_prompt, avatar_url, full_body_url')
             .eq('entity_type', entityType)
             .single();
+
+        // Fallback: query by code (aoi, aki, ami)
+        if (!data) {
+            const result = await supabase
+                .from('assistant_profiles')
+                .select('name, description, tone_prompt, avatar_url, full_body_url')
+                .eq('code', basePersona.id || 'aoi')
+                .single();
+            data = result.data;
+        }
 
         if (data) {
             return {
