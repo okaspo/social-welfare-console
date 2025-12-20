@@ -70,7 +70,16 @@ export function AdminSidebar({ currentUser }: AdminSidebarProps) {
                         }`}
                 >
                     <Shield className="h-4 w-4" />
-                    プラン機能管理
+                    プラン管理
+                </Link>
+
+                <Link
+                    href="/admin/features"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive('/admin/features') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <Tags className="h-4 w-4" />
+                    機能管理
                 </Link>
 
                 <Link

@@ -24,15 +24,6 @@ export default function PlanFeaturesPage() {
 
     const supabase = createClient();
 
-    const FEATURES = [
-        { key: 'email_sending', label: 'Eメール一斉送信' },
-        { key: 'word_export', label: 'Word出力' },
-        { key: 'audit_logs', label: '監査ログ閲覧' },
-        { key: 'custom_domain', label: '独自ドメイン' },
-        { key: 'priority_support', label: '優先サポート' },
-        { key: 'long_term_memory', label: '長期記憶 (Pin)' },
-    ];
-
     useEffect(() => {
         fetchPlans();
     }, []);
@@ -51,17 +42,6 @@ export default function PlanFeaturesPage() {
         setLoading(false);
     };
 
-    const handleFeatureToggle = (planIndex: number, featureKey: string) => {
-        const newPlans = [...plans];
-        const current = newPlans[planIndex].features[featureKey];
-        newPlans[planIndex].features = {
-            ...newPlans[planIndex].features,
-            [featureKey]: !current
-        };
-        setPlans(newPlans);
-        setMessage('変更を保存してください');
-    };
-
     const handleValueChange = (planIndex: number, field: keyof PlanLimit, value: any) => {
         const newPlans = [...plans];
         // @ts-ignore
@@ -77,7 +57,6 @@ export default function PlanFeaturesPage() {
                 const { error } = await supabase
                     .from('plan_limits')
                     .update({
-                        features: plan.features,
                         monthly_price_jpy: plan.monthly_price_jpy,
                         description: plan.description,
                         max_users: plan.max_users,
@@ -192,29 +171,6 @@ export default function PlanFeaturesPage() {
                                         value={plan.storage_limit_mb}
                                         onChange={(e) => handleValueChange(idx, 'storage_limit_mb', parseInt(e.target.value) || 0)}
                                     />
-                                </div>
-                            </section>
-
-                            {/* 3. Capabilities */}
-                            <section className="space-y-3">
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                    <Check className="h-3 w-3" /> Capabilities
-                                </h3>
-                                <div className="space-y-2">
-                                    {FEATURES.map(feature => (
-                                        <div key={feature.key} className="flex items-center justify-between">
-                                            <span className="text-xs text-gray-700">{feature.label}</span>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={!!plan.features[feature.key]}
-                                                    onChange={() => handleFeatureToggle(idx, feature.key)}
-                                                />
-                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                                            </label>
-                                        </div>
-                                    ))}
                                 </div>
                             </section>
                         </div>
