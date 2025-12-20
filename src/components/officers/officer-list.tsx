@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertCircle, CheckCircle, Download, Eye, EyeOff, FileSpreadsheet, FileText } from 'lucide-react'
 import { Officer, MOCK_OFFICERS, OfficerRole, getRoleLabel, getTermLimitYears } from '@/lib/officers/data'
 import NewOfficerDialog from './new-officer-dialog'
 
-// ... imports
 
 interface OfficerListProps {
     initialOfficers: Officer[]
@@ -42,10 +41,92 @@ function GovernanceAlert({ officers }: { officers: Officer[] }) {
 export default function OfficerList({ initialOfficers, readOnly = false }: OfficerListProps) {
     const [officers, setOfficers] = useState<Officer[]>(initialOfficers)
     const [filter, setFilter] = useState<OfficerRole | 'all'>('all')
+    const [privacyMask, setPrivacyMask] = useState(false)
 
     const filteredOfficers = filter === 'all'
         ? officers
         : officers.filter(o => o.role === filter)
+
+    // Privacy mask helper
+    const maskName = (name: string) => {
+        if (!privacyMask) return name
+        const parts = name.split(' ')
+        if (parts.length >= 2) {
+            return parts[0] + ' ' + '●'.repeat(parts[1].length)
+        }
+        return name.charAt(0) + '●'.repeat(name.length - 1)
+    }
+
+    // Export to CSV
+    const exportToCSV = () => {
+        const headers = ['氏名', '役職', '任期開始', '任期満了', '状態']
+        const rows = filteredOfficers.map(o => [
+            privacyMask ? maskName(o.name) : o.name,
+            getRoleLabel(o.role),
+            o.termStartDate,
+            o.termEndDate,
+            new Date(o.termEndDate) < new Date() ? '任期満了' : '有効'
+        ])
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `役員名簿_${new Date().toISOString().split('T')[0]}.csv`
+        link.click()
+    }
+
+    // Export to PDF (printable format)
+    const exportToPDF = () => {
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) return
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>役員名簿</title>
+                <style>
+                    body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; padding: 40px; }
+                    h1 { text-align: center; margin-bottom: 30px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #333; padding: 12px; text-align: left; }
+                    th { background: #f5f5f5; }
+                    .expired { color: red; }
+                    .footer { margin-top: 40px; text-align: right; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <h1>役員名簿</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>氏名</th>
+                            <th>役職</th>
+                            <th>任期開始</th>
+                            <th>任期満了</th>
+                            <th>状態</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredOfficers.map(o => {
+            const isExpired = new Date(o.termEndDate) < new Date()
+            return `<tr>
+                                <td>${privacyMask ? maskName(o.name) : o.name}</td>
+                                <td>${getRoleLabel(o.role)}</td>
+                                <td>${o.termStartDate}</td>
+                                <td>${o.termEndDate}</td>
+                                <td class="${isExpired ? 'expired' : ''}">${isExpired ? '任期満了' : '有効'}</td>
+                            </tr>`
+        }).join('')}
+                    </tbody>
+                </table>
+                <div class="footer">出力日: ${new Date().toLocaleDateString('ja-JP')}</div>
+            </body>
+            </html>
+        `)
+        printWindow.document.close()
+        printWindow.print()
+    }
 
     // Status Badge Helper
     const getStatusBadge = (officer: Officer) => {
@@ -123,9 +204,40 @@ export default function OfficerList({ initialOfficers, readOnly = false }: Offic
                         </button>
                     ))}
                 </div>
-                {!readOnly && (
-                    <NewOfficerDialog />
-                )}
+                <div className="flex items-center gap-2">
+                    {/* Privacy Toggle */}
+                    <button
+                        onClick={() => setPrivacyMask(!privacyMask)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${privacyMask ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                            }`}
+                        title={privacyMask ? '個人情報を表示' : '個人情報をマスク'}
+                    >
+                        {privacyMask ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {privacyMask ? 'マスク中' : 'マスク'}
+                    </button>
+
+                    {/* Export Buttons */}
+                    <button
+                        onClick={exportToCSV}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                        title="Excel用CSV出力"
+                    >
+                        <FileSpreadsheet className="h-4 w-4" />
+                        CSV
+                    </button>
+                    <button
+                        onClick={exportToPDF}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                        title="印刷用PDF出力"
+                    >
+                        <FileText className="h-4 w-4" />
+                        PDF
+                    </button>
+
+                    {!readOnly && (
+                        <NewOfficerDialog />
+                    )}
+                </div>
             </div>
 
             {/* Governance Balance Alert */}
@@ -151,7 +263,7 @@ export default function OfficerList({ initialOfficers, readOnly = false }: Offic
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
                                         <a href={`/dashboard/officers/${officer.id}`} className="hover:underline">
-                                            {officer.name}
+                                            {maskName(officer.name)}
                                         </a>
                                     </div>
                                 </td>

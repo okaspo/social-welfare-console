@@ -94,6 +94,28 @@ export default async function OfficerManagementPage() {
                 )}
             </div>
 
+            {/* Governance Feature Tabs */}
+            <div className="flex gap-2 border-b border-gray-200 pb-2">
+                <a
+                    href="/dashboard/officers"
+                    className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-t-lg"
+                >
+                    役員一覧
+                </a>
+                <a
+                    href="/dashboard/officers/relationships"
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-t-lg transition-colors"
+                >
+                    親族関係マトリクス
+                </a>
+                <a
+                    href="/dashboard/officers/training"
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-t-lg transition-colors"
+                >
+                    研修履歴
+                </a>
+            </div>
+
             <OfficerList initialOfficers={officers} readOnly={readOnly} />
         </div>
     )
