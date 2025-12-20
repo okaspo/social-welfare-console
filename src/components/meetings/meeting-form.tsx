@@ -245,7 +245,7 @@ export default function MeetingForm() {
                         </button>
                     )}
 
-                    <PlanGate featureKey="email_sending" minPlan="pro" currentPlan={subscription?.plan_id || 'free'}>
+                    <PlanGate featureKey="email_sending" minPlan="pro" currentPlan={(subscription?.plan_id || 'free').toLowerCase()}>
                         <button
                             onClick={handleSendEmail}
                             disabled={!generatedDoc || sendingEmail}
