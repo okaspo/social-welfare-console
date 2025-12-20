@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { getEntityConfig, type EntityType } from '@/lib/entity/config';
-import { getPersonaForEntity, buildPersonaPrompt } from '@/lib/ai/persona';
+import { getPersonaFromDB, buildPersonaPrompt } from '@/lib/ai/persona';
 
 /**
  * Builds the system prompt by stacking layers based on Plan ID and Entity Type.
@@ -39,7 +39,7 @@ export async function buildSystemPrompt(
     }
 
     const entityConfig = getEntityConfig(entityType);
-    const persona = getPersonaForEntity(entityType);
+    const persona = await getPersonaFromDB(entityType);
 
     // Fetch necessary modules (excluding persona slug since we use dynamic persona)
     const { data: modules, error } = await supabase

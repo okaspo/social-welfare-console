@@ -3,6 +3,8 @@
  * Defines the personalities and selects the appropriate assistant based on Organization Entity Type.
  */
 
+import { createClient } from '@/lib/supabase/server';
+
 export type EntityType = 'social_welfare' | 'npo' | 'medical_corp';
 export type AssistantPersona = 'aoi' | 'aki' | 'ami';
 
@@ -15,6 +17,9 @@ export interface PersonaDefinition {
     firstPerson: string; // 一人称 (e.g., "私", "当職")
     knowledgeFocus: string[];
     avatarCode: string; // for avatar-selector
+    tonePrompt?: string; // DB-driven custom prompt
+    avatarUrl?: string;
+    fullBodyUrl?: string;
 }
 
 export const PERSONAS: Record<AssistantPersona, PersonaDefinition> = {
@@ -66,9 +71,52 @@ export function getPersonaForEntity(entityType: EntityType | string): PersonaDef
 }
 
 /**
+ * Fetches persona from database with dynamic tone_prompt
+ */
+export async function getPersonaFromDB(entityType: EntityType | string): Promise<PersonaDefinition> {
+    const basePersona = getPersonaForEntity(entityType);
+
+    try {
+        const supabase = await createClient();
+        const { data } = await supabase
+            .from('assistant_profiles')
+            .select('name, description, tone_prompt, avatar_url, full_body_url')
+            .eq('entity_type', entityType)
+            .single();
+
+        if (data) {
+            return {
+                ...basePersona,
+                name: data.name || basePersona.name,
+                description: data.description || basePersona.description,
+                tonePrompt: data.tone_prompt || undefined,
+                avatarUrl: data.avatar_url || undefined,
+                fullBodyUrl: data.full_body_url || undefined,
+            };
+        }
+    } catch (e) {
+        console.warn('Failed to fetch persona from DB, using fallback:', e);
+    }
+
+    return basePersona;
+}
+
+/**
  * Builds the System Prompt Header for the selected Persona
+ * Uses database tone_prompt if available
  */
 export function buildPersonaPrompt(persona: PersonaDefinition): string {
+    // Use custom tone_prompt from database if available
+    if (persona.tonePrompt) {
+        return `
+${persona.tonePrompt}
+
+Your expertise covers: ${persona.knowledgeFocus.join(', ')}.
+Always stay in character. Do not break the fourth wall.
+`.trim();
+    }
+
+    // Fallback to hardcoded template
     return `
 You are ${persona.name}.
 Role: ${persona.role}
