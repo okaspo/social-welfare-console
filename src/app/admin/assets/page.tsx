@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Image, Upload, Copy, Check, FolderOpen } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { Image, Upload, Copy, Check, FolderOpen, Loader2 } from 'lucide-react';
 
 interface Asset {
     name: string;
@@ -20,6 +21,50 @@ export default function AssetsPage() {
     const [assets, setAssets] = useState<Asset[]>(PREDEFINED_ASSETS);
     const [filter, setFilter] = useState<'all' | 'avatars' | 'hero'>('all');
     const [copiedPath, setCopiedPath] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadCategory, setUploadCategory] = useState<'avatars' | 'hero'>('avatars');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const supabase = createClient();
+
+    const handleUpload = async (file: File) => {
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const fileName = `${Date.now()}_${file.name}`;
+            const filePath = `${uploadCategory}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('assets')
+                .getPublicUrl(filePath);
+
+            const newAsset: Asset = {
+                name: fileName,
+                path: publicUrl,
+                category: uploadCategory,
+            };
+
+            setAssets(prev => [...prev, newAsset]);
+            alert('アップロード完了: ' + fileName);
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            alert('アップロードエラー: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) {
+            handleUpload(e.target.files[0]);
+        }
+    };
 
     const filteredAssets = filter === 'all'
         ? assets
@@ -148,13 +193,47 @@ export default function AssetsPage() {
                 </div>
             </div>
 
-            {/* Future: Upload Section */}
-            <div className="mt-6 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">新しい画像をアップロード（今後実装予定）</p>
-                <p className="text-xs text-gray-400 mt-1">
-                    現在は public/assets フォルダに直接配置してください
-                </p>
+            {/* Upload Section */}
+            <div className="mt-6 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={onFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                />
+
+                {uploading ? (
+                    <div className="flex flex-col items-center">
+                        <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mb-3" />
+                        <p className="text-indigo-600 font-medium">アップロード中...</p>
+                    </div>
+                ) : (
+                    <>
+                        <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-700 font-medium mb-2">新しい画像をアップロード</p>
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                            <span className="text-sm text-gray-500">カテゴリ:</span>
+                            <select
+                                value={uploadCategory}
+                                onChange={(e) => setUploadCategory(e.target.value as 'avatars' | 'hero')}
+                                className="px-3 py-1 border rounded text-sm"
+                            >
+                                <option value="avatars">アバター</option>
+                                <option value="hero">ヒーロー</option>
+                            </select>
+                        </div>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                            ファイルを選択
+                        </button>
+                        <p className="text-xs text-gray-400 mt-2">
+                            ※Supabase Storage にアップロードされます
+                        </p>
+                    </>
+                )}
             </div>
         </div>
     );

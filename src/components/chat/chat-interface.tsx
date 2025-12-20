@@ -328,6 +328,19 @@ export default function ChatInterface({ knowledge, persona }: ChatInterfaceProps
 
             {/* Sidebar */}
             <div className="w-80 flex flex-col gap-4">
+                {/* Full Body Avatar */}
+                <div className="bg-gradient-to-b from-indigo-50 to-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <img
+                        src="/assets/avatars/aoi_full_body.jpg"
+                        alt={currentPersona.name}
+                        className="w-full h-48 object-cover object-top"
+                    />
+                    <div className="p-3 text-center">
+                        <h4 className="font-bold text-gray-900">{currentPersona.name}</h4>
+                        <p className="text-xs text-gray-500">{currentPersona.role}</p>
+                    </div>
+                </div>
+
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                         <Gavel className="h-4 w-4 text-gray-500" />
