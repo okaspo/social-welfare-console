@@ -9,7 +9,9 @@ import {
     Tags,
     FileText,
     LogOut,
-    Activity
+    Activity,
+    Image,
+    UserCircle
 } from 'lucide-react'
 import { logout } from '@/lib/actions/auth'
 
@@ -89,6 +91,24 @@ export function AdminSidebar({ currentUser }: AdminSidebarProps) {
                 >
                     <Tags className="h-4 w-4" />
                     キャンペーン管理
+                </Link>
+
+                <Link
+                    href="/admin/personas"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive('/admin/personas') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <UserCircle className="h-4 w-4" />
+                    ペルソナ管理
+                </Link>
+
+                <Link
+                    href="/admin/assets"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive('/admin/assets') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <Image className="h-4 w-4" />
+                    画像管理
                 </Link>
 
                 <Link
