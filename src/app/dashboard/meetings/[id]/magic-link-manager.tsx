@@ -5,6 +5,19 @@ import { generateConsentToken, sendConvocationEmails } from '../actions';
 import { CheckCircle2, Clock, XCircle, Link as LinkIcon, Copy, RefreshCw, Mail, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Type for officer data with consent status
+interface OfficerStatus {
+    id: string;
+    name: string;
+    role: string;
+    email?: string;
+    consent?: {
+        token?: string;
+        status?: string;
+        responded_at?: string;
+    };
+}
+
 export default function MagicLinkManager({
     meetingId,
     officers
