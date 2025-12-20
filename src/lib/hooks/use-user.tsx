@@ -9,6 +9,8 @@ interface UserProfile {
     organization_id: string;
     role: string;
     full_name: string;
+    organization_name?: string;
+    representative_name?: string;
 }
 
 interface Subscription {
@@ -46,57 +48,60 @@ export function useUser() {
                         id,
                         plan,
                         subscription_status,
-                        stripe_customer_id
+                        stripe_customer_id,
+                        name,
+                        representative_name
                     )
                 `)
                 .eq('id', authUser.id)
                 .single();
 
             if (profileData) {
+                const org = Array.isArray(profileData.organizations)
+                    ? profileData.organizations[0]
+                    : profileData.organizations;
+
                 setProfile({
                     id: profileData.id,
                     organization_id: profileData.organization_id,
                     role: profileData.role,
-                    full_name: profileData.full_name
+                    full_name: profileData.full_name,
+                    organization_name: org?.name || '',
+                    representative_name: org?.representative_name || ''
                 });
 
-                if (profileData.organizations) {
-                    const org = Array.isArray(profileData.organizations)
-                        ? profileData.organizations[0]
-                        : profileData.organizations;
+                if (org) {
+                    // 3. Get Plan Features
+                    // @ts-ignore
+                    const planId = org.plan || 'free';
+                    const { data: planLimit } = await supabase
+                        .from('plan_limits')
+                        .select('features')
+                        .eq('plan_id', planId)
+                        .single();
 
-                    if (org) {
-                        // 3. Get Plan Features
-                        // @ts-ignore
-                        const planId = org.plan || 'free';
-                        const { data: planLimit } = await supabase
-                            .from('plan_limits')
-                            .select('features')
-                            .eq('plan_id', planId)
-                            .single();
-
-                        setSubscription({
-                            id: org.id,
-                            plan_id: planId,
-                            status: org.subscription_status || 'active',
-                            stripe_customer_id: org.stripe_customer_id,
-                            features: (planLimit?.features as Record<string, boolean>) || {}
-                        });
-                    }
+                    setSubscription({
+                        id: org.id,
+                        plan_id: planId,
+                        status: org.subscription_status || 'active',
+                        stripe_customer_id: org.stripe_customer_id,
+                        features: (planLimit?.features as Record<string, boolean>) || {}
+                    });
                 }
             }
-
-            setLoading(false);
         }
 
-        fetchUser();
-    }, []);
+        setLoading(false);
+    }
 
-    return {
-        user,
-        profile,
-        subscription,
-        loading,
-        isAdmin: profile?.role === 'admin'
-    };
+        fetchUser();
+}, []);
+
+return {
+    user,
+    profile,
+    subscription,
+    loading,
+    isAdmin: profile?.role === 'admin'
+};
 }
