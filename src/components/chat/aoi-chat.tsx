@@ -128,13 +128,32 @@ export default function AoiChat() {
             // Add placeholder AI message
             setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '' }])
 
-            // 4. Read Loop
+            // 4. Read Loop - Parse AI SDK Text Stream Protocol
             while (true) {
                 const { done, value } = await reader.read()
                 if (done) break
 
                 const chunk = decoder.decode(value, { stream: true })
-                aiContent += chunk
+
+                // AI SDK streams text in format: 0:"text content"
+                // Parse each line to extract the actual text
+                const lines = chunk.split('\n')
+                for (const line of lines) {
+                    if (!line.trim()) continue
+
+                    // Match pattern: 0:"..." (text chunk)
+                    const textMatch = line.match(/^0:"(.*)"\s*$/)
+                    if (textMatch) {
+                        // Unescape the JSON string content
+                        try {
+                            const textContent = JSON.parse(`"${textMatch[1]}"`)
+                            aiContent += textContent
+                        } catch {
+                            // Fallback: use the matched text directly
+                            aiContent += textMatch[1]
+                        }
+                    }
+                }
 
                 setMessages(prev => prev.map(msg =>
                     msg.id === aiMsgId ? { ...msg, content: aiContent } : msg
@@ -298,8 +317,8 @@ export default function AoiChat() {
                                     <div className="flex flex-col">
                                         <div
                                             className={`px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user'
-                                                    ? 'bg-[#607D8B] text-white rounded-2xl rounded-tr-none'
-                                                    : 'bg-white text-gray-800 rounded-2xl rounded-tl-none border border-gray-100'
+                                                ? 'bg-[#607D8B] text-white rounded-2xl rounded-tr-none'
+                                                : 'bg-white text-gray-800 rounded-2xl rounded-tl-none border border-gray-100'
                                                 }`}
                                         >
                                             {msg.content}
