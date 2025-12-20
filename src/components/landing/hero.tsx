@@ -46,14 +46,13 @@ export function Hero() {
                 </div>
 
                 <div className="mt-16 relative mx-auto max-w-5xl rounded-2xl border border-gray-200 shadow-2xl overflow-hidden bg-white">
-                    <div className="aspect-[16/9] bg-gray-50 flex items-center justify-center text-gray-300 text-sm">
-                        {/* Placeholder for dashboard screenshot */}
-                        <div className="p-8 w-full h-full flex flex-col items-center justify-center gap-4">
-                            <div className="w-3/4 h-4 bg-gray-200 rounded animate-pulse" />
-                            <div className="w-1/2 h-4 bg-gray-200 rounded animate-pulse" />
-                            <div className="w-2/3 h-4 bg-gray-200 rounded animate-pulse" />
-                            <p className="text-gray-400 mt-4">Dashboard UI Preview</p>
-                        </div>
+                    <div className="aspect-[16/9] relative">
+                        <img
+                            src="/assets/hero/office_scene.jpg"
+                            alt="S級AI事務局 葵さん - ダッシュボード"
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                     </div>
                 </div>
             </div>
