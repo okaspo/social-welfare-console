@@ -53,7 +53,8 @@ export default async function OrganizationPage() {
         plan: org.plan,
         address: org.address,
         phone: org.phone,
-        establishment_date: org.establishment_date
+        establishment_date: org.establishment_date,
+        entity_type: org.entity_type || 'social_welfare'
     }
 
     return (

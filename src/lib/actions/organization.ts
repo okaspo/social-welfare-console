@@ -95,6 +95,7 @@ export async function updateOrganization(formData: FormData) {
     const address = formData.get('address') as string
     const phone = formData.get('phone') as string
     const establishmentDate = formData.get('establishmentDate') as string
+    const entityType = formData.get('entity_type') as string
 
     const { error } = await supabase
         .from('organizations')
@@ -102,7 +103,8 @@ export async function updateOrganization(formData: FormData) {
             name,
             address,
             phone,
-            establishment_date: establishmentDate || null
+            establishment_date: establishmentDate || null,
+            entity_type: entityType || 'social_welfare'
         })
         .eq('id', profile.organization_id)
 
@@ -132,3 +134,46 @@ export async function updateProfile(formData: FormData) {
     revalidatePath('/dashboard/organization')
     return { success: true }
 }
+
+export async function updateCustomDomain(domain: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.organization_id) return { error: 'No organization linked' }
+
+    // Get organization to check plan
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('plan')
+        .eq('id', profile.organization_id)
+        .single()
+
+    if (!org || (org.plan !== 'pro' && org.plan !== 'enterprise')) {
+        return { error: 'Custom domain is only available for Pro/Enterprise plans' }
+    }
+
+    // Validate domain format
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+$/
+    if (domain && !domainRegex.test(domain)) {
+        return { error: 'Invalid domain format' }
+    }
+
+    const { error } = await supabase
+        .from('organizations')
+        .update({ custom_domain: domain || null })
+        .eq('id', profile.organization_id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/organization')
+    return { success: true }
+}
+
