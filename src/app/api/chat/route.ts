@@ -192,6 +192,50 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         }
                         return 'フィードバックを送信しました。貴重なご意見ありがとうございます。';
                     }
+                }),
+                show_officer_list: tool({
+                    description: 'ユーザーが役員名簿を見たい時に呼び出す。右側のキャンバスに役員一覧を表示する。例: 「役員を見せて」「理事の一覧」「役員名簿」',
+                    parameters: z.object({}),
+                    execute: async () => {
+                        const { showOfficerList } = await import('@/lib/ai/canvas-tools');
+                        const result = await showOfficerList();
+                        return JSON.stringify({
+                            type: 'canvas_action',
+                            action: 'show_officer_list',
+                            ...result
+                        });
+                    }
+                }),
+                draft_minutes: tool({
+                    description: '議事録を作成したい時に呼び出す。右側のキャンバスに議事録エディタを表示する。例: 「議事録を作成」「理事会の議事録」「評議員会の記録」',
+                    parameters: z.object({
+                        meeting_type: z.enum(['board_meeting', 'council_meeting', 'general_meeting', 'committee']).optional().describe('会議の種類: 理事会(board_meeting), 評議員会(council_meeting), 総会(general_meeting), 委員会(committee)')
+                    }),
+                    execute: async ({ meeting_type }: { meeting_type?: string }) => {
+                        const { draftMinutes } = await import('@/lib/ai/canvas-tools');
+                        const result = await draftMinutes(meeting_type);
+                        return JSON.stringify({
+                            type: 'canvas_action',
+                            action: 'draft_minutes',
+                            ...result
+                        });
+                    }
+                }),
+                clear_canvas: tool({
+                    description: 'ユーザーが話題を切り替えた時、または作業を終了した時に呼び出す。現在のキャンバスの内容を下書きとして保存し、キャンバスをクリアする。',
+                    parameters: z.object({
+                        reason: z.string().optional().describe('キャンバスをクリアする理由（ユーザーへの説明用）')
+                    }),
+                    execute: async ({ reason }: { reason?: string }) => {
+                        const { clearCanvas } = await import('@/lib/ai/canvas-tools');
+                        // Note: In a real implementation, we'd pass the current canvas state
+                        const result = await clearCanvas(null, reason);
+                        return JSON.stringify({
+                            type: 'canvas_action',
+                            action: 'clear_canvas',
+                            ...result
+                        });
+                    }
                 })
             },
             maxSteps: 3,
