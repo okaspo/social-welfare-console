@@ -78,9 +78,9 @@ export function selectModel(
     userPlan: string,
     complexity: TaskComplexity
 ): ModelName {
-    // Free plan: No AI access
+    // Free plan: Use mini with limited access (starter experience)
     if (userPlan === 'free' || userPlan === 'Free') {
-        throw new Error('AI features not available in Free plan');
+        return 'gpt-4o-mini'; // Allow free users with limitations
     }
 
     // Standard plan: Always use mini (cost control)

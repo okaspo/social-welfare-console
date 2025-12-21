@@ -107,7 +107,7 @@ export default function FullPageChat({
                         if (!line.trim()) continue;
 
                         // Match pattern: 0:"..." (text chunk)
-                        const textMatch = line.match(/^0:"(.*)"\\s*$/);
+                        const textMatch = line.match(/^0:"(.*)"\s*$/);
                         if (textMatch) {
                             // Unescape the JSON string content
                             try {
