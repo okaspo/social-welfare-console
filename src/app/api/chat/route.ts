@@ -228,12 +228,66 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     }),
                     execute: async ({ reason }: { reason?: string }) => {
                         const { clearCanvas } = await import('@/lib/ai/canvas-tools');
-                        // Note: In a real implementation, we'd pass the current canvas state
                         const result = await clearCanvas(null, reason);
                         return JSON.stringify({
                             type: 'canvas_action',
                             action: 'clear_canvas',
                             ...result
+                        });
+                    }
+                }),
+                update_canvas_field: tool({
+                    description: 'キャンバスの特定フィールドを更新する。ユーザーとの対話から情報を抽出し、議事録などのフォームに自動入力する。例: 日付、出席者、議題などをセット。',
+                    parameters: z.object({
+                        field: z.enum(['date', 'meeting_type', 'attendees', 'agenda', 'content', 'corporation_name', 'title']).describe('更新するフィールド'),
+                        value: z.any().describe('設定する値'),
+                        action: z.enum(['set', 'append']).optional().describe('set=上書き、append=追加（配列フィールド用）')
+                    }),
+                    execute: async ({ field, value, action }: { field: string, value: any, action?: string }) => {
+                        const { updateCanvasField } = await import('@/lib/ai/canvas-updater');
+                        const result = await updateCanvasField(field as any, value, (action as any) || 'set');
+                        return JSON.stringify({
+                            type: 'canvas_update',
+                            action: 'update_field',
+                            field,
+                            value,
+                            ...result
+                        });
+                    }
+                }),
+                collect_info_for_minutes: tool({
+                    description: '議事録作成に必要な情報をユーザーから収集する際に使用。まだ収集していない情報を確認し、次に聞くべき質問を決定する。',
+                    parameters: z.object({
+                        collected: z.object({
+                            date: z.boolean().optional(),
+                            meeting_type: z.boolean().optional(),
+                            attendees: z.boolean().optional(),
+                            agenda: z.boolean().optional()
+                        }).describe('既に収集した情報のフラグ')
+                    }),
+                    execute: async ({ collected }: { collected: Record<string, boolean> }) => {
+                        // 未収集の情報を特定
+                        const missing: string[] = [];
+                        if (!collected.date) missing.push('date');
+                        if (!collected.meeting_type) missing.push('meeting_type');
+                        if (!collected.attendees) missing.push('attendees');
+                        if (!collected.agenda) missing.push('agenda');
+
+                        // 次に聞くべき質問を決定
+                        const questions: Record<string, string> = {
+                            date: 'いつの会議ですか？（例: 今日、12月21日）',
+                            meeting_type: 'どのような会議ですか？（例: 理事会、評議員会）',
+                            attendees: '出席者を教えてください。',
+                            agenda: '議題は何でしたか？'
+                        };
+
+                        const nextQuestion = missing.length > 0 ? questions[missing[0]] : null;
+
+                        return JSON.stringify({
+                            type: 'info_collection',
+                            missing_fields: missing,
+                            next_question: nextQuestion,
+                            all_collected: missing.length === 0
                         });
                     }
                 })
