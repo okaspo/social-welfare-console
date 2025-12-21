@@ -13,18 +13,19 @@ export default async function AdminLayout({
         redirect('/login')
     }
 
-    // Check Role - must have admin_roles entry
-    const { data: adminRole } = await supabase
-        .from('admin_roles')
-        .select('*')
-        .eq('user_id', user.id)
+    // Check Role - must be admin or super_admin in profiles
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
         .single()
 
-    if (!adminRole) {
-        redirect('/dashboard')
+    if (!profile || (profile.role !== 'super_admin' && profile.role !== 'admin')) {
+        redirect('/chat')
     }
 
     // Simple layout - child routes provide their own sidebars
     return <>{children}</>
 }
+
 
