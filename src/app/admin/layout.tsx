@@ -13,14 +13,15 @@ export default async function AdminLayout({
         redirect('/login')
     }
 
-    // Check Role - must be admin or super_admin in profiles
+    // Check Role - must be admin, super_admin, or representative in profiles
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
 
-    if (!profile || (profile.role !== 'super_admin' && profile.role !== 'admin')) {
+    const allowedRoles = ['super_admin', 'admin', 'representative'];
+    if (!profile || !allowedRoles.includes(profile.role)) {
         redirect('/chat')
     }
 

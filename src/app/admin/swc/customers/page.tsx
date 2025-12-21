@@ -19,7 +19,8 @@ export default async function SwcCustomersPage() {
         .eq('id', user.id)
         .single();
 
-    if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
+    const allowedRoles = ['super_admin', 'admin', 'representative'];
+    if (!profile || !allowedRoles.includes(profile.role)) {
         redirect('/chat');
     }
 

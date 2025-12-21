@@ -18,7 +18,8 @@ export default async function SwcPlansPage() {
         .eq('id', user.id)
         .single();
 
-    if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
+    const allowedRoles = ['super_admin', 'admin', 'representative'];
+    if (!profile || !allowedRoles.includes(profile.role)) {
         redirect('/chat');
     }
 
