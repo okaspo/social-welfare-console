@@ -5,6 +5,7 @@ import {
     Settings, BarChart3, Shield, Bell, Scale, Briefcase
 } from 'lucide-react';
 import AdminGlobalSwitcher from '@/components/admin/admin-global-switcher';
+import { AdminScopeProvider } from '@/lib/admin/admin-scope';
 
 interface MedLayoutProps {
     children: ReactNode;
@@ -86,7 +87,9 @@ export default function MedLayout({ children }: MedLayoutProps) {
 
                 {/* Content */}
                 <main className="flex-1 overflow-auto">
-                    {children}
+                    <AdminScopeProvider forceConsole="med">
+                        {children}
+                    </AdminScopeProvider>
                 </main>
             </div>
         </div>

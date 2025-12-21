@@ -5,6 +5,7 @@ import {
     Settings, BarChart3, Shield, FileText, Bell
 } from 'lucide-react';
 import AdminGlobalSwitcher from '@/components/admin/admin-global-switcher';
+import { AdminScopeProvider } from '@/lib/admin/admin-scope';
 
 interface SwcLayoutProps {
     children: ReactNode;
@@ -85,7 +86,9 @@ export default function SwcLayout({ children }: SwcLayoutProps) {
 
                 {/* Content */}
                 <main className="flex-1 overflow-auto">
-                    {children}
+                    <AdminScopeProvider forceConsole="swc">
+                        {children}
+                    </AdminScopeProvider>
                 </main>
             </div>
         </div>

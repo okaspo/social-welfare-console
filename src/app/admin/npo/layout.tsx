@@ -5,6 +5,7 @@ import {
     Settings, BarChart3, Shield, FileText, Bell, Award
 } from 'lucide-react';
 import AdminGlobalSwitcher from '@/components/admin/admin-global-switcher';
+import { AdminScopeProvider } from '@/lib/admin/admin-scope';
 
 interface NpoLayoutProps {
     children: ReactNode;
@@ -86,7 +87,9 @@ export default function NpoLayout({ children }: NpoLayoutProps) {
 
                 {/* Content */}
                 <main className="flex-1 overflow-auto">
-                    {children}
+                    <AdminScopeProvider forceConsole="npo">
+                        {children}
+                    </AdminScopeProvider>
                 </main>
             </div>
         </div>
