@@ -1,7 +1,10 @@
 'use client';
 
 import { ReactNode, createContext, useContext, useState, useCallback } from 'react';
-import { X, MessageCircle, FileText } from 'lucide-react';
+import { X, MessageCircle, FileText, FolderOpen, Settings } from 'lucide-react';
+import MinimalSidebar, { NavItem } from './minimal-sidebar';
+import RegistryCanvas from '../canvas/registry-canvas';
+import ArchiveCanvas from '../canvas/archive-canvas';
 
 // ============================================================================
 // Canvas Context - 右側パネルの状態管理
@@ -10,7 +13,7 @@ import { X, MessageCircle, FileText } from 'lucide-react';
 interface CanvasContent {
     id: string;
     title: string;
-    type: 'form' | 'preview' | 'editor' | 'viewer';
+    type: 'form' | 'preview' | 'editor' | 'viewer' | 'registry' | 'archive';
     component: ReactNode;
 }
 
@@ -39,13 +42,18 @@ interface ChatSplitLayoutProps {
     children: ReactNode; // Chat component
     personaEmoji?: string;
     personaName?: string;
+    userName?: string;
+    corporationName?: string;
 }
 
 export default function ChatSplitLayout({
     children,
     personaEmoji = '💙',
-    personaName = '葵'
+    personaName = '葵',
+    userName,
+    corporationName
 }: ChatSplitLayoutProps) {
+    const [activeNav, setActiveNav] = useState<NavItem>('home');
     const [isCanvasOpen, setIsCanvasOpen] = useState(false);
     const [canvasContent, setCanvasContent] = useState<CanvasContent | null>(null);
     const [isMobileCanvasOpen, setIsMobileCanvasOpen] = useState(false);
@@ -59,7 +67,49 @@ export default function ChatSplitLayout({
     const closeCanvas = useCallback(() => {
         setIsCanvasOpen(false);
         setIsMobileCanvasOpen(false);
+        setActiveNav('home');
     }, []);
+
+    // Handle sidebar navigation
+    const handleNavClick = useCallback((item: NavItem) => {
+        setActiveNav(item);
+
+        if (item === 'home') {
+            closeCanvas();
+        } else if (item === 'registry') {
+            openCanvas({
+                id: 'registry',
+                title: '台帳',
+                type: 'registry',
+                component: (
+                    <RegistryCanvas
+                        items={[]}
+                        onItemClick={(regItem) => {
+                            // Handle registry item click - could open officer list, etc.
+                            console.log('Registry item clicked:', regItem);
+                        }}
+                    />
+                )
+            });
+        } else if (item === 'archive') {
+            openCanvas({
+                id: 'archive',
+                title: '文書',
+                type: 'archive',
+                component: (
+                    <ArchiveCanvas
+                        documents={[]}
+                        onDocumentClick={(doc) => {
+                            console.log('Document clicked:', doc);
+                        }}
+                    />
+                )
+            });
+        } else if (item === 'settings') {
+            // Navigate to settings page
+            window.location.href = '/dashboard/settings';
+        }
+    }, [openCanvas, closeCanvas]);
 
     const contextValue: CanvasContextType = {
         isOpen: isCanvasOpen,
@@ -71,10 +121,20 @@ export default function ChatSplitLayout({
     return (
         <CanvasContext.Provider value={contextValue}>
             <div className="h-screen w-full flex overflow-hidden bg-gray-50">
+                {/* ===== Minimal Sidebar ===== */}
+                <MinimalSidebar
+                    activeItem={activeNav}
+                    onNavClick={handleNavClick}
+                    personaEmoji={personaEmoji}
+                    personaName={personaName}
+                    userName={userName}
+                    corporationName={corporationName}
+                />
+
                 {/* ===== Left Pane: Chat Console ===== */}
                 <div className={`
                     flex flex-col h-full transition-all duration-300 ease-in-out
-                    w-full lg:w-[50%] xl:w-[45%]
+                    flex-1 lg:flex-none lg:w-[45%] xl:w-[40%]
                     ${isCanvasOpen ? 'lg:border-r lg:border-gray-200' : ''}
                 `}>
                     {/* Chat Header */}
