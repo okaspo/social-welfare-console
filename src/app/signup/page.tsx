@@ -31,7 +31,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${getURL()}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${getURL()}/auth/callback?next=/chat`,
           data: {
             full_name: fullName,
             corporation_name: corporationName,
@@ -48,12 +48,12 @@ export default function SignupPage() {
 
       // In a real app, you'd show a "Check your email" message
       // For this demo/mock, providing immediate feedback
-      router.push('/dashboard')
+      router.push('/chat')
     } catch (err) {
       // Graceful fallback if env vars are missing (mock mode)
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         console.warn("Supabase credentials missing, simulating success for UI demo.")
-        router.push('/dashboard?mock=true')
+        router.push('/chat?mock=true')
       } else {
         setError((err as Error).message)
       }

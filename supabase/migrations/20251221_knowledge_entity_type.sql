@@ -8,7 +8,7 @@ ADD COLUMN IF NOT EXISTS entity_type VARCHAR(50) DEFAULT 'common';
 
 -- Create index for entity_type filtering
 CREATE INDEX IF NOT EXISTS idx_common_knowledge_entity_type 
-ON common_knowledge (entity_type, is_active);
+ON common_knowledge (entity_type);
 
 -- Comment
 COMMENT ON COLUMN common_knowledge.entity_type IS 
@@ -18,3 +18,4 @@ COMMENT ON COLUMN common_knowledge.entity_type IS
 UPDATE common_knowledge 
 SET entity_type = 'common' 
 WHERE entity_type IS NULL;
+

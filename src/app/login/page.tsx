@@ -158,7 +158,7 @@ export default function LoginPage() {
                                 await supabase.auth.signInWithOAuth({
                                     provider: 'google',
                                     options: {
-                                        redirectTo: `${getURL()}/auth/callback?next=/dashboard`,
+                                        redirectTo: `${getURL()}/auth/callback?next=/chat`,
                                         queryParams: {
                                             access_type: 'offline',
                                             prompt: 'consent',
@@ -195,7 +195,7 @@ export default function LoginPage() {
                                 await supabase.auth.signInWithOAuth({
                                     provider: 'azure',
                                     options: {
-                                        redirectTo: `${getURL()}/auth/callback?next=/dashboard`,
+                                        redirectTo: `${getURL()}/auth/callback?next=/chat`,
                                         scopes: 'email profile openid',
                                     },
                                 })
@@ -217,7 +217,7 @@ export default function LoginPage() {
                                 await supabase.auth.signInWithOAuth({
                                     provider: 'line' as any,
                                     options: {
-                                        redirectTo: `${getURL()}/auth/callback?next=/dashboard`,
+                                        redirectTo: `${getURL()}/auth/callback?next=/chat`,
                                         scopes: 'profile openid email',
                                     },
                                 })
