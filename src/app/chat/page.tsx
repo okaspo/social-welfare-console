@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import ChatSplitLayout from '@/components/layout/chat-split-layout';
-import AoiChat from '@/components/chat/aoi-chat';
+import FullPageChat from '@/components/chat/full-page-chat';
 import { getPersonaByEntityType } from '@/lib/ai/personas';
 
 export default async function ChatPage() {
@@ -38,8 +38,14 @@ export default async function ChatPage() {
         <ChatSplitLayout
             personaEmoji={persona.info.emoji}
             personaName={persona.info.name}
+            userName={profile?.full_name || undefined}
+            corporationName={profile?.corporation_name || undefined}
         >
-            <AoiChat />
+            <FullPageChat
+                personaId={persona.info.id}
+                personaName={persona.info.name}
+                personaEmoji={persona.info.emoji}
+            />
         </ChatSplitLayout>
     );
 }
