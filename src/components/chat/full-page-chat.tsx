@@ -99,25 +99,34 @@ export default function FullPageChat({
                     if (done) break;
 
                     const chunk = decoder.decode(value, { stream: true });
-                    // Handle streaming text format
+
+                    // AI SDK streams text in format: 0:"text content"
+                    // Parse each line to extract the actual text
                     const lines = chunk.split('\n');
                     for (const line of lines) {
-                        if (line.startsWith('0:')) {
+                        if (!line.trim()) continue;
+
+                        // Match pattern: 0:"..." (text chunk)
+                        const textMatch = line.match(/^0:"(.*)"\\s*$/);
+                        if (textMatch) {
+                            // Unescape the JSON string content
                             try {
-                                const text = JSON.parse(line.slice(2));
-                                assistantContent += text;
-                                setMessages(prev =>
-                                    prev.map(m =>
-                                        m.id === assistantMsgId
-                                            ? { ...m, content: assistantContent }
-                                            : m
-                                    )
-                                );
+                                const textContent = JSON.parse(`"${textMatch[1]}"`);
+                                assistantContent += textContent;
                             } catch {
-                                // Non-JSON chunk
+                                // Fallback: use the matched text directly
+                                assistantContent += textMatch[1];
                             }
                         }
                     }
+
+                    setMessages(prev =>
+                        prev.map(m =>
+                            m.id === assistantMsgId
+                                ? { ...m, content: assistantContent }
+                                : m
+                        )
+                    );
                 }
             }
         } catch (error) {
