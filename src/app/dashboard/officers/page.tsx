@@ -1,4 +1,5 @@
 import OfficerList from "@/components/officers/officer-list"
+import OfficerExportButton from "@/components/officers/officer-export-button"
 import { createClient } from "@/lib/supabase/server"
 import { MOCK_OFFICERS, Officer } from "@/lib/officers/data"
 
@@ -82,16 +83,19 @@ export default async function OfficerManagementPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">役員・評議員管理</h1>
-                <p className="text-gray-500 text-sm mt-1">
-                    理事、監事、評議員、および選任解任委員の任期管理を行います。
-                </p>
-                {readOnly && (
-                    <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 text-sm rounded border border-yellow-200">
-                        ※ 現在、Freeプラン（解約済）のため、新規登録・編集は制限されています。閲覧のみ可能です。
-                    </div>
-                )}
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">役員・評議員管理</h1>
+                    <p className="text-gray-500 text-sm mt-1">
+                        理事、監事、評議員、および選任解任委員の任期管理を行います。
+                    </p>
+                    {readOnly && (
+                        <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 text-sm rounded border border-yellow-200">
+                            ※ 現在、Freeプラン（解約済）のため、新規登録・編集は制限されています。閲覧のみ可能です。
+                        </div>
+                    )}
+                </div>
+                <OfficerExportButton />
             </div>
 
             {/* Governance Feature Tabs */}

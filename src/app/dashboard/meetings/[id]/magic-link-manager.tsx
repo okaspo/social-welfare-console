@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { generateConsentToken, sendConvocationEmails } from '../actions';
-import { CheckCircle2, Clock, XCircle, Link as LinkIcon, Copy, RefreshCw, Mail, Send, Loader2 } from 'lucide-react';
+import { checkAndGenerateAutoMinutes } from '@/lib/actions/auto-minutes';
+import { CheckCircle2, Clock, XCircle, Link as LinkIcon, Copy, RefreshCw, Mail, Send, Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Type for officer data with consent status
@@ -27,6 +28,27 @@ export default function MagicLinkManager({
 }) {
     const [generatingId, setGeneratingId] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
+    const [isGeneratingMinutes, setIsGeneratingMinutes] = useState(false);
+
+    // Check if all officers have agreed
+    const allAgreed = officers.length > 0 && officers.every(o => o.consent?.status === 'agreed');
+    const agreedCount = officers.filter(o => o.consent?.status === 'agreed').length;
+
+    const handleGenerateMinutes = async () => {
+        setIsGeneratingMinutes(true);
+        try {
+            const result = await checkAndGenerateAutoMinutes(meetingId);
+            if (result.success && result.generated) {
+                toast.success('議事録ドラフトを自動生成しました');
+            } else if (result.error) {
+                toast.error(result.error);
+            }
+        } catch (e) {
+            toast.error('議事録生成に失敗しました');
+        } finally {
+            setIsGeneratingMinutes(false);
+        }
+    };
 
     const handleGenerateLink = async (officerId: string) => {
         // ... (existing logic)
@@ -80,15 +102,39 @@ export default function MagicLinkManager({
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                <button
-                    onClick={handleSendEmails}
-                    disabled={isSending}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm font-medium shadow-sm"
-                >
-                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    一括送信など
-                </button>
+            {/* Progress and Actions */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600">
+                        同意状況: <span className="font-bold text-gray-900">{agreedCount}</span> / {officers.length}
+                    </span>
+                    {allAgreed && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 className="h-3 w-3" />
+                            全員同意済み
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    {allAgreed && (
+                        <button
+                            onClick={handleGenerateMinutes}
+                            disabled={isGeneratingMinutes}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm font-medium shadow-sm"
+                        >
+                            {isGeneratingMinutes ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                            議事録を自動生成
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSendEmails}
+                        disabled={isSending || allAgreed}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm font-medium shadow-sm"
+                    >
+                        {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        招集通知を一括送信
+                    </button>
+                </div>
             </div>
 
             <div className="overflow-x-auto bg-white border border-gray-100 rounded-lg">
