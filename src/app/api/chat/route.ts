@@ -6,7 +6,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { buildSystemPrompt } from '@/lib/prompt-builder';
 import { checkUsageLimit, logUsage } from '@/lib/ai/usage-limiter';
 import { selectModel, assessComplexity, calculateCost } from '@/lib/ai/model-router';
-// LimitReachedError removed
+import { getSystemPromptForEntityType, getPersonaByEntityType } from '@/lib/ai/personas';
 
 export const maxDuration = 60; // Increased for o1
 export const dynamic = 'force-dynamic';
@@ -34,17 +34,24 @@ export async function POST(req: Request) {
                 organizations (
                     id,
                     plan_id,
-                    plan
+                    plan,
+                    entity_type
                 )
             `)
             .eq('id', user.id)
             .single();
 
-        const userProfile = profile || { full_name: 'ゲスト', corporation_name: '未設定法人', organization_id: null, organizations: { plan_id: 'free', plan: 'free' } };
+        const userProfile = profile || { full_name: 'ゲスト', corporation_name: '未設定法人', organization_id: null, organizations: { plan_id: 'free', plan: 'free', entity_type: 'social_welfare' } };
         const orgId = userProfile.organization_id;
         const orgData = userProfile.organizations;
         // @ts-ignore
         const plan = (Array.isArray(orgData) ? orgData[0]?.plan : orgData?.plan) || 'free';
+        // @ts-ignore
+        const entityType = (Array.isArray(orgData) ? orgData[0]?.entity_type : orgData?.entity_type) || 'social_welfare';
+
+        // Get persona based on entity type
+        const persona = getPersonaByEntityType(entityType);
+        const personaPrompt = persona.systemPrompt;
 
         // 2. Cost Control: Check Usage Limit (Initial Check)
         // 2. Cost Control: Check Usage Limit (Initial Check)
@@ -59,8 +66,11 @@ export async function POST(req: Request) {
         const fetchIfOrg = (query: any) => userProfile.organization_id ? query : Promise.resolve({ data: [] });
 
         const [knowledgeRes, documentsRes, officersRes, articlesRes] = await Promise.all([
-            // [Common] Service Knowledge (active items)
-            supabase.from('common_knowledge').select('title, content, category').eq('is_active', true),
+            // [Common] Service Knowledge (active items) - Filter by entity type
+            supabase.from('common_knowledge')
+                .select('title, content, category')
+                .eq('is_active', true)
+                .or(`entity_type.is.null,entity_type.eq.common,entity_type.eq.${entityType}`),
 
             // [Individual] Managed Documents (Minutes etc.)
             fetchIfOrg(supabase.from('private_documents')
@@ -117,13 +127,14 @@ export async function POST(req: Request) {
         // Re-check quota including Reasoning Limits (omitted for now as redundant or needing specific reasoning-limit logic)
         // if (orgId) { ... }
 
-        // 5. Build Final System Message
+        // 5. Build Final System Message with Persona
         const finalSystemMessage = `
-${systemPromptFull}
+${personaPrompt}
 
 【ユーザー情報】
 - ユーザー名: ${userProfile.full_name}
 - 法人名: ${userProfile.corporation_name || '未設定'}
+- 法人種別: ${persona.info.entityType === 'social_welfare' ? '社会福祉法人' : persona.info.entityType === 'npo' ? 'NPO法人' : persona.info.entityType === 'medical_corp' ? '医療法人' : '一般社団法人'}
 
 【個別知識 (Individual Knowledge)】
 この法人固有の情報です。質問がこの法人の内部事情に関するものである場合は、ここを最優先で参照してください。
