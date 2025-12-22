@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText, ToolCallPart, ToolResultPart, tool } from 'ai';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { buildSystemPrompt } from '@/lib/prompt-builder';
 import { checkUsageLimit, logUsage } from '@/lib/ai/usage-limiter';
@@ -18,8 +18,8 @@ export async function POST(req: Request) {
         const body = await req.json();
         const messages = body?.messages || [];
 
-        console.log('[Chat API] Creating Supabase client...');
-        const supabase = await createClient();
+        console.log('[Chat API] Creating Supabase client from request...');
+        const supabase = createClientFromRequest(req);
 
         // 1. Check Auth & Get User Profile
         console.log('[Chat API] Getting user...');
