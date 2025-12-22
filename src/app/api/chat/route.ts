@@ -341,7 +341,9 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         outputTokens: usage.completionTokens || 0
                     });
                 }
-            }
+            },
+            // @ts-ignore - maxSteps is available in newer versions but types might be outdated
+            maxSteps: 10, // Allow up to 10 steps for tool execution
         });
 
         // Use headers to signal reasoning mode
