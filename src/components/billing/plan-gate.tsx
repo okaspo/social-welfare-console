@@ -33,9 +33,9 @@ export async function PlanGate({ children, plan: requiredPlan, fallback }: PlanG
     // Check effective plan status (including grace period calculations)
     const { plan: currentPlan, status } = await checkSubscriptionStatus(profile.organization_id)
 
-    const hierarchy = { free: 0, standard: 1, pro: 2 }
-    const currentLevel = hierarchy[currentPlan] || 0
-    const requiredLevel = hierarchy[requiredPlan] || 0
+    const hierarchy: Record<string, number> = { free: 0, standard: 1, pro: 2, enterprise: 3 }
+    const currentLevel = hierarchy[currentPlan] ?? 0
+    const requiredLevel = hierarchy[requiredPlan] ?? 0
 
     // If plan is higher or equal, render children
     // Exception: If status is canceled (actually expired), the checkSubscriptionStatus would have returned 'free' anyway.
