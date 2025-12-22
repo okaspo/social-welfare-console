@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, Paperclip, Loader2, Sparkles, Save, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAssistantAvatar } from '@/lib/hooks/use-assistant-avatar';
@@ -22,11 +22,12 @@ export default function FullPageChat({
     personaName = '葵',
     personaEmoji = '💙'
 }: FullPageChatProps) {
+    // Use static welcome message ID to prevent hydration mismatch
     const [messages, setMessages] = useState<Message[]>([
         {
-            id: 'welcome',
+            id: 'welcome-msg',
             role: 'assistant',
-            content: `こんにちは！${personaName}です。今日はどのようなお手伝いをしましょうか？\n\n💡 例えば：\n• 「議事録を作成して」\n• 「役員名簿を見せて」\n• 「理事会の招集通知を作成」`
+            content: `こんにちは！${personaName}です。今日はどのようなお手伝いをしましょうか?\n\n💡 例えば：\n• 「議事録を作成して」\n• 「役員名簿を見せて」\n• 「理事会の招集通知を作成」`
         }
     ]);
     const [input, setInput] = useState('');
@@ -35,7 +36,16 @@ export default function FullPageChat({
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const supabase = createClient();
+
+    // Lazy initialization of Supabase client to prevent hydration issues
+    const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+    const getSupabase = useCallback(() => {
+        if (!supabaseRef.current) {
+            supabaseRef.current = createClient();
+        }
+        return supabaseRef.current;
+    }, []);
+
     const { avatarUrl } = useAssistantAvatar(personaId);
 
     const scrollToBottom = () => {
