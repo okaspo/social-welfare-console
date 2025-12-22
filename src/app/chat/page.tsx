@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import ChatSplitLayout from '@/components/layout/chat-split-layout';
+// Temporarily disabled for debugging
+// import ChatSplitLayout from '@/components/layout/chat-split-layout';
 import FullPageChat from '@/components/chat/full-page-chat';
 import { getPersonaByEntityType } from '@/lib/ai/personas';
 
@@ -34,18 +35,15 @@ export default async function ChatPage() {
     const entityType = (Array.isArray(orgData) ? orgData[0]?.entity_type : orgData?.entity_type) || 'social_welfare';
     const persona = getPersonaByEntityType(entityType);
 
+    // Simplified layout for debugging - no ChatSplitLayout
     return (
-        <ChatSplitLayout
-            personaEmoji={persona.info.emoji}
-            personaName={persona.info.name}
-            userName={profile?.full_name || undefined}
-            corporationName={profile?.corporation_name || undefined}
-        >
+        <div className="h-screen w-full bg-white">
             <FullPageChat
                 personaId={persona.info.id}
                 personaName={persona.info.name}
                 personaEmoji={persona.info.emoji}
             />
-        </ChatSplitLayout>
+        </div>
     );
 }
+
