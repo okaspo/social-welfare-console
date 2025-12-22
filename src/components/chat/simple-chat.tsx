@@ -77,11 +77,31 @@ export default function SimpleChat({
                     if (done) break;
 
                     const chunk = decoder.decode(value, { stream: true });
-                    console.log('[SimpleChat] Chunk:', JSON.stringify(chunk));
+                    console.log('[SimpleChat] Chunk:', chunk);
 
-                    // toTextStreamResponse returns plain text.
-                    // Just append the chunk directly.
-                    assistantContent += chunk;
+                    // Parse AI SDK streaming format (Data Stream Protocol)
+                    // Format: 
+                    // 0:"text content"
+                    // d:{"key":"value"} (data)
+                    // e:{"error":"..."} (error)
+                    const lines = chunk.split('\n');
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+
+                        // Handle text delta: 0:"text"
+                        if (line.startsWith('0:')) {
+                            const content = line.substring(2);
+                            try {
+                                // Content is JSON string encoded, e.g. "Hello"
+                                const parsed = JSON.parse(content);
+                                assistantContent += parsed;
+                            } catch {
+                                // Fallback
+                                assistantContent += content;
+                            }
+                        }
+                        // Handle formatting (sometimes it comes as raw JSON if toTextStreamResponse was used, but we are back to toDataStreamResponse)
+                    }
 
                     setLocalMessages(prev =>
                         prev.map(m =>
@@ -124,8 +144,8 @@ export default function SimpleChat({
                     >
                         <div
                             className={`max-w-[80%] rounded-2xl px-4 py-2 ${message.role === 'user'
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-gray-100 text-gray-900'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-gray-100 text-gray-900'
                                 }`}
                         >
                             <p className="whitespace-pre-wrap">{message.content}</p>

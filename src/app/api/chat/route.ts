@@ -350,10 +350,13 @@ ${commonKnowledgeText || "(共通知識はありません)"}
         const headers = new Headers();
         if (taskComplexity === 'reasoning') {
             headers.set('X-Reasoning-Mode', 'true');
+            console.log('[Chat API] Reasoning mode active (o1/o3)');
         }
 
-        // return result.toTextStreamResponse({ data });
-        return result.toTextStreamResponse({ headers });
+        console.log(`[Chat API] Streaming response using Data Stream Protocol. Model: ${selectedModel}`);
+
+        // @ts-ignore - toDataStreamResponse exists in AI SDK but types might be outdated
+        return result.toDataStreamResponse({ headers });
 
     } catch (error: any) {
         console.error("❌ [Chat API] Critical Error:", error);
