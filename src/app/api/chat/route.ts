@@ -354,15 +354,42 @@ ${commonKnowledgeText || "(共通知識はありません)"}
         }
 
         console.log(`[Chat API] Streaming response using Data Stream Protocol. Model: ${selectedModel}`);
-        console.log('[Chat API] Result keys:', Object.keys(result));
 
-        try {
-            const response = result.toDataStreamResponse({ headers });
-            console.log('[Chat API] Stream response created successfully');
-            return response;
-        } catch (streamError: any) {
-            console.error('[Chat API] Error creating stream response:', streamError);
-            throw streamError;
+        // DEBUG: Inspect result object
+        const keys = Object.keys(result);
+        const protoKeys = Object.getPrototypeOf(result) ? Object.getOwnPropertyNames(Object.getPrototypeOf(result)) : [];
+        console.log('[Chat API] Result keys:', keys);
+        console.log('[Chat API] Result proto keys:', protoKeys);
+
+        // Fallback to text stream if data stream is missing, just to see if it works
+        // But first, let's return the keys to the client to debug 500 error
+        return new Response(JSON.stringify({
+            keys,
+            protoKeys,
+            // @ts-ignore
+            isDataStreamAvailable: typeof result.toDataStreamResponse === 'function',
+            // @ts-ignore
+            isTextStreamAvailable: typeof result.toTextStreamResponse === 'function',
+            resultString: String(result)
+        }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        // Try toDataStreamResponse again, with explicit logging
+        if (typeof result.toDataStreamResponse === 'function') {
+            // @ts-ignore
+            return result.toDataStreamResponse({ headers });
+        } else if (typeof result.toAIStreamResponse === 'function') {
+            // @ts-ignore
+            return result.toAIStreamResponse({ headers });
+        } else {
+            // Fallback or debug output
+            console.error('[Chat API] No streaming method found on result object');
+            return new Response(JSON.stringify({
+                error: 'Streaming method not found',
+                keys,
+                protoKeys
+            }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
     } catch (error: any) {
