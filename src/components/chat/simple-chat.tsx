@@ -61,7 +61,16 @@ export default function SimpleChat({
             console.log('[SimpleChat] Response status:', response.status);
 
             if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
+                let errorMessage = `API error: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.details) errorMessage += ` - ${errorData.details}`;
+                    else if (errorData.error) errorMessage += ` - ${errorData.error}`;
+                } catch {
+                    // Ignore JSON parse error
+                    errorMessage += ` (${response.statusText})`;
+                }
+                throw new Error(errorMessage);
             }
 
             const reader = response.body?.getReader();
