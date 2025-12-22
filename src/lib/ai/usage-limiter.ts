@@ -35,7 +35,7 @@ export async function checkUsageLimit(
         p_plan_name: planName,
     });
 
-    if (error || !data || data.length === 0) {
+    if (error) {
         console.error('Failed to check usage limit:', error);
         // Fail open (allow request) rather than fail closed
         return {
@@ -46,13 +46,37 @@ export async function checkUsageLimit(
         };
     }
 
-    const result = data[0];
+    // Handle both JSONB (object) and TABLE (array) return formats
+    // SQL function returns JSONB with { allowed, limit, currentCost }
+    const result = Array.isArray(data) ? data[0] : data;
+
+    if (!result) {
+        return {
+            allowed: true,
+            currentCost: 0,
+            limit: 0,
+            usagePercent: 0,
+        };
+    }
+
+    // Map SQL fields to TypeScript interface
+    // SQL returns: allowed, limit, currentCost (from our JSONB function)
+    // or has_exceeded, limit_cost, current_cost (from original TABLE function)
+    const allowed = result.allowed !== undefined
+        ? result.allowed
+        : !result.has_exceeded;
+    const currentCost = result.currentCost !== undefined
+        ? parseFloat(result.currentCost || 0)
+        : parseFloat(result.current_cost || 0);
+    const limit = result.limit !== undefined
+        ? parseFloat(result.limit || 0)
+        : parseFloat(result.limit_cost || 0);
 
     return {
-        allowed: !result.has_exceeded,
-        currentCost: parseFloat(result.current_cost),
-        limit: parseFloat(result.limit_cost),
-        usagePercent: parseFloat(result.usage_percent),
+        allowed,
+        currentCost,
+        limit,
+        usagePercent: limit > 0 ? (currentCost / limit) * 100 : 0,
     };
 }
 

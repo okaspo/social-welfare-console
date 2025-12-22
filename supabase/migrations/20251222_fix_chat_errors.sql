@@ -54,6 +54,6 @@ BEGIN
         AND column_name = 'slug'
     ) THEN
         ALTER TABLE prompt_modules ADD COLUMN slug TEXT;
-        ADD CONSTRAINT prompt_modules_slug_unique UNIQUE (slug);
+        ALTER TABLE prompt_modules ADD CONSTRAINT prompt_modules_slug_unique UNIQUE (slug);
     END IF;
 END $$;
