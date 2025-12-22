@@ -112,9 +112,13 @@ export default function SimpleChat({
                                 console.log('[SimpleChat] Tool Call:', json.value);
                                 // Optional: Show a "Thinking..." indicator or tool name
                             }
+                            else if (json.type === 'error') {
+                                console.error('[SimpleChat] Stream Error Event:', json.value);
+                                assistantContent += `\n\n[System Error: ${json.value}]`;
+                            }
                             else if (json.type === 'server-error') {
                                 console.error('[SimpleChat] Server Error:', json.value);
-                                throw new Error(json.value);
+                                assistantContent += `\n\n[Server Error: ${json.value}]`;
                             }
                         } catch (e) {
                             console.warn('[SimpleChat] Parse error for line:', line, e);

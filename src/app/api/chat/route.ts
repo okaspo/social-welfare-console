@@ -370,8 +370,8 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                                 // @ts-ignore
                                 part.type === 'tool-call' ? (part.toolCallName || part.toolName) :
                                     // @ts-ignore
-                                    part.type === 'error' ? part.error : null,
-                            raw: part // Send raw part for debugging
+                                    part.type === 'error' ? (part.error instanceof Error ? part.error.message : String(part.error)) : null,
+                            raw: part.type === 'error' ? { message: String(part.error) } : part // Send raw part for debugging, careful with Error objects
                         };
                         // Filter out empty text updates to reduce noise
                         if (chunk.type === 'text-delta' && !chunk.value) continue;
