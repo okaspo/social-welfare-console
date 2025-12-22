@@ -12,8 +12,8 @@ DECLARE
     v_current BIGINT;
     v_allowed BOOLEAN;
 BEGIN
-    -- Get plan limit (default to 0 if not found)
-    SELECT max_monthly_chat INTO v_limit
+    -- Get plan limit (default to 10 if not found)
+    SELECT monthly_chat_limit INTO v_limit
     FROM plan_limits
     WHERE plan_id = p_plan_name;
     
@@ -22,24 +22,29 @@ BEGIN
         v_limit := 10;
     END IF;
 
-    -- Get current usage
-    SELECT COALESCE(SUM(output_tokens), 0) / 100 -- Approximate checks or count rows
+    -- Get current usage from organization_usage table (using chat_count column)
+    SELECT COALESCE(chat_count, 0)
     INTO v_current 
     FROM organization_usage
     WHERE organization_id = p_organization_id
-    AND feature_name = 'chat_response'
-    AND created_at >= date_trunc('month', now());
+    AND current_month = date_trunc('month', now())::date;
 
-    -- Simple check (modify logic as needed for tokens vs count)
-    -- Here assuming 1 chat = 1 call for simplicity in this wrapper, 
-    -- but real logic might use token counts. 
-    -- For now, let's just return true to unblock the chat unless strictly needed.
-    v_allowed := true; 
+    -- If no record found, default to 0
+    IF v_current IS NULL THEN
+        v_current := 0;
+    END IF;
+
+    -- Check if under limit (-1 means unlimited)
+    IF v_limit = -1 THEN
+        v_allowed := true;
+    ELSE
+        v_allowed := v_current < v_limit;
+    END IF;
 
     RETURN jsonb_build_object(
         'allowed', v_allowed,
         'limit', v_limit,
-        'currentCost', 0 -- Placeholder
+        'currentCost', v_current
     );
 END;
 $$;
