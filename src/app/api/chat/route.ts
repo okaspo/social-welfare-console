@@ -18,40 +18,58 @@ export async function POST(req: Request) {
         const body = await req.json();
         const messages = body?.messages || [];
 
+        console.log('[Chat API] Messages count:', messages.length);
+
+        // Create Supabase client outside try-catch so it's accessible everywhere
         console.log('[Chat API] Creating Supabase client from request...');
         const supabase = createClientFromRequest(req);
 
-        // 1. Check Auth & Get User Profile
-        console.log('[Chat API] Getting user...');
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        // Try to get user, but continue with fallback if it fails
+        let user: any = null;
 
-        if (authError) {
-            console.error('[Chat API] Auth error:', authError);
-            return new Response(JSON.stringify({ error: "Auth error", details: authError.message }), { status: 401 });
+        try {
+            console.log('[Chat API] Getting user...');
+            const { data, error: authError } = await supabase.auth.getUser();
+            user = data?.user;
+
+            if (authError) {
+                console.error('[Chat API] Auth error:', authError.message);
+            }
+        } catch (authErr: any) {
+            console.error('[Chat API] Auth exception:', authErr.message);
         }
 
+        // Log user status
         if (!user) {
-            console.log('[Chat API] No user found');
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+            console.log('[Chat API] No user found, continuing with guest mode');
+        } else {
+            console.log('[Chat API] User found:', user.id);
         }
 
-        console.log('[Chat API] User found:', user.id);
-
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select(`
-                full_name, 
-                corporation_name, 
-                organization_id,
-                organizations (
-                    id,
-                    plan_id,
-                    plan,
-                    entity_type
-                )
-            `)
-            .eq('id', user.id)
-            .single();
+        // Get profile - use optional chaining and fallback
+        let profile: any = null;
+        if (user) {
+            try {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select(`
+                        full_name, 
+                        corporation_name, 
+                        organization_id,
+                        organizations (
+                            id,
+                            plan_id,
+                            plan,
+                            entity_type
+                        )
+                    `)
+                    .eq('id', user.id)
+                    .single();
+                profile = data;
+            } catch (profileErr: any) {
+                console.error('[Chat API] Profile fetch error:', profileErr.message);
+            }
+        }
 
         const userProfile = profile || { full_name: 'ゲスト', corporation_name: '未設定法人', organization_id: null, organizations: { plan_id: 'free', plan: 'free', entity_type: 'social_welfare' } };
         const orgId = userProfile.organization_id;
