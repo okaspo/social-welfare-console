@@ -204,6 +204,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
             //     data.close();
             // },
             tools: {
+                /*
                 submit_feedback: tool({
                     description: 'ユーザーからの機能要望、バグ報告、その他フィードバックを運営チームに送信・保存します。',
                     parameters: z.object({
@@ -224,6 +225,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         return 'フィードバックを送信しました。貴重なご意見ありがとうございます。';
                     }
                 }),
+                */
                 show_officer_list: tool({
                     description: 'ユーザーが役員名簿を見たい時に呼び出す。右側のキャンバスに役員一覧を表示する。例: 「役員を見せて」「理事の一覧」「役員名簿」',
                     parameters: z.object({}),
