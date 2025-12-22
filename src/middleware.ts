@@ -50,23 +50,37 @@ export async function middleware(request: NextRequest) {
 
     // 1. Admin Routes Protection
     if (url.pathname.startsWith('/admin')) {
+        console.log('[Middleware] Admin route accessed:', url.pathname);
+
         if (!user) {
+            console.log('[Middleware] No user, redirecting to login');
             url.pathname = '/login'
             return NextResponse.redirect(url)
         }
 
+        console.log('[Middleware] User found:', user.id);
+
         // Check if user has admin role
-        const { data: adminRole } = await supabase
+        const { data: adminRole, error: adminError } = await supabase
             .from('admin_roles')
             .select('role')
             .eq('user_id', user.id)
             .single()
 
+        if (adminError) {
+            console.error('[Middleware] Admin role check error:', adminError);
+        }
+
+        console.log('[Middleware] Admin role result:', adminRole);
+
         if (!adminRole) {
             // Unauthorized access to admin area
+            console.log('[Middleware] No admin role, redirecting to dashboard');
             url.pathname = '/dashboard'
             return NextResponse.redirect(url)
         }
+
+        console.log('[Middleware] Admin access granted');
     }
 
     // 2. Dashboard Routes Protection
