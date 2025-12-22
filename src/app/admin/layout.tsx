@@ -22,7 +22,7 @@ export default async function AdminLayout({
 
     const allowedRoles = ['super_admin', 'admin', 'representative'];
     if (!profile || !allowedRoles.includes(profile.role)) {
-        redirect('/chat')
+        redirect('/dashboard')
     }
 
     // Simple layout - child routes provide their own sidebars

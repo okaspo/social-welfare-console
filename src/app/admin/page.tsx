@@ -20,7 +20,7 @@ export default async function AdminHubPage() {
 
     const allowedRoles = ['super_admin', 'admin', 'representative'];
     if (!profile || !allowedRoles.includes(profile.role)) {
-        redirect('/chat');
+        redirect('/dashboard');
     }
 
     const consoles = [
