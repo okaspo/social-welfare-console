@@ -207,8 +207,8 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                 submit_feedback: tool({
                     description: 'ユーザーからの機能要望、バグ報告、その他フィードバックを運営チームに送信・保存します。',
                     parameters: z.object({
-                        category: z.enum(['bug', 'feature', 'other']).describe('フィードバックの分類: バグ(bug), 要望(feature), その他(other)'),
-                        content: z.string().describe('フィードバックの具体的な内容')
+                        category: z.enum(['bug', 'feature', 'other']),
+                        content: z.string()
                     }),
                     // @ts-ignore
                     execute: async ({ category, content }: { category: string, content: string }) => {
