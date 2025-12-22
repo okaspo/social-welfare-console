@@ -234,7 +234,7 @@ export default function ChatSplitLayout({
                             onClick={() => setIsMobileCanvasOpen(false)}
                         />
                         {/* Modal */}
-                        <div className="absolute inset-x-0 bottom-0 top-16 bg-white rounded-t-2xl shadow-2xl flex flex-col animate-slide-up">
+                        <div className="absolute inset-x-0 bottom-0 top-16 bg-white rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-300 ease-out">
                             {/* Header */}
                             <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-t-2xl">
                                 <div className="flex items-center gap-2">
@@ -257,20 +257,6 @@ export default function ChatSplitLayout({
                     </div>
                 )}
             </div>
-
-            <style jsx global>{`
-                @keyframes slide-up {
-                    from {
-                        transform: translateY(100%);
-                    }
-                    to {
-                        transform: translateY(0);
-                    }
-                }
-                .animate-slide-up {
-                    animation: slide-up 0.3s ease-out;
-                }
-            `}</style>
         </CanvasContext.Provider>
     );
 }
