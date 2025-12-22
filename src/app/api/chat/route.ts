@@ -274,7 +274,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     description: 'キャンバスの特定フィールドを更新する。ユーザーとの対話から情報を抽出し、議事録などのフォームに自動入力する。例: 日付、出席者、議題などをセット。',
                     parameters: z.object({
                         field: z.enum(['date', 'meeting_type', 'attendees', 'agenda', 'content', 'corporation_name', 'title']).describe('更新するフィールド'),
-                        value: z.any().describe('設定する値'),
+                        value: z.union([z.string(), z.array(z.string())]).describe('設定する値（文字列または文字列配列）'),
                         action: z.enum(['set', 'append']).optional().describe('set=上書き、append=追加（配列フィールド用）')
                     }),
                     // @ts-ignore

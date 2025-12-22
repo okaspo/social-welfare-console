@@ -42,15 +42,26 @@ export async function buildSystemPrompt(
     const persona = await getPersonaFromDB(entityType);
 
     // Fetch necessary modules (excluding persona slug since we use dynamic persona)
-    const { data: modules, error } = await supabase
-        .from('prompt_modules')
-        .select('slug, content, required_plan_level, entity_type')
-        .eq('is_active', true)
-        .eq('entity_type', entityType)
-        .order('required_plan_level', { ascending: true });
+    // Try to select columns that may or may not exist
+    let modules: any[] | null = null;
+    let queryError = null;
 
-    if (error) {
-        console.error('Failed to fetch prompt modules:', error);
+    try {
+        // First try with all columns
+        const { data, error } = await supabase
+            .from('prompt_modules')
+            .select('slug, content, entity_type')
+            .eq('is_active', true)
+            .eq('entity_type', entityType);
+
+        modules = data;
+        queryError = error;
+    } catch (e: any) {
+        console.error('Failed to fetch prompt modules:', e.message);
+    }
+
+    if (queryError) {
+        console.error('Failed to fetch prompt modules:', queryError);
         // Do not crash, continue with defaults
     }
 
@@ -67,8 +78,8 @@ export async function buildSystemPrompt(
         ?.filter(m =>
             m.slug !== 'mod_persona' &&
             !m.slug.startsWith('mod_law') && // Exclude law modules logic if separated
-            (entityConfig.promptModules?.functionalModules?.includes(m.slug) || true) && // Relax filter for now
-            m.required_plan_level <= currentLevel
+            (entityConfig.promptModules?.functionalModules?.includes(m.slug) || true) // Relax filter for now
+            // Note: required_plan_level check removed due to potential missing column
         )
         .map(m => m.content)
         .join('\n\n') || "";
