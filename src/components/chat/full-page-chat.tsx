@@ -46,7 +46,9 @@ export default function FullPageChat({
         return supabaseRef.current;
     }, []);
 
-    const { avatarUrl } = useAssistantAvatar(personaId);
+    // Temporarily use static avatar to debug JS execution issue
+    // const { avatarUrl } = useAssistantAvatar(personaId);
+    const avatarUrl = '/assets/avatars/aoi_face_icon.jpg';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
