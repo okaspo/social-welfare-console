@@ -112,22 +112,25 @@ export default function FullPageChat({
 
                     const chunk = decoder.decode(value, { stream: true });
 
+                    // Debug: log raw chunk
+                    console.log('[Chat] Chunk:', chunk);
+
                     // AI SDK streams text in format: 0:"text content"
-                    // Parse each line to extract the actual text
                     const lines = chunk.split('\n');
                     for (const line of lines) {
                         if (!line.trim()) continue;
 
-                        // Match pattern: 0:"..." (text chunk)
-                        const textMatch = line.match(/^0:"(.*)"\s*$/);
-                        if (textMatch) {
-                            // Unescape the JSON string content
+                        // Log each line for debugging
+                        console.log('[Chat] Line:', line);
+
+                        // Handle AI SDK format: 0:"..."
+                        if (line.startsWith('0:')) {
+                            const content = line.substring(2);
                             try {
-                                const textContent = JSON.parse(`"${textMatch[1]}"`);
-                                assistantContent += textContent;
+                                const parsed = JSON.parse(content);
+                                assistantContent += parsed;
                             } catch {
-                                // Fallback: use the matched text directly
-                                assistantContent += textMatch[1];
+                                assistantContent += content;
                             }
                         }
                     }
