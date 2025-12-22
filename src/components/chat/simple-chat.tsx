@@ -86,30 +86,36 @@ export default function SimpleChat({
                     if (done) break;
 
                     const chunk = decoder.decode(value, { stream: true });
-                    console.log('[SimpleChat] Chunk:', chunk);
+                    // console.log('[SimpleChat] Raw Chunk:', chunk);
 
-                    // Parse AI SDK streaming format (Data Stream Protocol)
-                    // Format: 
-                    // 0:"text content"
-                    // d:{"key":"value"} (data)
-                    // e:{"error":"..."} (error)
                     const lines = chunk.split('\n');
                     for (const line of lines) {
                         if (!line.trim()) continue;
 
-                        // Handle text delta: 0:"text"
-                        if (line.startsWith('0:')) {
-                            const content = line.substring(2);
-                            try {
-                                // Content is JSON string encoded, e.g. "Hello"
-                                const parsed = JSON.parse(content);
-                                assistantContent += parsed;
-                            } catch {
-                                // Fallback
-                                assistantContent += content;
+                        try {
+                            // Helper to try parsing both standard JSON and potential prefixed formats
+                            let json;
+                            if (line.startsWith('{')) {
+                                json = JSON.parse(line);
+                            } else {
+                                // Fallback just in case some weird prefix comes in, though API sends pure JSON
+                                continue;
                             }
+
+                            if (json.type === 'text-delta') {
+                                assistantContent += (json.value || '');
+                            }
+                            else if (json.type === 'tool-call') {
+                                console.log('[SimpleChat] Tool Call:', json.value);
+                                // Optional: Show a "Thinking..." indicator or tool name
+                            }
+                            else if (json.type === 'server-error') {
+                                console.error('[SimpleChat] Server Error:', json.value);
+                                throw new Error(json.value);
+                            }
+                        } catch (e) {
+                            console.warn('[SimpleChat] Parse error for line:', line, e);
                         }
-                        // Handle formatting (sometimes it comes as raw JSON if toTextStreamResponse was used, but we are back to toDataStreamResponse)
                     }
 
                     setLocalMessages(prev =>

@@ -353,44 +353,45 @@ ${commonKnowledgeText || "(共通知識はありません)"}
             console.log('[Chat API] Reasoning mode active (o1/o3)');
         }
 
-        console.log(`[Chat API] Streaming response using Data Stream Protocol. Model: ${selectedModel}`);
+        // Custom Streaming Implementation using NDJSON
+        // This ensures robust streaming regardless of SDK methods
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    // @ts-ignore - fullStream exists in v5
+                    for await (const part of result.fullStream) {
+                        const chunk = {
+                            type: part.type,
+                            // @ts-ignore
+                            value: part.type === 'text-delta' ? (part.textDelta || part.text) :
+                                // @ts-ignore
+                                part.type === 'tool-call' ? (part.toolCallName || part.toolName) :
+                                    // @ts-ignore
+                                    part.type === 'error' ? part.error : null
+                        };
+                        // Filter out empty text updates to reduce noise
+                        if (chunk.type === 'text-delta' && !chunk.value) continue;
 
-        // DEBUG: Inspect result object
-        const keys = Object.keys(result);
-        const protoKeys = Object.getPrototypeOf(result) ? Object.getOwnPropertyNames(Object.getPrototypeOf(result)) : [];
-        console.log('[Chat API] Result keys:', keys);
-        console.log('[Chat API] Result proto keys:', protoKeys);
-
-        // Fallback to text stream if data stream is missing, just to see if it works
-        // But first, let's return the keys to the client to debug 500 error
-        return new Response(JSON.stringify({
-            keys,
-            protoKeys,
-            // @ts-ignore
-            isDataStreamAvailable: typeof result.toDataStreamResponse === 'function',
-            // @ts-ignore
-            isTextStreamAvailable: typeof result.toTextStreamResponse === 'function',
-            resultString: String(result)
-        }), {
-            headers: { 'Content-Type': 'application/json' }
+                        const json = JSON.stringify(chunk);
+                        controller.enqueue(new TextEncoder().encode(json + '\n'));
+                    }
+                    controller.close();
+                } catch (error) {
+                    console.error('[Chat API] Stream error:', error);
+                    const errorChunk = JSON.stringify({ type: 'server-error', value: String(error) });
+                    controller.enqueue(new TextEncoder().encode(errorChunk + '\n'));
+                    controller.close();
+                }
+            }
         });
 
-        // Try toDataStreamResponse again, with explicit logging
-        if (typeof result.toDataStreamResponse === 'function') {
-            // @ts-ignore
-            return result.toDataStreamResponse({ headers });
-        } else if (typeof result.toAIStreamResponse === 'function') {
-            // @ts-ignore
-            return result.toAIStreamResponse({ headers });
-        } else {
-            // Fallback or debug output
-            console.error('[Chat API] No streaming method found on result object');
-            return new Response(JSON.stringify({
-                error: 'Streaming method not found',
-                keys,
-                protoKeys
-            }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-        }
+        console.log('[Chat API] Streaming started with custom NDJSON protocol');
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'application/x-ndjson',
+                'X-Content-Type-Options': 'nosniff'
+            }
+        });
 
     } catch (error: any) {
         console.error("❌ [Chat API] Critical Error:", error);
