@@ -357,7 +357,6 @@ ${commonKnowledgeText || "(共通知識はありません)"}
         console.log('[Chat API] Result keys:', Object.keys(result));
 
         try {
-            // @ts-ignore - toDataStreamResponse exists in AI SDK but types might be outdated
             const response = result.toDataStreamResponse({ headers });
             console.log('[Chat API] Stream response created successfully');
             return response;
