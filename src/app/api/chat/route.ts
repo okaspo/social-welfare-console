@@ -180,6 +180,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         category: z.enum(['bug', 'feature', 'other']).describe('フィードバックの分類: バグ(bug), 要望(feature), その他(other)'),
                         content: z.string().describe('フィードバックの具体的な内容')
                     }),
+                    // @ts-ignore
                     execute: async ({ category, content }: { category: string, content: string }) => {
                         const { error } = await supabase.from('user_feedback').insert({
                             user_id: user.id,
@@ -196,6 +197,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                 show_officer_list: tool({
                     description: 'ユーザーが役員名簿を見たい時に呼び出す。右側のキャンバスに役員一覧を表示する。例: 「役員を見せて」「理事の一覧」「役員名簿」',
                     parameters: z.object({}),
+                    // @ts-ignore
                     execute: async () => {
                         const { showOfficerList } = await import('@/lib/ai/canvas-tools');
                         const result = await showOfficerList();
@@ -211,6 +213,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     parameters: z.object({
                         meeting_type: z.enum(['board_meeting', 'council_meeting', 'general_meeting', 'committee']).optional().describe('会議の種類: 理事会(board_meeting), 評議員会(council_meeting), 総会(general_meeting), 委員会(committee)')
                     }),
+                    // @ts-ignore
                     execute: async ({ meeting_type }: { meeting_type?: string }) => {
                         const { draftMinutes } = await import('@/lib/ai/canvas-tools');
                         const result = await draftMinutes(meeting_type);
@@ -226,6 +229,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     parameters: z.object({
                         reason: z.string().optional().describe('キャンバスをクリアする理由（ユーザーへの説明用）')
                     }),
+                    // @ts-ignore
                     execute: async ({ reason }: { reason?: string }) => {
                         const { clearCanvas } = await import('@/lib/ai/canvas-tools');
                         const result = await clearCanvas(null, reason);
@@ -243,6 +247,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         value: z.any().describe('設定する値'),
                         action: z.enum(['set', 'append']).optional().describe('set=上書き、append=追加（配列フィールド用）')
                     }),
+                    // @ts-ignore
                     execute: async ({ field, value, action }: { field: string, value: any, action?: string }) => {
                         const { updateCanvasField } = await import('@/lib/ai/canvas-updater');
                         const result = await updateCanvasField(field as any, value, (action as any) || 'set');
@@ -265,6 +270,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                             agenda: z.boolean().optional()
                         }).describe('既に収集した情報のフラグ')
                     }),
+                    // @ts-ignore
                     execute: async ({ collected }: { collected: Record<string, boolean> }) => {
                         // 未収集の情報を特定
                         const missing: string[] = [];
@@ -292,9 +298,7 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                     }
                 })
             },
-            maxSteps: 3,
             onFinish: async (completion) => {
-                // data.close();
                 if (orgId) {
                     // Cast usage safely
                     const usage = completion.usage as any;
