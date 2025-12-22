@@ -102,6 +102,9 @@ export default function SimpleChat({
                                 continue;
                             }
 
+                            // Log all events received from the API stream
+                            console.log('[SimpleChat] Stream Event:', json);
+
                             if (json.type === 'text-delta') {
                                 assistantContent += (json.value || '');
                             }

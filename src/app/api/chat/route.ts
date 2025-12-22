@@ -359,6 +359,9 @@ ${commonKnowledgeText || "(共通知識はありません)"}
             async start(controller) {
                 try {
                     // @ts-ignore - fullStream exists in v5
+                    // DEBUG: Send start event
+                    controller.enqueue(new TextEncoder().encode(JSON.stringify({ type: 'debug', value: 'Stream started' }) + '\n'));
+
                     for await (const part of result.fullStream) {
                         const chunk = {
                             type: part.type,
@@ -367,7 +370,8 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                                 // @ts-ignore
                                 part.type === 'tool-call' ? (part.toolCallName || part.toolName) :
                                     // @ts-ignore
-                                    part.type === 'error' ? part.error : null
+                                    part.type === 'error' ? part.error : null,
+                            raw: part // Send raw part for debugging
                         };
                         // Filter out empty text updates to reduce noise
                         if (chunk.type === 'text-delta' && !chunk.value) continue;
@@ -375,6 +379,8 @@ ${commonKnowledgeText || "(共通知識はありません)"}
                         const json = JSON.stringify(chunk);
                         controller.enqueue(new TextEncoder().encode(json + '\n'));
                     }
+                    // DEBUG: Send finish event
+                    controller.enqueue(new TextEncoder().encode(JSON.stringify({ type: 'debug', value: 'Stream finished' }) + '\n'));
                     controller.close();
                 } catch (error) {
                     console.error('[Chat API] Stream error:', error);
