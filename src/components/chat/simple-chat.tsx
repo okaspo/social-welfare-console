@@ -77,24 +77,11 @@ export default function SimpleChat({
                     if (done) break;
 
                     const chunk = decoder.decode(value, { stream: true });
-                    console.log('[SimpleChat] Chunk:', chunk);
+                    console.log('[SimpleChat] Chunk:', JSON.stringify(chunk));
 
-                    // Parse AI SDK streaming format
-                    const lines = chunk.split('\n');
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-
-                        // Handle format: 0:"text"
-                        if (line.startsWith('0:')) {
-                            const content = line.substring(2);
-                            try {
-                                const parsed = JSON.parse(content);
-                                assistantContent += parsed;
-                            } catch {
-                                assistantContent += content;
-                            }
-                        }
-                    }
+                    // toTextStreamResponse returns plain text.
+                    // Just append the chunk directly.
+                    assistantContent += chunk;
 
                     setLocalMessages(prev =>
                         prev.map(m =>
