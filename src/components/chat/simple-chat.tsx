@@ -14,48 +14,105 @@ export default function SimpleChat({
     personaEmoji = '💙'
 }: SimpleChatProps) {
     const [inputValue, setInputValue] = useState('');
-
-    const { messages, append, status, error } = useChat({
-        initialMessages: [
-            {
-                id: 'welcome',
-                role: 'assistant',
-                content: `こんにちは！${personaName}です。今日はどのようなお手伝いをしましょうか？`
-            }
-        ]
-    });
+    const [localMessages, setLocalMessages] = useState<Array<{ id: string, role: string, content: string }>>([
+        {
+            id: 'welcome',
+            role: 'assistant',
+            content: `こんにちは！${personaName}です。今日はどのようなお手伝いをしましょうか？`
+        }
+    ]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const isLoading = status === 'streaming' || status === 'submitted';
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    // Debug: log messages
-    useEffect(() => {
-        console.log('[SimpleChat] Messages:', messages);
-        console.log('[SimpleChat] Status:', status);
-    }, [messages, status]);
-
-    // Debug: log errors
-    useEffect(() => {
-        if (error) {
-            console.error('[SimpleChat] Error:', error);
-        }
-    }, [error]);
+    }, [localMessages]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!inputValue.trim() || isLoading) return;
 
-        const message = inputValue.trim();
-        setInputValue('');
-
-        await append({
+        const userMessage = {
+            id: `user-${Date.now()}`,
             role: 'user',
-            content: message
-        });
+            content: inputValue.trim()
+        };
+
+        setLocalMessages(prev => [...prev, userMessage]);
+        setInputValue('');
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            console.log('[SimpleChat] Sending request...');
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [...localMessages, userMessage].map(m => ({
+                        role: m.role,
+                        content: m.content
+                    }))
+                })
+            });
+
+            console.log('[SimpleChat] Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let assistantContent = '';
+            const assistantMsgId = `assistant-${Date.now()}`;
+
+            setLocalMessages(prev => [...prev, { id: assistantMsgId, role: 'assistant', content: '' }]);
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    console.log('[SimpleChat] Chunk:', chunk);
+
+                    // Parse AI SDK streaming format
+                    const lines = chunk.split('\n');
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+
+                        // Handle format: 0:"text"
+                        if (line.startsWith('0:')) {
+                            const content = line.substring(2);
+                            try {
+                                const parsed = JSON.parse(content);
+                                assistantContent += parsed;
+                            } catch {
+                                assistantContent += content;
+                            }
+                        }
+                    }
+
+                    setLocalMessages(prev =>
+                        prev.map(m =>
+                            m.id === assistantMsgId
+                                ? { ...m, content: assistantContent }
+                                : m
+                        )
+                    );
+                }
+            }
+
+            console.log('[SimpleChat] Final content:', assistantContent);
+        } catch (err: any) {
+            console.error('[SimpleChat] Error:', err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -73,7 +130,7 @@ export default function SimpleChat({
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((message) => (
+                {localMessages.map((message) => (
                     <div
                         key={message.id}
                         className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -84,11 +141,7 @@ export default function SimpleChat({
                                     : 'bg-gray-100 text-gray-900'
                                 }`}
                         >
-                            <p className="whitespace-pre-wrap">
-                                {typeof message.content === 'string'
-                                    ? message.content
-                                    : JSON.stringify(message.content)}
-                            </p>
+                            <p className="whitespace-pre-wrap">{message.content}</p>
                         </div>
                     </div>
                 ))}
@@ -105,7 +158,7 @@ export default function SimpleChat({
                 {error && (
                     <div className="flex justify-center">
                         <div className="bg-red-100 text-red-700 rounded-lg px-4 py-2 text-sm">
-                            エラーが発生しました: {error.message}
+                            エラー: {error}
                         </div>
                     </div>
                 )}
