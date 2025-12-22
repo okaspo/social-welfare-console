@@ -13,17 +13,29 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
+        console.log('[Chat API] Starting request...');
+
         const body = await req.json();
         const messages = body?.messages || [];
 
+        console.log('[Chat API] Creating Supabase client...');
         const supabase = await createClient();
 
         // 1. Check Auth & Get User Profile
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log('[Chat API] Getting user...');
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError) {
+            console.error('[Chat API] Auth error:', authError);
+            return new Response(JSON.stringify({ error: "Auth error", details: authError.message }), { status: 401 });
+        }
 
         if (!user) {
+            console.log('[Chat API] No user found');
             return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
         }
+
+        console.log('[Chat API] User found:', user.id);
 
         const { data: profile } = await supabase
             .from('profiles')
