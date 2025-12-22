@@ -6,6 +6,12 @@ from supabase import create_client, Client
 import tempfile
 
 class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"Convert API is active. POST a file to convert.")
+
     def do_POST(self):
         try:
             # 1. Parse Request Body
