@@ -56,33 +56,32 @@ export default function OrgEditForm({ initialData }: { initialData: OrgData }) {
 
             <div className="p-6">
                 <form action={handleSubmit} className="space-y-6">
-                    {/* Entity Type Selector */}
+                    {/* Entity Type - Read Only */}
                     <div className="space-y-3">
                         <label className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
                             法人種別
                             <Info className="h-3 w-3 text-gray-400" />
                         </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {ENTITY_TYPES.map((type) => (
-                                <button
-                                    key={type.value}
-                                    type="button"
-                                    onClick={() => setEntityType(type.value)}
-                                    className={`p-3 rounded-lg border-2 text-left transition-all ${entityType === type.value
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
-                                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                                        }`}
-                                >
-                                    <div className="font-bold text-sm">{type.label}</div>
-                                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">{type.description}</div>
-                                </button>
-                            ))}
+                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3">
+                            <Building2 className="h-5 w-5 text-indigo-600" />
+                            <div>
+                                <div className="font-bold text-gray-900 text-sm">
+                                    {selectedEntityInfo?.label || '未設定'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    {selectedEntityInfo?.description}
+                                </div>
+                            </div>
+                            <div className="ml-auto text-xs text-gray-400 bg-white px-2 py-1 rounded border">
+                                変更不可
+                            </div>
                         </div>
-                        {selectedEntityInfo && (
-                            <p className="text-xs text-gray-500">
-                                選択中: <span className="font-medium">{selectedEntityInfo.label}</span> - {selectedEntityInfo.description}
-                            </p>
-                        )}
+                        {/* Hidden input to ensure value is preserved on submit if needed, 
+                            though updateOrganization likely needs to be careful not to overwrite if not present.
+                            Actually, updateOrganization is getting FormData. If we don't send entity_type, 
+                            we should ensure the backend doesn't nullify it, OR we send it as hidden.
+                         */}
+                        <input type="hidden" name="entity_type" value={entityType} />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
