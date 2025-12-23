@@ -10,7 +10,7 @@ export async function login(formData: FormData) {
 
     // Construct the explicit callback URL
     // getURL() returns a normalized URL without trailing slash (e.g. https://site.com)
-    const emailRedirectTo = `${getURL()}/auth/callback?next=/dashboard`
+    const emailRedirectTo = `${getURL()}/auth/callback?next=/swc/dashboard`
 
     const { error } = await supabase.auth.signInWithOtp({
         email,

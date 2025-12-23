@@ -75,8 +75,8 @@ export async function middleware(request: NextRequest) {
 
         if (!adminRole) {
             // Unauthorized access to admin area
-            console.log('[Middleware] No admin role, redirecting to dashboard');
-            url.pathname = '/dashboard'
+            console.log('[Middleware] No admin role, redirecting to swc dashboard');
+            url.pathname = '/swc/dashboard'
             return NextResponse.redirect(url)
         }
 
@@ -84,22 +84,28 @@ export async function middleware(request: NextRequest) {
     }
 
     // 2. Dashboard Routes Protection
-    if (url.pathname.startsWith('/dashboard')) {
+    if (url.pathname.startsWith('/swc/dashboard') || url.pathname.startsWith('/dashboard')) {
         if (!user) {
             url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
+
+        // Redirect legacy /dashboard to /swc/dashboard
+        if (url.pathname.startsWith('/dashboard')) {
+            url.pathname = url.pathname.replace('/dashboard', '/swc/dashboard')
             return NextResponse.redirect(url)
         }
     }
 
     // 3. Auth Routes (Redirect to dashboard if logged in)
     if (user && (url.pathname === '/login' || url.pathname === '/signup')) {
-        url.pathname = '/dashboard'
+        url.pathname = '/swc/dashboard'
         return NextResponse.redirect(url)
     }
 
     // 4. Root Path (Redirect to dashboard if logged in)
     if (user && url.pathname === '/') {
-        url.pathname = '/dashboard'
+        url.pathname = '/swc/dashboard'
         return NextResponse.redirect(url)
     }
 
