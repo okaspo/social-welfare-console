@@ -19,6 +19,58 @@ export type BroadcastResult = {
 }
 
 /**
+ * Get count of broadcast targets
+ */
+export async function getBroadcastTargetCount(filters: BroadcastFilters = {}): Promise<number> {
+    const supabase = await createClient()
+
+    // Auth Check
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return 0
+
+    // Role Check
+    const { data: adminRole } = await supabase
+        .from('admin_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'super_admin')
+        .single()
+    if (!adminRole) return 0
+
+    // Only count organizations? No, we need user count ideally.
+    // For now, let's just count ORGs and assume 1 user per org (since that's the current model mostly).
+    // Or if we want strict user count, we'd need the Service Role logic again.
+    // Let's copy the Service Role logic or make a shared internal function.
+    // For expediency, I will duplicate the simple logic using Service Role to be accurate.
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return 0
+
+    const supabaseAdmin = await import('@supabase/supabase-js').then(mod =>
+        mod.createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+    )
+
+    let orgQuery = supabaseAdmin.from('organizations').select('id')
+    if (filters.plan) orgQuery = orgQuery.eq('plan', filters.plan)
+    if (filters.entity_type) orgQuery = orgQuery.eq('entity_type', filters.entity_type)
+
+    const { data: orgs, error } = await orgQuery
+    if (error || !orgs?.length) return 0
+    const orgIds = orgs.map(o => o.id)
+
+    // Count Profiles
+    const { count } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .in('organization_id', orgIds)
+
+    return count || 0
+}
+
+/**
  * Send Broadcast Email to Users with Filtering
  * @param subject Email Subject
  * @param body Email Body (Markdown supported basically, but Resend takes HTML/React or text)
@@ -218,12 +270,13 @@ export async function sendBroadcastEmail(
             // Audit Log
             // Check if audit_logs exists? I'll assume standard structure based on prompt "Audit Logs [cite: 25]"
             // "audit_logs" usually: action, target_resource, details, performed_by
-            await supabase.from('audit_logs').insert({
+            const { error: auditError } = await supabase.from('audit_logs').insert({
                 action: 'BROADCAST_EMAIL_SENT',
                 target_resource: 'users',
                 details: { subject, filters, count: sentCount, is_test: isTest },
                 performed_by: user.id
-            }).catch(err => console.warn('Audit log failed', err)) // Don't fail main action
+            })
+            if (auditError) console.warn('Audit log failed', auditError)
         }
 
         return {
