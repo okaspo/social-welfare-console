@@ -33,10 +33,8 @@ export async function getScopedOrganizations(options: ScopedQueryOptions) {
             plan,
             entity_type,
             created_at,
-            profiles!organization_id (
-                id,
-                full_name,
-                email
+            profiles (
+                id
             )
         `)
         .order('created_at', { ascending: false });
