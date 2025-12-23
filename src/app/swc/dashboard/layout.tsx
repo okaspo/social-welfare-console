@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import AoiChat from '@/components/chat/aoi-chat'
+import AoiChat from '@/components/swc/chat/aoi-chat'
 import { SubscriptionAlert } from '@/components/billing/subscription-alert'
 import { createClient } from '@/lib/supabase/server'
 import { OrganizationProvider } from '@/context/organization-context'
