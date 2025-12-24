@@ -2,6 +2,9 @@ import { getScopedPlanLimits } from '@/lib/admin/scoped-queries';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Building2, CreditCard, Users, Zap } from 'lucide-react';
+import AdminPlanEditor from '@/components/admin/plan-editor';
+import PriceManager from '@/components/admin/price-manager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function SwcPlansPage() {
     const supabase = await createClient();
@@ -29,15 +32,20 @@ export default async function SwcPlansPage() {
         skipFilter: true // Plans are shared across entities
     });
 
-    const planInfo: Record<string, { name: string; color: string; icon: typeof CreditCard }> = {
-        free: { name: 'フリー', color: 'bg-gray-100 text-gray-700', icon: CreditCard },
-        standard: { name: 'スタンダード', color: 'bg-blue-100 text-blue-700', icon: CreditCard },
-        pro: { name: 'プロ', color: 'bg-purple-100 text-purple-700', icon: Zap },
-        enterprise: { name: 'エンタープライズ', color: 'bg-amber-100 text-amber-700', icon: Building2 },
-    };
+    // Fetch Prices (Universal)
+    const { data: prices } = await supabase
+        .from('plan_prices')
+        .select('*')
+        .order('amount');
+
+    // Format for PriceManager
+    const simplePlans = plans.map((p: any) => ({
+        plan_id: p.plan_id,
+        name: p.plan_id.toUpperCase() // Or map to Japanese names if you want
+    }));
 
     return (
-        <div className="p-6">
+        <div className="p-6 pb-20">
             {/* Header */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -48,72 +56,32 @@ export default async function SwcPlansPage() {
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">プラン管理</h1>
                 <p className="text-gray-600 mt-1">
-                    プランごとの制限と機能を確認・編集します
+                    各プランの機能制限および価格設定を管理します。
                 </p>
             </div>
 
-            {/* Plans Grid */}
-            <div className="grid grid-cols-2 gap-6">
-                {plans.map((plan: any) => {
-                    const info = planInfo[plan.plan_id] || planInfo.free;
-                    const Icon = info.icon;
-                    const features = plan.features || {};
+            <Tabs defaultValue="limits" className="space-y-8">
+                <TabsList>
+                    <TabsTrigger value="limits">機能と制限 (Limits)</TabsTrigger>
+                    <TabsTrigger value="prices">価格設定 (Prices)</TabsTrigger>
+                </TabsList>
 
-                    return (
-                        <div key={plan.plan_id} className="bg-white rounded-xl border p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${info.color}`}>
-                                        <Icon className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-gray-900">{info.name}</h3>
-                                        <span className="text-xs text-gray-500">{plan.plan_id}</span>
-                                    </div>
-                                </div>
-                            </div>
+                <TabsContent value="limits" className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800 mb-6">
+                        ここは<strong>機能制限（クォータ）</strong>の管理画面です。ユーザー数や生成回数の上限を設定できます。
+                    </div>
+                    {/* @ts-ignore */}
+                    <AdminPlanEditor initialPlans={plans} />
+                </TabsContent>
 
-                            {/* Limits */}
-                            <div className="space-y-3 mb-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">チャット制限</span>
-                                    <span className="font-medium">
-                                        {plan.monthly_chat_limit === -1 ? '無制限' : `${plan.monthly_chat_limit}/月`}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">ドキュメント生成</span>
-                                    <span className="font-medium">
-                                        {plan.monthly_doc_gen_limit === -1 ? '無制限' : `${plan.monthly_doc_gen_limit}/月`}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">ストレージ</span>
-                                    <span className="font-medium">
-                                        {plan.storage_limit_mb ? `${plan.storage_limit_mb}MB` : '無制限'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Features */}
-                            <div className="border-t pt-4">
-                                <div className="text-xs font-medium text-gray-500 mb-2">機能フラグ</div>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(features).map(([key, value]) => (
-                                        <span
-                                            key={key}
-                                            className={`px-2 py-1 text-xs rounded ${value ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
-                                                }`}
-                                        >
-                                            {key}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+                <TabsContent value="prices" className="space-y-4">
+                    <div className="bg-green-50 border border-green-100 rounded-lg p-4 text-sm text-green-800 mb-6">
+                        ここは<strong>価格（Price）</strong>の管理画面です。Stripe連携用の価格を作成・編集します。
+                    </div>
+                    {/* @ts-ignore */}
+                    <PriceManager plans={simplePlans} prices={prices || []} />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

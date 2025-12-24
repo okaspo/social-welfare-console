@@ -234,3 +234,33 @@ export async function deletePrice(priceId: string) {
     revalidatePath('/admin/plans')
     return { success: true }
 }
+
+export async function updatePlanLimits(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const planId = formData.get('planId') as string
+    const maxUsers = parseInt(formData.get('maxUsers') as string)
+    const chatLimit = parseInt(formData.get('chatLimit') as string)
+    const docLimit = parseInt(formData.get('docLimit') as string)
+    const storageLimit = parseInt(formData.get('storageLimit') as string)
+    const features = JSON.parse(formData.get('features') as string)
+
+    const { error } = await supabase
+        .from('plan_limits')
+        .update({
+            max_users: maxUsers,
+            monthly_chat_limit: chatLimit,
+            monthly_doc_gen_limit: docLimit,
+            storage_limit_mb: storageLimit,
+            features: features
+        })
+        .eq('plan_id', planId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/plans')
+    revalidatePath('/admin/swc/plans')
+    return { success: true }
+}

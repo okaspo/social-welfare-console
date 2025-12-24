@@ -1,11 +1,23 @@
-import { Building2, BarChart3, Users, FileText, TrendingUp } from 'lucide-react';
+import { getScopedDashboardStats } from '@/lib/admin/scoped-queries';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { Building2, BarChart3, Users, FileText, TrendingUp, BookOpen, MessageSquare, ShieldCheck, Mail } from 'lucide-react';
+import Link from 'next/link';
 
-export default function SwcDashboardPage() {
+export default async function SwcDashboardPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) redirect('/login');
+
+    // Stats
+    const statsData = await getScopedDashboardStats({ pathname: '/admin/swc' });
+
     const stats = [
-        { label: '登録法人数', value: '87', change: '+12%', icon: Building2 },
-        { label: 'アクティブユーザー', value: '1,234', change: '+8%', icon: Users },
-        { label: '今月の書類生成', value: '456', change: '+23%', icon: FileText },
-        { label: '月間売上', value: '¥1.8M', change: '+15%', icon: TrendingUp },
+        { label: '登録法人数', value: statsData.organizationCount.toString(), change: '-', icon: Building2 },
+        { label: '総ユーザー数', value: statsData.userCount.toString(), change: '-', icon: Users },
+        { label: '今月の書類生成', value: '456', change: '+23%', icon: FileText }, // Placeholder as query not ready
+        { label: '月間売上 (推定)', value: '¥1.8M', change: '+15%', icon: TrendingUp }, // Placeholder
     ];
 
     return (
@@ -36,20 +48,36 @@ export default function SwcDashboardPage() {
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">クイックアクション</h3>
-                <div className="grid grid-cols-3 gap-4">
-                    <button className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left">
-                        <div className="font-medium text-gray-900">ナレッジ追加</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">クイックアクション (SWC)</h3>
+                <div className="grid grid-cols-4 gap-4">
+                    <Link href="/admin/swc/knowledge" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left group">
+                        <div className="p-2 bg-indigo-50 w-fit rounded-md mb-3 group-hover:bg-indigo-100">
+                            <BookOpen className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div className="font-medium text-gray-900">ナレッジ管理</div>
                         <div className="text-sm text-gray-500">法令・ガイドラインを追加</div>
-                    </button>
-                    <button className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left">
-                        <div className="font-medium text-gray-900">プロンプト編集</div>
-                        <div className="text-sm text-gray-500">AIの応答を調整</div>
-                    </button>
-                    <button className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left">
-                        <div className="font-medium text-gray-900">顧客サポート</div>
-                        <div className="text-sm text-gray-500">問い合わせ対応</div>
-                    </button>
+                    </Link>
+                    <Link href="/admin/swc/prompts" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left group">
+                        <div className="p-2 bg-purple-50 w-fit rounded-md mb-3 group-hover:bg-purple-100">
+                            <MessageSquare className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div className="font-medium text-gray-900">プロンプト管理</div>
+                        <div className="text-sm text-gray-500">AIの応答調整</div>
+                    </Link>
+                    <Link href="/admin/swc/audit" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left group">
+                        <div className="p-2 bg-green-50 w-fit rounded-md mb-3 group-hover:bg-green-100">
+                            <ShieldCheck className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="font-medium text-gray-900">監査基準・ログ</div>
+                        <div className="text-sm text-gray-500">監査ログと基準の管理</div>
+                    </Link>
+                    <Link href="/admin/marketing/broadcast" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left group">
+                        <div className="p-2 bg-orange-50 w-fit rounded-md mb-3 group-hover:bg-orange-100">
+                            <Mail className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div className="font-medium text-gray-900">一斉メール配信</div>
+                        <div className="text-sm text-gray-500">管理者向けお知らせ</div>
+                    </Link>
                 </div>
             </div>
         </div>
