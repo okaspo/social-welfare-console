@@ -2,13 +2,12 @@
 
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import { AdminConsoleType, EntityType } from './admin-scope-types';
+import { getEntityTypeFromPath } from './scope-utils';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-export type AdminConsoleType = 'swc' | 'npo' | 'med' | 'global';
-export type EntityType = 'social_welfare' | 'npo' | 'medical_corp' | null;
 
 interface AdminScopeContextValue {
     /** Current console type (swc, npo, med, global) */
@@ -138,29 +137,4 @@ export function useAdminScope(): AdminScopeContextValue {
     }
 
     return context;
-}
-
-// ============================================================================
-// Server-Side Utility
-// ============================================================================
-
-/**
- * Get entity type from pathname (for server components)
- */
-export function getEntityTypeFromPath(pathname: string): EntityType {
-    if (pathname.startsWith('/admin/swc')) return 'social_welfare';
-    if (pathname.startsWith('/admin/npo')) return 'npo';
-    if (pathname.startsWith('/admin/med')) return 'medical_corp';
-    return null;
-}
-
-/**
- * Get console type from pathname
- */
-export function getConsoleFromPath(pathname: string): AdminConsoleType {
-    if (pathname.startsWith('/admin/swc')) return 'swc';
-    if (pathname.startsWith('/admin/npo')) return 'npo';
-    if (pathname.startsWith('/admin/med')) return 'med';
-    if (pathname.startsWith('/admin/global')) return 'global';
-    return 'global';
 }

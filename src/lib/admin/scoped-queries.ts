@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { getEntityTypeFromPath, EntityType } from './admin-scope';
+import { getEntityTypeFromPath } from './scope-utils';
+import { EntityType } from './admin-scope-types';
 
 // ============================================================================
 // Types
