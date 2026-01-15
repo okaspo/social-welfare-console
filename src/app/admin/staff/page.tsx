@@ -20,7 +20,7 @@ export default async function AdminStaffPage() {
         .single()
 
     if (!adminRole) {
-        redirect('/dashboard') // Not an admin
+        redirect('/swc/dashboard') // Not an admin
     }
 
     const staff = await getAdminStaff()

@@ -22,7 +22,7 @@ export default function AoiChat() {
     const [isOpen, setIsOpen] = useState(false)
 
     // Hide on the dedicated chat page to avoid redundancy
-    if (pathname === '/dashboard/chat') return null
+    if (pathname === '/swc/dashboard/chat') return null
 
     const [messages, setMessages] = useState<Message[]>([
         { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }

@@ -24,7 +24,7 @@ export default async function AssistantsPage() {
         .single();
 
     if (profile?.role !== 'admin') {
-        redirect('/dashboard');
+        redirect('/swc/dashboard');
     }
 
     // Fetch all assistant profiles

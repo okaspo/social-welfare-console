@@ -29,7 +29,7 @@ export default async function UnifiedOperationsDashboard() {
         .single();
 
     if (!adminRole || (adminRole.role !== 'super_admin' && adminRole.role !== 'admin')) {
-        redirect('/dashboard');
+        redirect('/swc/dashboard');
     }
 
     // Fetch all organizations with member count

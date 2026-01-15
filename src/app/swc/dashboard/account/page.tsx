@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function AccountPage() {
-    redirect('/dashboard/organization')
+    redirect('/swc/dashboard/organization')
 }
