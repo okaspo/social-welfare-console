@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (!priceRecord || !priceRecord.stripe_price_id) {
-             return NextResponse.json({ error: 'Invalid price ID' }, { status: 400 });
+            return NextResponse.json({ error: 'Invalid price ID' }, { status: 400 });
         }
 
         const stripePriceId = priceRecord.stripe_price_id;
@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
                     },
                 },
             },
-            success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/settings?billing_status=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/settings?billing_status=canceled`,
+            success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/swc/dashboard/settings?billing_status=success`,
+            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/swc/dashboard/settings?billing_status=canceled`,
             metadata: {
                 organizationId: orgId,
                 planId: priceRecord.plan_id

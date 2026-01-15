@@ -219,8 +219,8 @@ export async function createCheckoutSession(
             customer: org.stripe_customer_id || undefined,
             line_items: [{ price: priceId, quantity: 1 }],
             mode: 'subscription',
-            success_url: `${process.env.NEXT_PUBLIC_URL}/swc/dashboard/settings/billing?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_URL}/swc/dashboard/settings/billing`,
+            success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/swc/dashboard/settings/billing?success=true`,
+            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/swc/dashboard/settings/billing`,
             metadata: {
                 organization_id: organizationId,
             },
