@@ -22,7 +22,7 @@ export function usePrecisionCheck() {
         setResult(null);
 
         try {
-            const response = await fetch('/api/chat/precision-check', {
+            const response = await fetch('/api/swc/chat/precision-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageId, conversationHistory }),

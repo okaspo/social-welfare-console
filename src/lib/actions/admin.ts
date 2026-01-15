@@ -62,7 +62,7 @@ export async function impersonateUser(userId: string) {
         type: 'magiclink',
         email: user.email,
         options: {
-            redirectTo: process.env.NEXT_PUBLIC_APP_URL + '/dashboard'
+            redirectTo: process.env.NEXT_PUBLIC_APP_URL + '/swc/dashboard'
         }
     })
 

@@ -67,7 +67,7 @@ export function PlanGate({
 
                     {/* CTA */}
                     <button
-                        onClick={() => router.push('/dashboard/settings/billing')}
+                        onClick={() => router.push('/swc/dashboard/settings/billing')}
                         className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md text-xs font-medium hover:shadow-md transition-all hover:scale-105 active:scale-95"
                     >
                         プランを確認

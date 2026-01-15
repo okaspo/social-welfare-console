@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createOfficer, updateOfficer } from '@/app/dashboard/officers/[id]/actions'
+import { createOfficer, updateOfficer } from '@/app/swc/dashboard/officers/[id]/actions'
 import { Loader2 } from 'lucide-react'
 
 type OfficerFormProps = {

@@ -107,7 +107,7 @@ export default function ChatSplitLayout({
             });
         } else if (item === 'settings') {
             // Navigate to settings page
-            window.location.href = '/dashboard/settings';
+            window.location.href = '/swc/dashboard/settings';
         }
     }, [openCanvas, closeCanvas]);
 

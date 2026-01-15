@@ -32,9 +32,6 @@ export async function POST(req: Request) {
         // 2. Usage Check (Reasoning is expensive)
         const check = await checkUsageLimit(orgId, plan);
         // Note: usage-limiter might need an explicit 'o1' check function if not covered by generic check.
-        // Assuming generic check covers cost, but we might want to check reasoning count specifically.
-        // The migration added `check_o1_quota` function. Let's use it if available, or rely on generic cost.
-        // For now, relying on generic cost + generic check is safer for MVP integration.
         if (!check.allowed) {
             return new Response(JSON.stringify({ error: 'Usage limit exceeded' }), { status: 403 });
         }
@@ -52,26 +49,19 @@ export async function POST(req: Request) {
             userPlan: plan,
             context: context,
             userInput: content,
-            assistantPersona: 'aoi' // Default to Aoi for now
+            assistantPersona: 'aoi' // Default to Aoi for SWC
         });
 
         // 4. Log Usage
         if (result.cost) {
-            // We log the *translation* part and *reasoning* part.
-            // Simplified logging:
             await logUsage({
                 organizationId: orgId,
                 userId: user.id,
                 featureName: feature,
                 model: result.reasoning.model as any,
-                inputTokens: 0, // Hard to track exact tokens from wrapper without modifying it, assuming cost is enough for now
+                inputTokens: 0,
                 outputTokens: 0,
-                // metadata: { cost: result.cost.totalCost } 
             });
-            // Note: logUsage recalculates cost based on tokens. 
-            // Ideally executeLegalCheck returns tokens used.
-            // Use metadata to store actual cost if possible, or update logUsage. 
-            // For MVP, we accept a slight discrepancy or update logUsage to accept overrides.
         }
 
         // 5. Save to Audit Log

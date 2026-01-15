@@ -60,7 +60,7 @@ export async function PlanGate({ children, plan: requiredPlan, fallback }: PlanG
                 </p>
             </div>
             <Button asChild variant="outline">
-                <NextLink href="/dashboard/settings/billing">
+                <NextLink href="/swc/dashboard/settings/billing">
                     プランを確認する
                 </NextLink>
             </Button>

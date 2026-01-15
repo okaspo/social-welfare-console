@@ -50,7 +50,7 @@ export async function SubscriptionAlert() {
                                 {format(gracePeriodEnd, 'yyyy年MM月dd日', { locale: ja })}まで猶予期間として機能を利用できますが、それまでに決済情報の更新が必要です。
                             </span>
                             <Button asChild size="sm" variant="destructive" className="ml-4">
-                                <NextLink href="/dashboard/settings/billing">
+                                <NextLink href="/swc/dashboard/settings/billing">
                                     お支払い情報を更新
                                 </NextLink>
                             </Button>
@@ -75,7 +75,7 @@ export async function SubscriptionAlert() {
                             {format(currentPeriodEnd, 'yyyy年MM月dd日', { locale: ja })}までPro機能をご利用いただけます。その後、Freeプランへ自動的にダウングレードされます。
                         </span>
                         <Button asChild size="sm" variant="outline" className="ml-4 border-yellow-300 text-yellow-800 hover:bg-yellow-100">
-                            <NextLink href="/dashboard/settings/billing">
+                            <NextLink href="/swc/dashboard/settings/billing">
                                 契約を継続する
                             </NextLink>
                         </Button>

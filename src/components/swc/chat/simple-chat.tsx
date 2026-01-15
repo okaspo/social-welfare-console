@@ -47,7 +47,7 @@ export default function SimpleChat({
 
         try {
             console.log('[SimpleChat] Sending request...');
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/api/swc/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

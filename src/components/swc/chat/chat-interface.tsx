@@ -33,11 +33,12 @@ export default function ChatInterface({ knowledge, persona }: ChatInterfaceProps
         firstPerson: '私',
         knowledgeFocus: ['社会福祉法', '理事会運営', '会計基準'],
         avatarCode: 'aoi_blue',
+        id: 'aoi',
     };
 
     // @ts-ignore - useChat types are mismatching in this env but runtime is correct
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-        api: '/api/chat',
+        api: '/api/swc/chat',
         onError: (error: any) => {
             console.error('Chat error:', error);
             setConfigError(['Chat Error: ' + error.message]); // Simple error reporting
@@ -63,7 +64,7 @@ export default function ChatInterface({ knowledge, persona }: ChatInterfaceProps
         setIsChecking(true)
         setCheckResult(null)
         try {
-            const res = await fetch('/api/chat/precision-check', {
+            const res = await fetch('/api/swc/chat/precision-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageId, content, history: messages })

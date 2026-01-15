@@ -15,7 +15,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
-import { addConcurrentPost, deleteConcurrentPost, ConcurrentPost } from '@/app/dashboard/officers/[id]/actions'
+import { addConcurrentPost, deleteConcurrentPost, ConcurrentPost } from '@/app/swc/dashboard/officers/[id]/actions'
 import { toast } from 'sonner'
 
 export default function ConcurrentPostsManager({

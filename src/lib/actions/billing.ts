@@ -64,8 +64,8 @@ export async function changePlan(priceId: string) {
                     },
                 },
             },
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?canceled=true`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/swc/dashboard/settings/billing?success=true`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/swc/dashboard/settings/billing?canceled=true`,
             metadata: {
                 organization_id: org.id
             },
@@ -125,7 +125,7 @@ export async function cancelSubscription() {
 
         if (error) return { error: error.message }
 
-        revalidatePath('/dashboard/settings/billing')
+        revalidatePath('/swc/dashboard/settings/billing')
         return { success: true }
     } catch (err: any) {
         return { error: err.message }
@@ -169,7 +169,7 @@ export async function resumeSubscription() {
 
         if (error) return { error: error.message }
 
-        revalidatePath('/dashboard/settings/billing')
+        revalidatePath('/swc/dashboard/settings/billing')
         return { success: true }
     } catch (err: any) {
         return { error: err.message }

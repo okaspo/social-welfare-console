@@ -64,7 +64,7 @@ export async function createMember(formData: FormData) {
         return { error: 'Profile creation failed: ' + profileError.message }
     }
 
-    revalidatePath('/dashboard/organization')
+    revalidatePath('/swc/dashboard/organization')
     return { success: true, tempPassword, email }
 }
 
@@ -110,8 +110,8 @@ export async function updateOrganization(formData: FormData) {
 
     if (error) return { error: error.message }
 
-    revalidatePath('/dashboard/organization')
-    revalidatePath('/dashboard', 'layout') // Update header
+    revalidatePath('/swc/dashboard/organization')
+    revalidatePath('/swc/dashboard', 'layout') // Update header
     return { success: true }
 }
 
@@ -131,7 +131,7 @@ export async function updateProfile(formData: FormData) {
 
     if (error) return { error: error.message }
 
-    revalidatePath('/dashboard/organization')
+    revalidatePath('/swc/dashboard/organization')
     return { success: true }
 }
 
@@ -173,7 +173,7 @@ export async function updateCustomDomain(domain: string) {
 
     if (error) return { error: error.message }
 
-    revalidatePath('/dashboard/organization')
+    revalidatePath('/swc/dashboard/organization')
     return { success: true }
 }
 

@@ -54,7 +54,7 @@ export default function DocumentWizard() {
 
     // AI Generation
     const { messages, input, handleInputChange, handleSubmit, setInput, isLoading: isAiLoading, append } = (useChat as any)({
-        api: '/api/chat/generate-doc', // New specialized endpoint
+        api: '/api/swc/chat/generate-doc', // New specialized endpoint
         initialMessages: []
     })
 
@@ -354,7 +354,7 @@ ${template.content}
                                             if (error) throw error
 
                                             alert('保存しました')
-                                            router.push('/dashboard/documents')
+                                            router.push('/swc/dashboard/documents')
                                         } catch (e: any) {
                                             console.error(e)
                                             alert('保存に失敗しました: ' + e.message)

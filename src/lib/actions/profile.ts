@@ -40,6 +40,6 @@ export async function updateProfile(formData: FormData) {
         return { error: 'プロフィールの更新に失敗しました' }
     }
 
-    revalidatePath('/dashboard/settings/profile')
+    revalidatePath('/swc/dashboard/settings/profile')
     return { success: true }
 }

@@ -262,7 +262,7 @@ export default function OfficerList({ initialOfficers, readOnly = false }: Offic
                             <tr key={officer.id} className="hover:bg-gray-50/50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
-                                        <a href={`/dashboard/officers/${officer.id}`} className="hover:underline">
+                                        <a href={`/swc/dashboard/officers/${officer.id}`} className="hover:underline">
                                             {maskName(officer.name)}
                                         </a>
                                     </div>
@@ -283,7 +283,7 @@ export default function OfficerList({ initialOfficers, readOnly = false }: Offic
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <a
-                                                href={`/dashboard/officers/${officer.id}`}
+                                                href={`/swc/dashboard/officers/${officer.id}`}
                                                 className="p-2 text-gray-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all"
                                             >
                                                 <Edit2 className="h-4 w-4" />

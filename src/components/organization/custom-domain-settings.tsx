@@ -61,7 +61,7 @@ export default function CustomDomainSettings({ currentDomain, planType }: Custom
                             カスタムドメイン機能はPro/Enterpriseプランでご利用いただけます。
                         </p>
                         <a
-                            href="/dashboard/settings/billing"
+                            href="/swc/dashboard/settings/billing"
                             className="text-indigo-600 text-sm font-medium mt-2 inline-flex items-center gap-1 hover:underline"
                         >
                             プランをアップグレード

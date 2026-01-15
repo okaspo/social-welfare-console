@@ -25,8 +25,8 @@ function SidebarItem({ href, icon: Icon, label }: { href: string; icon: any; lab
     // Simple active check: exact match or starts with href (if not root dashboard)
     // Actually existing logic in layout was passed 'active={true}' for dashboard manually?
     // Let's implement proper active logic.
-    const isActive = href === '/dashboard'
-        ? pathname === '/dashboard'
+    const isActive = href === '/swc/dashboard'
+        ? pathname === '/swc/dashboard'
         : pathname?.startsWith(href)
 
     return (
@@ -54,26 +54,26 @@ export function DashboardSidebar() {
                 {/* Group 1: 運営 (Daily) */}
                 <div className="space-y-1">
                     <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">運営 (Daily)</div>
-                    <SidebarItem href="/dashboard" icon={LayoutDashboard} label="ダッシュボード" />
-                    <SidebarItem href="/dashboard/meetings" icon={Calendar} label="会議管理" />
-                    <SidebarItem href="/dashboard/chat" icon={ShieldCheck} label="葵さん (フル画面)" />
-                    <SidebarItem href="/dashboard/subsidies" icon={Coins} label="おすすめ助成金" />
-                    <SidebarItem href="/dashboard/break-room" icon={Coffee} label="休憩室" />
+                    <SidebarItem href="/swc/dashboard" icon={LayoutDashboard} label="ダッシュボード" />
+                    <SidebarItem href="/swc/dashboard/meetings" icon={Calendar} label="会議管理" />
+                    <SidebarItem href="/swc/dashboard/chat" icon={ShieldCheck} label="葵さん (フル画面)" />
+                    <SidebarItem href="/swc/dashboard/subsidies" icon={Coins} label="おすすめ助成金" />
+                    <SidebarItem href="/swc/dashboard/break-room" icon={Coffee} label="休憩室" />
                 </div>
 
                 {/* Group 2: 組織 (Governance) */}
                 <div className="space-y-1">
                     <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">組織 (Governance)</div>
-                    <SidebarItem href="/dashboard/officers" icon={Users} label="役員管理" />
-                    <SidebarItem href="/dashboard/documents" icon={FileText} label="書類管理" />
-                    <SidebarItem href="/dashboard/articles" icon={BookOpen} label="定款・規程" />
+                    <SidebarItem href="/swc/dashboard/officers" icon={Users} label="役員管理" />
+                    <SidebarItem href="/swc/dashboard/documents" icon={FileText} label="書類管理" />
+                    <SidebarItem href="/swc/dashboard/articles" icon={BookOpen} label="定款・規程" />
                 </div>
 
                 {/* Group 3: 設定 (System) */}
                 <div className="space-y-1">
                     <div className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">設定 (System)</div>
-                    <SidebarItem href="/dashboard/organization" icon={Building2} label="組織情報" />
-                    <SidebarItem href="/dashboard/settings" icon={Settings} label="設定" />
+                    <SidebarItem href="/swc/dashboard/organization" icon={Building2} label="組織情報" />
+                    <SidebarItem href="/swc/dashboard/settings" icon={Settings} label="設定" />
                     <div className="px-3">
                         <FeedbackDialog />
                     </div>
