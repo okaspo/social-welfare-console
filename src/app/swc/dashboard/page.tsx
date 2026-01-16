@@ -7,7 +7,7 @@ import {
     Users
 } from 'lucide-react'
 import Link from 'next/link'
-import { DailyMutter } from '@/components/dashboard/daily-mutter';
+import { DailyMutter } from '@/components/swc/dashboard/daily-mutter';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 

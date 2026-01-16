@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import AoiChat from '@/components/swc/chat/aoi-chat'
-import { SubscriptionAlert } from '@/components/billing/subscription-alert'
+import { SubscriptionAlert } from '@/components/swc/billing/subscription-alert'
 import { createClient } from '@/lib/supabase/server'
 import { OrganizationProvider } from '@/context/organization-context'
-import { DashboardHeader } from '@/components/dashboard/dashboard-header'
+import { DashboardHeader } from '@/components/swc/dashboard/dashboard-header'
 import { SWCDashboardSidebar } from '@/components/swc/dashboard-sidebar'
 
 export default async function DashboardLayout({

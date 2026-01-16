@@ -15,7 +15,7 @@ import {
     Coffee,
     Coins,
 } from 'lucide-react'
-import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
+import { FeedbackDialog } from '@/components/swc/feedback/feedback-dialog'
 import { logout } from '@/lib/actions/auth'
 
 // Sidebar Item Component

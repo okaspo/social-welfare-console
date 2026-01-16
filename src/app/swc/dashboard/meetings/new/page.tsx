@@ -1,4 +1,4 @@
-import MeetingForm from "@/components/meetings/meeting-form"
+import MeetingForm from "@/components/swc/meetings/meeting-form"
 
 export default function NewMeetingPage() {
     return (

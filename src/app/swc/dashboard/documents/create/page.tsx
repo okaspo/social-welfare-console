@@ -1,4 +1,4 @@
-import DocumentWizard from '@/components/documents/document-wizard'
+import DocumentWizard from '@/components/swc/documents/document-wizard'
 
 export default function CreateDocumentPage() {
     return (

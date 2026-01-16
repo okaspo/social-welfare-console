@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Clock, Download, FileText, ExternalLink, History, Plus, FileType, AlignLeft } from 'lucide-react'
 import { ARTICLE_CATEGORIES, ArticleCategory } from '@/lib/articles/data'
 import { createClient } from '@/lib/supabase/client'
-import UploadModal from '@/components/articles/upload-modal'
+import UploadModal from '@/components/swc/articles/upload-modal'
 import ReactMarkdown from 'react-markdown'
 
 interface ArticleDetail {

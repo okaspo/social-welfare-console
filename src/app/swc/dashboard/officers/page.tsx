@@ -1,5 +1,5 @@
-import OfficerList from "@/components/officers/officer-list"
-import OfficerExportButton from "@/components/officers/officer-export-button"
+import OfficerList from "@/components/swc/officers/officer-list"
+import OfficerExportButton from "@/components/swc/officers/officer-export-button"
 import { createClient } from "@/lib/supabase/server"
 import { MOCK_OFFICERS, Officer } from "@/lib/officers/data"
 

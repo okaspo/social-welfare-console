@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Users, Building2, Calendar, MapPin, Phone } from 'lucide-react'
-import AddMemberModal from '@/components/organization/add-member-modal'
-import OrgEditForm from '@/components/organization/org-edit-form'
-import MemberListItem from '@/components/organization/member-list-item'
+import AddMemberModal from '@/components/swc/organization/add-member-modal'
+import OrgEditForm from '@/components/swc/organization/org-edit-form'
+import MemberListItem from '@/components/swc/organization/member-list-item'
 
 export default async function OrganizationPage() {
     const supabase = await createClient()

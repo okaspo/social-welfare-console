@@ -1,4 +1,4 @@
-import MinutesForm from "@/components/documents/minutes-form"
+import MinutesForm from "@/components/swc/documents/minutes-form"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function NewDocumentPage() {

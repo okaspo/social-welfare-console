@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Settings, Shield, Bell, CreditCard } from 'lucide-react'
-import SecuritySettings from '@/components/organization/security-settings'
-import NotificationSettings from '@/components/organization/notification-settings'
+import SecuritySettings from '@/components/swc/organization/security-settings'
+import NotificationSettings from '@/components/swc/organization/notification-settings'
 import { PlanGate } from '@/components/common/plan-gate'
 
 export default async function SettingsPage() {

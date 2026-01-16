@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import PlanSettings from '@/components/organization/plan-settings'
+import PlanSettings from '@/components/swc/organization/plan-settings'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 

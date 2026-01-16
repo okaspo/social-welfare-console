@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
-import PlanGate from '@/components/billing/plan-gate';
+import { PlanGate } from '@/components/swc/billing/plan-gate';
 import { useCurrentPlan } from '@/hooks/use-current-plan';
 
 interface WordExportButtonProps {

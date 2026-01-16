@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { refreshMatches } from './actions';
 import { Coins, RefreshCw, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
-import { PlanGate } from '@/components/billing/plan-gate';
+import { PlanGate } from '@/components/swc/billing/plan-gate';
 
 export default async function SubsidiesPage() {
     const supabase = await createClient();

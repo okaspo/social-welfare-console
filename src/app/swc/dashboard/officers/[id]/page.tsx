@@ -1,5 +1,5 @@
 import { getConcurrentPosts, getOfficerDetails } from './actions'
-import ConcurrentPostsManager from '@/components/officers/concurrent-posts-manager'
+import ConcurrentPostsManager from '@/components/swc/officers/concurrent-posts-manager'
 import Link from 'next/link'
 import { ArrowLeft, User, Calendar } from 'lucide-react'
 

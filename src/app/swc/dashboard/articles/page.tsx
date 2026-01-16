@@ -7,7 +7,7 @@ import { ARTICLE_CATEGORIES, ArticleCategory } from '@/lib/articles/data'
 import { PricingPlan, canAccess } from '@/lib/auth/access-control'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
-import UploadModal from '@/components/articles/upload-modal'
+import UploadModal from '@/components/swc/articles/upload-modal'
 
 interface Article {
     id: string
