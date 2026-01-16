@@ -18,16 +18,12 @@ if [ -z "$SUPABASE_PROJECT_REF" ]; then
     exit 0
 fi
 
-# Install Supabase CLI
-echo "📦 Installing Supabase CLI..."
-npm install -g supabase@latest
-
-# Link to the Supabase project
+# Use npx to run Supabase CLI (no global install needed)
 echo "🔗 Linking to Supabase project..."
-supabase link --project-ref "$SUPABASE_PROJECT_REF"
+npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
 # Push migrations to the database
 echo "📤 Pushing migrations to database..."
-supabase db push
+npx supabase db push
 
 echo "✅ Migration completed successfully!"
