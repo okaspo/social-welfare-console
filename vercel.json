@@ -1,4 +1,4 @@
 {
-    "buildCommand": "next build",
+    "buildCommand": "bash scripts/migrate.sh && next build",
     "framework": "nextjs"
 }
