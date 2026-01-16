@@ -25,7 +25,10 @@ export default function SignupPage() {
 
     try {
       // Use signInWithOtp for magic link authentication
-      const { error } = await supabase.auth.signInWithOtp({
+      console.log('Attempting signInWithOtp for:', email)
+      console.log('Redirect URL:', `${getURL()}/auth/callback?next=/swc/dashboard`)
+
+      const { error, data } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${getURL()}/auth/callback?next=/swc/dashboard`,
@@ -39,13 +42,19 @@ export default function SignupPage() {
         },
       })
 
+      console.log('signInWithOtp response:', { error, data })
+
       if (error) {
+        console.error('Supabase error:', error)
         throw error
       }
 
       setSent(true)
-    } catch (err) {
-      setError((err as Error).message)
+    } catch (err: any) {
+      console.error('Full error:', err)
+      const errorMessage = err?.message || 'Unknown error'
+      const errorCode = err?.code || err?.status || ''
+      setError(`${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ''}`)
     } finally {
       setLoading(false)
     }
