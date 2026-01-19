@@ -4,13 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { OrganizationProvider } from '@/context/organization-context'
 import { DashboardHeader } from '@/components/swc/dashboard/dashboard-header'
 import { SWCDashboardSidebar } from '@/components/swc/dashboard-sidebar'
-import dynamic from 'next/dynamic'
-
-// Dynamically import AoiChat with SSR disabled to prevent hydration errors and client-side exceptions
-const AoiChat = dynamic(() => import('@/components/swc/chat/aoi-chat'), {
-    ssr: false,
-    loading: () => null // Optional: Render nothing while loading
-})
+import AoiChatWrapper from '@/components/swc/chat/aoi-chat-wrapper'
 
 export default async function DashboardLayout({
     children,
@@ -44,7 +38,7 @@ export default async function DashboardLayout({
                     </div>
                 </main>
 
-                <AoiChat />
+                <AoiChatWrapper />
             </div>
         </OrganizationProvider >
     )
