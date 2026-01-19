@@ -42,6 +42,7 @@ export default function AoiChat() {
     const [isSaving, setIsSaving] = useState(false)
     const [showPrecisionResult, setShowPrecisionResult] = useState(false)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
+    const [debugInfo, setDebugInfo] = useState<string>('')
 
     // const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
     // const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
@@ -105,6 +106,7 @@ export default function AoiChat() {
         setIsLoading(true)
 
         try {
+            setDebugInfo('Request started...')
             // 2. Call API
             const response = await fetch('/api/swc/chat', {
                 method: 'POST',
@@ -112,8 +114,12 @@ export default function AoiChat() {
                 body: JSON.stringify({ messages: newMessages })
             })
 
+            setDebugInfo(prev => prev + `\nStatus: ${response.status} ${response.statusText}`)
+
             if (!response.ok) {
-                throw new Error(response.statusText)
+                const text = await response.text()
+                setDebugInfo(prev => prev + `\nError Body: ${text}`)
+                throw new Error(response.statusText + ': ' + text)
             }
 
             if (!response.body) {
@@ -132,9 +138,15 @@ export default function AoiChat() {
             // 4. Read Loop - Parse Custom NDJSON Protocol
             while (true) {
                 const { done, value } = await reader.read()
-                if (done) break
+                if (done) {
+                    setDebugInfo(prev => prev + '\nStream complete.')
+                    break
+                }
 
                 const chunk = decoder.decode(value, { stream: true })
+                // update debug info with raw chunk (truncated)
+                setDebugInfo(prev => prev + `\nChunk: ${chunk.slice(0, 50)}...`)
+
                 const lines = chunk.split('\n')
 
                 for (const line of lines) {
@@ -336,6 +348,13 @@ export default function AoiChat() {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
+
+                    {/* Debug Info Area */}
+                    {debugInfo && (
+                        <div className="bg-black text-green-400 p-2 text-xs font-mono max-h-32 overflow-y-auto border-t border-gray-800 opacity-80">
+                            <pre>{debugInfo}</pre>
+                        </div>
+                    )}
 
                     {/* Input Area */}
                     <form onSubmit={onFormSubmit} className="p-3 bg-white border-t border-gray-100">
