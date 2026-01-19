@@ -15,11 +15,11 @@ import { LanguageModel } from 'ai'
 // ============================================================================
 
 const getGoogleProvider = () => createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    apiKey: (process.env.GOOGLE_GENERATIVE_AI_API_KEY || '').trim(),
 })
 
 const getOpenAIProvider = () => createOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: (process.env.OPENAI_API_KEY || '').trim(),
 })
 
 // ============================================================================
