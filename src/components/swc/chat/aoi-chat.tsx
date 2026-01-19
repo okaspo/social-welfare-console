@@ -20,9 +20,17 @@ interface Message {
 export default function AoiChat() {
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     // Hide on the dedicated chat page to avoid redundancy
     if (pathname === '/swc/dashboard/chat') return null
+
+    // Prevent hydration mismatch by confirming mount
+    if (!isMounted) return null
 
     const [messages, setMessages] = useState<Message[]>([
         { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
