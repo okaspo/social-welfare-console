@@ -123,14 +123,26 @@ export default function FullPageChat({
                         // Log each line for debugging
                         console.log('[Chat] Line:', line);
 
-                        // Handle AI SDK format: 0:"..."
-                        if (line.startsWith('0:')) {
-                            const content = line.substring(2);
-                            try {
-                                const parsed = JSON.parse(content);
-                                assistantContent += parsed;
-                            } catch {
-                                assistantContent += content;
+                        try {
+                            const data = JSON.parse(line)
+
+                            // Handle Custom NDJSON format
+                            if (data.type === 'text-delta' && data.value) {
+                                assistantContent += data.value
+                            } else if (data.type === 'error' || data.type === 'server-error') {
+                                console.error('[Chat] Stream Error:', data.value)
+                                assistantContent += `\n\n[システムエラー: ${data.value}]`
+                            }
+                        } catch (e) {
+                            // Fallback check for AI SDK format
+                            if (line.startsWith('0:')) {
+                                const content = line.substring(2)
+                                try {
+                                    const parsed = JSON.parse(content)
+                                    assistantContent += parsed
+                                } catch {
+                                    assistantContent += content
+                                }
                             }
                         }
                     }
