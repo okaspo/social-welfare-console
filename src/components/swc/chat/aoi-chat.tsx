@@ -155,22 +155,28 @@ export default function AoiChat() {
 
                 const chunk = decoder.decode(value, { stream: true })
 
-                // AI SDK streams text in format: 0:"text content"
-                // Parse each line to extract the actual text
+                // NDJSON Parsing Loop
                 const lines = chunk.split('\n')
                 for (const line of lines) {
                     if (!line.trim()) continue
 
-                    // Match pattern: 0:"..." (text chunk)
-                    const textMatch = line.match(/^0:"(.*)"\s*$/)
-                    if (textMatch) {
-                        // Unescape the JSON string content
-                        try {
-                            const textContent = JSON.parse(`"${textMatch[1]}"`)
-                            aiContent += textContent
-                        } catch {
-                            // Fallback: use the matched text directly
-                            aiContent += textMatch[1]
+                    try {
+                        const data = JSON.parse(line)
+                        // Handle Custom NDJSON format: { type: 'text-delta', value: '...' }
+                        if (data.type === 'text-delta' && data.value) {
+                            aiContent += data.value
+                        }
+                    } catch (e) {
+                        // AI SDK fallback or partial JSON parse error
+                        // Checking for standard AI SDK format just in case: 0:"text"
+                        const textMatch = line.match(/^0:"(.*)"\s*$/)
+                        if (textMatch) {
+                            try {
+                                const textContent = JSON.parse(`"${textMatch[1]}"`)
+                                aiContent += textContent
+                            } catch {
+                                aiContent += textMatch[1]
+                            }
                         }
                     }
                 }
