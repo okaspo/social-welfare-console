@@ -50,3 +50,4 @@ build_*.txt
 report.txt
 schema_report.txt
 prompt_output.txt
+/src/generated/prisma

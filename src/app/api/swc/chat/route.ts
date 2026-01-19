@@ -147,7 +147,7 @@ export async function POST(req: Request) {
 
         // Override with Intent Detector if specific
         if (detectedIntent.suggestedTier === 'advisor') taskComplexity = 'reasoning'; // Map advisor to reasoning logic
-        else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'complex'; // Persona often equals complex in terms of needing 4o
+        else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'legal'; // Persona often equals legal in terms of needing 4o
 
         const selectedModel = selectModel(plan, complexityResult);
 

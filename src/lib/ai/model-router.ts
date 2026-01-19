@@ -1,126 +1,237 @@
-// API Cost Control - Model Router & Pricing
-// Automatically select optimal model based on task complexity and plan
+/**
+ * AI Model Router - タスク種別に応じた最適なAIモデルを選択
+ * 
+ * Gemini 2.0 Flash: コスト最適化（通常会話、要約、フォーマット）
+ * GPT-4o: 精度重視（法令解釈、リスク検出）
+ * Gemini 2.0 Flash Thinking: 推論タスク（分析、検討）
+ */
 
-export const MODEL_PRICING = {
-    'gpt-4o': {
-        input: 0.0025, // $2.50 per 1M tokens
-        output: 0.010, // $10.00 per 1M tokens
-    },
-    'gpt-4o-mini': {
-        input: 0.00015, // $0.15 per 1M tokens
-        output: 0.0006, // $0.60 per 1M tokens
-    },
-    'o1-preview': {
-        input: 0.015, // $15.00 per 1M tokens
-        output: 0.060, // $60.00 per 1M tokens
-    },
-    'text-embedding-3-small': {
-        input: 0.00002, // $0.02 per 1M tokens
-        output: 0, // No output for embeddings
-    },
-} as const;
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
+import { LanguageModel } from 'ai'
 
-export type ModelName = keyof typeof MODEL_PRICING;
+// ============================================================================
+// Provider初期化（遅延評価）
+// ============================================================================
+
+const getGoogleProvider = () => createGoogleGenerativeAI({
+    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+})
+
+const getOpenAIProvider = () => createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+})
+
+// ============================================================================
+// 型定義
+// ============================================================================
+
+export type TaskType =
+    | 'chat'           // 通常会話 → Gemini Flash
+    | 'legal'          // 法令解釈 → GPT-4o
+    | 'risk'           // リスク検出 → GPT-4o
+    | 'summary'        // 要約 → Gemini Flash
+    | 'format'         // フォーマット変換 → Gemini Flash
+    | 'reasoning'      // 複雑な推論 → Gemini Thinking
+    | 'simple'         // 簡単な挨拶 → GPT-4o-mini
 
 export interface TaskComplexity {
-    type: 'simple' | 'moderate' | 'complex' | 'reasoning';
-    reason?: string;
+    type: TaskType
+    reason?: string
 }
 
-/**
- * Calculate estimated cost for a request
- */
+// ============================================================================
+// モデル価格情報（1M tokens, USD）
+// ============================================================================
+
+export const MODEL_PRICING = {
+    'gpt-4o': { input: 0.0025, output: 0.010 },
+    'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
+    'o1-preview': { input: 0.015, output: 0.060 },
+    'gemini-2.0-flash': { input: 0.000075, output: 0.0003 },
+    'gemini-2.0-flash-thinking-exp': { input: 0.0001, output: 0.0004 },
+    'text-embedding-3-small': { input: 0.00002, output: 0 },
+} as const
+
+export type ModelName = keyof typeof MODEL_PRICING
+
+// ============================================================================
+// モデルマッピング
+// ============================================================================
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const MODEL_MAP: Record<TaskType, () => any> = {
+    chat: () => getGoogleProvider()('gemini-2.0-flash'),
+    legal: () => getOpenAIProvider()('gpt-4o'),
+    risk: () => getOpenAIProvider()('gpt-4o'),
+    summary: () => getGoogleProvider()('gemini-2.0-flash'),
+    format: () => getGoogleProvider()('gemini-2.0-flash'),
+    reasoning: () => getGoogleProvider()('gemini-2.0-flash-thinking-exp'),
+    simple: () => getOpenAIProvider()('gpt-4o-mini'),
+}
+
+// ============================================================================
+// コスト計算
+// ============================================================================
+
 export function calculateCost(
     model: ModelName,
     inputTokens: number,
     outputTokens: number = 0
 ): number {
-    const pricing = MODEL_PRICING[model];
-    const inputCost = (inputTokens / 1_000_000) * pricing.input;
-    const outputCost = (outputTokens / 1_000_000) * pricing.output;
-    return inputCost + outputCost;
+    const pricing = MODEL_PRICING[model]
+    const inputCost = (inputTokens / 1_000_000) * pricing.input
+    const outputCost = (outputTokens / 1_000_000) * pricing.output
+    return inputCost + outputCost
 }
 
-/**
- * Determine task complexity from prompt
- */
-export function assessComplexity(prompt: string, context?: string): TaskComplexity {
-    const lowerPrompt = prompt.toLowerCase();
+export function formatCost(usd: number): string {
+    if (usd < 0.01) return '<¥1'
+    const jpy = Math.ceil(usd * 150)
+    return `¥${jpy.toLocaleString('ja-JP')}`
+}
 
-    // Simple tasks
+export function getUsagePercentage(currentCost: number, limit: number): number {
+    if (limit === 0) return 0
+    return Math.min(Math.round((currentCost / limit) * 100), 100)
+}
+
+// ============================================================================
+// タスク種別判定
+// ============================================================================
+
+export function detectTaskType(prompt: string, context?: string): TaskComplexity {
+    const lowerPrompt = prompt.toLowerCase()
+
+    // 簡単な挨拶
     if (
         lowerPrompt.length < 50 ||
         /^(こんにち|おはよう|こんばん|ありがとう|はい|いいえ)/.test(lowerPrompt)
     ) {
-        return { type: 'simple', reason: 'Short greeting or confirmation' };
+        return { type: 'simple', reason: '短い挨拶・確認' }
     }
 
-    // Complex tasks
-    if (
-        lowerPrompt.includes('法的') ||
-        lowerPrompt.includes('条文') ||
-        lowerPrompt.includes('監査') ||
-        lowerPrompt.includes('議事録') ||
-        lowerPrompt.includes('定款') ||
-        (context && context.length > 5000) // Large context = complex
-    ) {
-        return { type: 'complex', reason: 'Legal/governance task or large context' };
+    // 法令関連
+    if (/法令|条文|法律|規則|義務|責任|社会福祉法|定款/.test(prompt)) {
+        return { type: 'legal', reason: '法令・定款関連タスク' }
     }
 
-    // Default: moderate
-    return { type: 'moderate', reason: 'Standard consultation' };
+    // リスク・コンプライアンス
+    if (/リスク|懸念|問題|注意|警告|危険|違反|コンプライアンス|監査/.test(prompt)) {
+        return { type: 'risk', reason: 'リスク検出・コンプライアンス' }
+    }
+
+    // 要約
+    if (/要約|まとめ|概要|サマリー|ポイント/.test(prompt)) {
+        return { type: 'summary', reason: '要約タスク' }
+    }
+
+    // フォーマット
+    if (/フォーマット|変換|整形|テンプレート|書式|議事録/.test(prompt)) {
+        return { type: 'format', reason: 'フォーマット変換' }
+    }
+
+    // 複雑な推論
+    if (/なぜ|理由|分析|考察|検討|比較|評価/.test(prompt)) {
+        return { type: 'reasoning', reason: '分析・推論タスク' }
+    }
+
+    // 大きなコンテキスト
+    if (context && context.length > 5000) {
+        return { type: 'legal', reason: '大規模コンテキスト処理' }
+    }
+
+    // デフォルト
+    return { type: 'chat', reason: '通常会話' }
+}
+
+// ============================================================================
+// モデル選択（メイン関数）
+// ============================================================================
+
+/**
+ * タスク種別に応じた最適なモデルを選択
+ */
+export function getModel(taskType: TaskType): LanguageModel {
+    const modelFactory = MODEL_MAP[taskType]
+    if (!modelFactory) {
+        console.warn(`[ModelRouter] Unknown task type: ${taskType}, falling back to chat`)
+        return MODEL_MAP.chat()
+    }
+    return modelFactory()
 }
 
 /**
- * Select optimal model based on plan and task complexity
+ * プロンプトから自動判定してモデルを選択
+ */
+export function selectModelFromPrompt(prompt: string, context?: string): LanguageModel {
+    const complexity = detectTaskType(prompt, context)
+    console.log(`[ModelRouter] Task: ${complexity.type} (${complexity.reason}), Prompt: "${prompt.slice(0, 50)}..."`)
+    return getModel(complexity.type)
+}
+
+/**
+ * プラン別モデル選択（従来互換用）
  */
 export function selectModel(
     userPlan: string,
     complexity: TaskComplexity
 ): ModelName {
-    // Free plan: Use mini with limited access (starter experience)
-    if (userPlan === 'free' || userPlan === 'Free') {
-        return 'gpt-4o-mini'; // Allow free users with limitations
+    // Free/Standard plan: 常にmini
+    if (['free', 'Free', 'standard', 'Standard'].includes(userPlan)) {
+        return 'gpt-4o-mini'
     }
 
-    // Standard plan: Always use mini (cost control)
-    if (userPlan === 'standard' || userPlan === 'Standard') {
-        return 'gpt-4o-mini';
+    // Pro/Enterprise: タスク種別に応じて選択
+    switch (complexity.type) {
+        case 'simple':
+            return 'gpt-4o-mini'
+        case 'chat':
+        case 'summary':
+        case 'format':
+            return 'gemini-2.0-flash'
+        case 'reasoning':
+            return 'gemini-2.0-flash-thinking-exp'
+        case 'legal':
+        case 'risk':
+            return 'gpt-4o'
+        default:
+            return 'gpt-4o-mini'
     }
-
-    // Pro/Enterprise: Dynamic selection
-    if (complexity.type === 'simple') {
-        return 'gpt-4o-mini'; // Fast & cheap for greetings
-    }
-
-    if (complexity.type === 'complex') {
-        return 'gpt-4o'; // Best model for important tasks
-    }
-
-    if (complexity.type === 'reasoning') {
-        return 'o1-preview';
-    }
-
-    // Moderate: Use mini to save cost
-    return 'gpt-4o-mini';
 }
 
 /**
- * Format cost for display
+ * フォールバック付きモデル選択
  */
-export function formatCost(usd: number): string {
-    if (usd < 0.01) {
-        return '<¥1';
+export function selectModelWithFallback(prompt: string, context?: string): LanguageModel {
+    const hasGeminiKey = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+
+    if (!hasGeminiKey && !hasOpenAIKey) {
+        throw new Error('[ModelRouter] No AI API keys configured.')
     }
-    // Convert to JPY (approximate rate: 1 USD = 150 JPY)
-    const jpy = Math.ceil(usd * 150);
-    return `¥${jpy.toLocaleString('ja-JP')}`;
+
+    const complexity = detectTaskType(prompt, context)
+
+    // Geminiが必要なタスクでキーがない場合
+    if (!hasGeminiKey && ['chat', 'summary', 'format', 'reasoning'].includes(complexity.type)) {
+        console.log(`[ModelRouter] Gemini key missing, fallback to OpenAI: ${complexity.type}`)
+        return getOpenAIProvider()('gpt-4o-mini') as any  // eslint-disable-line
+    }
+
+    // OpenAIが必要なタスクでキーがない場合
+    if (!hasOpenAIKey && ['legal', 'risk', 'simple'].includes(complexity.type)) {
+        console.log(`[ModelRouter] OpenAI key missing, fallback to Gemini: ${complexity.type}`)
+        return getGoogleProvider()('gemini-2.0-flash') as any  // eslint-disable-line
+    }
+
+    return getModel(complexity.type)
 }
 
-/**
- * Get usage percentage for UI display
- */
-export function getUsagePercentage(currentCost: number, limit: number): number {
-    if (limit === 0) return 0; // No limit
-    return Math.min(Math.round((currentCost / limit) * 100), 100);
+// ============================================================================
+// 従来互換用エクスポート
+// ============================================================================
+
+export function assessComplexity(prompt: string, context?: string): TaskComplexity {
+    return detectTaskType(prompt, context)
 }
