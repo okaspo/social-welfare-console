@@ -21,24 +21,33 @@ export function useAssistantAvatar(assistantCode: string = 'aoi') {
         async function fetchAvatar() {
             setLoading(true);
 
-            // Fetch from assistant_profiles table (managed via admin console)
-            const { data: profile, error } = await supabase
-                .from('assistant_profiles')
-                .select('avatar_url, full_body_url')
-                .eq('code', assistantCode)
-                .single();
+            try {
+                // Fetch from assistant_profiles table (managed via admin console)
+                const { data: profile, error } = await supabase
+                    .from('assistant_profiles')
+                    .select('avatar_url, full_body_url')
+                    .eq('code', assistantCode)
+                    .single();
 
-            if (profile && !error) {
-                if (profile.avatar_url) {
-                    setAvatarUrl(profile.avatar_url);
+                if (error) {
+                    console.warn('Avatar fetch warning (using fallback):', error.message);
+                    setLoading(false);
+                    return;
                 }
-                if (profile.full_body_url) {
-                    setFullBodyUrl(profile.full_body_url);
+
+                if (profile) {
+                    if (profile.avatar_url) {
+                        setAvatarUrl(profile.avatar_url);
+                    }
+                    if (profile.full_body_url) {
+                        setFullBodyUrl(profile.full_body_url);
+                    }
                 }
+            } catch (e) {
+                console.warn('Avatar fetch failed (using fallback)', e);
+            } finally {
+                setLoading(false);
             }
-            // If DB fails, keep static fallback (already set in useState)
-
-            setLoading(false);
         }
 
         fetchAvatar();

@@ -12,19 +12,27 @@ export function DailyMutter() {
 
     useEffect(() => {
         const fetchTweet = async () => {
-            const today = new Date().toISOString().split('T')[0];
+            try {
+                const today = new Date().toISOString().split('T')[0];
 
-            const { data } = await supabase
-                .from('daily_tweets')
-                .select('content, image_url')
-                .eq('published_date', today)
-                .limit(1)
-                .single();
+                const { data, error } = await supabase
+                    .from('daily_tweets')
+                    .select('content, image_url')
+                    .eq('published_date', today)
+                    .limit(1)
+                    .single();
 
-            if (data) {
-                setTweet(data);
-            } else {
-                // Fallback content if no tweet for today
+                if (error || !data) {
+                    // Fallback content if no tweet for today or table missing
+                    setTweet({
+                        content: '休憩も仕事のうちです。無理せずいきましょう。',
+                        image_url: null
+                    });
+                } else {
+                    setTweet(data);
+                }
+            } catch (e) {
+                // Silent failure fallback
                 setTweet({
                     content: '休憩も仕事のうちです。無理せずいきましょう。',
                     image_url: null

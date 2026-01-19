@@ -18,9 +18,6 @@ interface Message {
 }
 
 export default function AoiChat() {
-    // TEMPORARY: Disable AoiChat to debug infinite re-render loop
-    return null;
-
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
