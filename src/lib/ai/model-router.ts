@@ -61,12 +61,13 @@ export type ModelName = keyof typeof MODEL_PRICING
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MODEL_MAP: Record<TaskType, () => any> = {
-    chat: () => getGoogleProvider()('gemini-2.0-flash'),
+    // Switch all to OpenAI to avoid Gemini connection issues
+    chat: () => getOpenAIProvider()('gpt-4o-mini'),
     legal: () => getOpenAIProvider()('gpt-4o'),
     risk: () => getOpenAIProvider()('gpt-4o'),
-    summary: () => getGoogleProvider()('gemini-2.0-flash'),
-    format: () => getGoogleProvider()('gemini-2.0-flash'),
-    reasoning: () => getGoogleProvider()('gemini-2.0-flash-thinking-exp'),
+    summary: () => getOpenAIProvider()('gpt-4o-mini'),
+    format: () => getOpenAIProvider()('gpt-4o-mini'),
+    reasoning: () => getOpenAIProvider()('gpt-4o'), // Reasoning fallback to 4o
     simple: () => getOpenAIProvider()('gpt-4o-mini'),
 }
 
