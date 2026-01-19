@@ -145,6 +145,9 @@ export default function AoiChat() {
                         // Handle Custom NDJSON format
                         if (data.type === 'text-delta' && data.value) {
                             aiContent += data.value
+                        } else if (data.type === 'error' || data.type === 'server-error') {
+                            console.error('Stream Error:', data.value)
+                            aiContent += `\n\n[システムエラー: ${data.value}]`
                         }
                     } catch (e) {
                         // Fallback check for AI SDK format
