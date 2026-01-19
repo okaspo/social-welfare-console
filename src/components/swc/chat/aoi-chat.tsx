@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
-import { processUploadedFile } from '@/lib/actions/document-processing'
+// import { processUploadedFile } from '@/lib/actions/document-processing'
 import { createClient } from '@/lib/supabase/client'
 import { usePrecisionCheck, type PrecisionCheckResult } from '@/hooks/use-precision-check'
 import { PlanGate } from '@/components/common/plan-gate'
@@ -55,7 +55,8 @@ export default function AoiChat() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const supabase = createClient()
+    // Memoize supabase client
+    const supabase = useMemo(() => createClient(), [])
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -69,6 +70,10 @@ export default function AoiChat() {
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: `📎 ファイルアップロード: ${file.name}` }
         setMessages(prev => [...prev, userMsg])
 
+        // Server Action temporarily disabled for debugging
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: '申し訳ありません。現在ファイルアップロード機能はメンテナンス中です。' }])
+
+        /*
         try {
             const formData = new FormData()
             formData.append('file', file)
@@ -84,6 +89,7 @@ export default function AoiChat() {
         } catch (e) {
             setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'エラーが発生しました。' }])
         }
+        */
     }
 
     // ... drag handlers ...
