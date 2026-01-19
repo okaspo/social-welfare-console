@@ -44,8 +44,14 @@ export default function AoiChat() {
     const [showPrecisionResult, setShowPrecisionResult] = useState(false)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
 
-    const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
-    const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
+    // const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
+    // const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
+    const avatarUrl = '/assets/avatars/aoi_face_icon.jpg'; // Static fallback for debugging
+
+    // Dummy variables to satisfy linter while debugging
+    const isChecking = false;
+    const checkMessage = async (...args: any[]) => { };
+    const precisionResult = null;
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
