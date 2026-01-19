@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation'
+import FullPageChat from '@/components/swc/chat/full-page-chat'
 
-/**
- * Redirect to the unified chat page at /chat
- * This consolidates all chat functionality in one location
- */
 export default function DashboardChatPage() {
-    redirect('/chat')
+    return (
+        <div className="h-[calc(100vh-200px)] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <FullPageChat />
+        </div>
+    )
 }
