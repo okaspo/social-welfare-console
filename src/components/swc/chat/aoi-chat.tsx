@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
-// import { processUploadedFile } from '@/lib/actions/document-processing'
+// Icons removed to isolate crash
+// import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+// import { processUploadedFile } from '@/lib/actions/document-processing'
 // import { usePrecisionCheck, type PrecisionCheckResult } from '@/hooks/use-precision-check'
 // import { PlanGate } from '@/components/common/plan-gate'
 // import { useAssistantAvatar } from '@/lib/hooks/use-assistant-avatar'
@@ -32,7 +33,7 @@ export default function AoiChat() {
     if (!isMounted) return null
 
     const [messages, setMessages] = useState<Message[]>([
-        { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？\n（例：「理事長の任期は？」や、法人の情報を教えてください）' }
+        { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？' }
     ])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -42,7 +43,7 @@ export default function AoiChat() {
     const [isSaving, setIsSaving] = useState(false)
     const [showPrecisionResult, setShowPrecisionResult] = useState(false)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
-    const [debugInfo, setDebugInfo] = useState<string>('')
+    // Debug info removed as chat is working
 
     // const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
     // const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
@@ -106,7 +107,6 @@ export default function AoiChat() {
         setIsLoading(true)
 
         try {
-            setDebugInfo('Request started...')
             // 2. Call API
             const response = await fetch('/api/swc/chat', {
                 method: 'POST',
@@ -114,11 +114,8 @@ export default function AoiChat() {
                 body: JSON.stringify({ messages: newMessages })
             })
 
-            setDebugInfo(prev => prev + `\nStatus: ${response.status} ${response.statusText}`)
-
             if (!response.ok) {
                 const text = await response.text()
-                setDebugInfo(prev => prev + `\nError Body: ${text}`)
                 throw new Error(response.statusText + ': ' + text)
             }
 
@@ -139,14 +136,10 @@ export default function AoiChat() {
             while (true) {
                 const { done, value } = await reader.read()
                 if (done) {
-                    setDebugInfo(prev => prev + '\nStream complete.')
                     break
                 }
 
                 const chunk = decoder.decode(value, { stream: true })
-                // update debug info with raw chunk (truncated)
-                setDebugInfo(prev => prev + `\nChunk: ${chunk.slice(0, 50)}...`)
-
                 const lines = chunk.split('\n')
 
                 for (const line of lines) {
@@ -271,7 +264,7 @@ export default function AoiChat() {
                                     {avatarUrl ? (
                                         <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Bot className="h-6 w-6 text-white" />
+                                        <div className="w-6 h-6 flex items-center justify-center">🤖</div>
                                     )}
                                 </div>
                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
@@ -287,7 +280,7 @@ export default function AoiChat() {
                                 className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all opacity-50 cursor-not-allowed"
                                 title="会話をピン留め (メンテ中)"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pin"><line x1="12" x2="12" y1="17" y2="22" /><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" /></svg>
+                                <div className="w-4 h-4 flex items-center justify-center">📌</div>
                             </button>
 
                             <button
@@ -296,10 +289,10 @@ export default function AoiChat() {
                                 className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all disabled:opacity-30"
                                 title="会話をナレッジとして保存"
                             >
-                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                {isSaving ? <div className="w-4 h-4 flex items-center justify-center animate-spin">⏳</div> : <div className="w-4 h-4 flex items-center justify-center">💾</div>}
                             </button>
                             <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all">
-                                <X className="h-5 w-5" />
+                                <div className="w-5 h-5 flex items-center justify-center">✕</div>
                             </button>
                         </div>
                     </div>
@@ -314,7 +307,7 @@ export default function AoiChat() {
                                             {avatarUrl ? (
                                                 <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                                             ) : (
-                                                <Bot className="h-5 w-5 text-gray-400" />
+                                                <div className="w-5 h-5 flex items-center justify-center">🤖</div>
                                             )}
                                         </div>
                                     )}
@@ -335,13 +328,11 @@ export default function AoiChat() {
                         {isLoading && (
                             <div className="flex justify-start items-end gap-2">
                                 <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-white flex-shrink-0 mb-1">
-                                    <Bot className="h-5 w-5 text-gray-400" />
+                                    <div className="w-5 h-5 flex items-center justify-center">🤖</div>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
-                                    <div className="flex gap-1.5">
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                                    <div className="flex gap-1.5 text-xs text-gray-400">
+                                        考え中...
                                     </div>
                                 </div>
                             </div>
@@ -349,22 +340,15 @@ export default function AoiChat() {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Debug Info Area */}
-                    {debugInfo && (
-                        <div className="bg-black text-green-400 p-2 text-xs font-mono max-h-32 overflow-y-auto border-t border-gray-800 opacity-80">
-                            <pre>{debugInfo}</pre>
-                        </div>
-                    )}
-
                     {/* Input Area */}
                     <form onSubmit={onFormSubmit} className="p-3 bg-white border-t border-gray-100">
                         <div className="relative flex gap-2">
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-100 transition-all"
+                                className="p-2.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-100 transition-all font-bold"
                             >
-                                <Paperclip className="h-5 w-5" />
+                                📎
                             </button>
                             <input
                                 type="file"
@@ -384,9 +368,9 @@ export default function AoiChat() {
                             <button
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
-                                className="p-2.5 bg-[#607D8B] text-white rounded-lg hover:bg-[#546E7A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                className="p-2.5 bg-[#607D8B] text-white rounded-lg hover:bg-[#546E7A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm font-bold"
                             >
-                                <Send className="h-5 w-5" />
+                                ➤
                             </button>
                         </div>
                     </form>
@@ -403,7 +387,7 @@ export default function AoiChat() {
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                             ) : (
-                                <Bot className="h-5 w-5" />
+                                <div className="w-5 h-5 flex items-center justify-center">🤖</div>
                             )}
                         </div>
                         <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
