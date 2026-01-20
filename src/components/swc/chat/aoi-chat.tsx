@@ -26,12 +26,7 @@ export default function AoiChat() {
         setIsMounted(true)
     }, [])
 
-    // Hide on the dedicated chat page to avoid redundancy
-    if (pathname === '/swc/dashboard/chat') return null
-
-    // Prevent hydration mismatch by confirming mount
-    if (!isMounted) return null
-
+    // Hooks must be called unconditionally at the top level
     const [messages, setMessages] = useState<Message[]>([
         { id: 'welcome', role: 'assistant', content: 'お疲れ様です。本日はどのような業務をお手伝いしましょうか？' }
     ])
@@ -43,7 +38,6 @@ export default function AoiChat() {
     const [isSaving, setIsSaving] = useState(false)
     const [showPrecisionResult, setShowPrecisionResult] = useState(false)
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null)
-    // Debug info removed as chat is working
 
     // const { isChecking, result: precisionResult, checkMessage } = usePrecisionCheck()
     // const { avatarUrl } = useAssistantAvatar('aoi'); // Get Dynamic Avatar
@@ -56,16 +50,30 @@ export default function AoiChat() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    // Memoize supabase client
-    const supabase = useMemo(() => createClient(), [])
+
+    // Lazy initialization of Supabase client
+    const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+    const getSupabase = useCallback(() => {
+        if (!supabaseRef.current) {
+            supabaseRef.current = createClient();
+        }
+        return supabaseRef.current;
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
 
     useEffect(() => {
-        scrollToBottom()
+        if (isOpen) {
+            scrollToBottom()
+        }
     }, [messages, isOpen])
+
+    // Render logic check
+    const shouldRender = isMounted && pathname !== '/swc/dashboard/chat'
+
+    if (!shouldRender) return null
 
     const handleFileUpload = async (file: File) => {
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: `📎 ファイルアップロード: ${file.name}` }
@@ -190,6 +198,7 @@ export default function AoiChat() {
         setIsSaving(true)
 
         try {
+            const supabase = getSupabase()
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('Not authenticated')
 
