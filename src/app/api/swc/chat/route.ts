@@ -149,12 +149,13 @@ export async function POST(req: Request) {
         if (detectedIntent.suggestedTier === 'advisor') taskComplexity = 'reasoning'; // Map advisor to reasoning logic
         else if (detectedIntent.suggestedTier === 'persona') taskComplexity = 'legal'; // Persona often equals legal in terms of needing 4o
 
-        const selectedModel = selectModel(plan, complexityResult);
+        // Get Primary Model (Gemini or OpenAI based on logic)
+        let selectedModel = selectModel(plan, complexityResult);
+        let activeComplexity = taskComplexity;
 
-        console.log(`[Model Router] Intent: ${detectedIntent.intent} (${detectedIntent.confidence}) -> Plan: ${plan} -> Complexity: ${taskComplexity} -> Model: ${selectedModel}`);
+        console.log(`[Model Router] Intent: ${detectedIntent.intent} -> Complexity: ${taskComplexity} -> Primary Model Selected`);
 
         // Re-check quota including Reasoning Limits
-        // Re-check quota including Reasoning Limits (omitted for now as redundant or needing specific reasoning-limit logic)
         // if (orgId) { ... }
 
         // 5. Build Final System Message with Persona
@@ -188,29 +189,29 @@ ${commonKnowledgeText || "(共通知識はありません)"}
 - サービスの機能についての質問（例：「議事録の作り方」）には、【共通知識】に含まれるサービスの仕様に基づいて回答してください。
 `;
 
-        // const { tool } = await import('ai'); // Already imported
-        // const { z } = await import('zod');
+        // Execute Stream with Fallback Logic
+        let result;
+        try {
+            result = await streamText({
+                model: selectedModel,
+                system: finalSystemMessage,
+                messages: messages,
+            });
+        } catch (primaryError: any) {
+            console.warn(`[Chat API] Primary model failed: ${primaryError.message}. Attempting fallback...`);
 
-        // const data = new StreamData();
-        // if (taskComplexity === 'reasoning') {
-        //     data.append({ status: 'thinking' });
-        // }
+            // Fallback logic
+            const { getFallbackModel } = await import('@/lib/ai/model-router');
+            const fallbackModel = getFallbackModel(taskComplexity);
 
-        const result = await streamText({
-            model: openai(selectedModel),
-            system: finalSystemMessage,
-            messages: messages,
-            // onFinish: async () => {
-            //     data.close();
-            // },
-            /*
-            tools: {
-                // ... tools definitions commented out ...
-            },
-            */
-            // @ts-ignore - maxSteps is available in newer versions but types might be outdated
-            // maxSteps: 10, // Disable maxSteps as well since no tools
-        });
+            console.log(`[Chat API] Switching to fallback model for task: ${taskComplexity}`);
+
+            result = await streamText({
+                model: fallbackModel,
+                system: finalSystemMessage,
+                messages: messages,
+            });
+        }
 
         // Use headers to signal reasoning mode
         const headers = new Headers();
