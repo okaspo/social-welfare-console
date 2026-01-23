@@ -1,9 +1,6 @@
-'use client'
-
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
-// Icons removed to isolate crash
-// import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
+import { Bot, X, Send, Paperclip, Upload, Save, Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 // import { processUploadedFile } from '@/lib/actions/document-processing'
 // import { usePrecisionCheck, type PrecisionCheckResult } from '@/hooks/use-precision-check'
@@ -18,6 +15,8 @@ interface Message {
     precisionCheckResult?: any // PrecisionCheckResult
 }
 export default function AoiChat() {
+    // ... (Hooks and State remain unchanged) ...
+
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
@@ -273,7 +272,7 @@ export default function AoiChat() {
                                     {avatarUrl ? (
                                         <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-6 h-6 flex items-center justify-center">🤖</div>
+                                        <Bot className="w-6 h-6" />
                                     )}
                                 </div>
                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
@@ -298,10 +297,10 @@ export default function AoiChat() {
                                 className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all disabled:opacity-30"
                                 title="会話をナレッジとして保存"
                             >
-                                {isSaving ? <div className="w-4 h-4 flex items-center justify-center animate-spin">⏳</div> : <div className="w-4 h-4 flex items-center justify-center">💾</div>}
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             </button>
                             <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all">
-                                <div className="w-5 h-5 flex items-center justify-center">✕</div>
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -316,7 +315,7 @@ export default function AoiChat() {
                                             {avatarUrl ? (
                                                 <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-5 h-5 flex items-center justify-center">🤖</div>
+                                                <Bot className="w-5 h-5" />
                                             )}
                                         </div>
                                     )}
@@ -337,7 +336,7 @@ export default function AoiChat() {
                         {isLoading && (
                             <div className="flex justify-start items-end gap-2">
                                 <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-white flex-shrink-0 mb-1">
-                                    <div className="w-5 h-5 flex items-center justify-center">🤖</div>
+                                    <Bot className="w-5 h-5" />
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
                                     <div className="flex gap-1.5 text-xs text-gray-400">
@@ -355,9 +354,9 @@ export default function AoiChat() {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-100 transition-all font-bold"
+                                className="p-2.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-100 transition-all"
                             >
-                                📎
+                                <Paperclip className="w-5 h-5" />
                             </button>
                             <input
                                 type="file"
@@ -377,9 +376,9 @@ export default function AoiChat() {
                             <button
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
-                                className="p-2.5 bg-[#607D8B] text-white rounded-lg hover:bg-[#546E7A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm font-bold"
+                                className="p-2.5 bg-[#607D8B] text-white rounded-lg hover:bg-[#546E7A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >
-                                ➤
+                                <Send className="w-5 h-5" />
                             </button>
                         </div>
                     </form>
@@ -396,7 +395,7 @@ export default function AoiChat() {
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt="Aoi" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-5 h-5 flex items-center justify-center">🤖</div>
+                                <Bot className="w-5 h-5" />
                             )}
                         </div>
                         <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#607D8B] rounded-full"></span>
