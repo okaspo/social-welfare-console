@@ -70,7 +70,7 @@ export default function AoiChat() {
     }, [messages, isOpen])
 
     // Render logic check
-    const shouldRender = isMounted && pathname !== '/swc/dashboard/chat'
+    const shouldRender = isMounted && pathname !== '/swc/dashboard/chat' && pathname !== '/swc/dashboard/organization'
 
     if (!shouldRender) return null
 
