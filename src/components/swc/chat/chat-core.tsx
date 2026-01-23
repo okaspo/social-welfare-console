@@ -187,14 +187,23 @@ export default function ChatCore({
 
             {/* Messages */}
             <div className={`${messagesContainerStyles} ${messagesClassName}`}>
-                {messages.map((msg) => (
-                    <MessageBubble
-                        key={msg.id}
-                        message={msg}
-                        avatarUrl={avatarUrl}
-                        isFullPage={isFullPage}
-                    />
-                ))}
+                {messages.map((msg, index) => {
+                    // Skip empty placeholder message while loading (last assistant message with empty content)
+                    const isLastMessage = index === messages.length - 1
+                    const isEmptyAssistant = msg.role === 'assistant' && !msg.content.trim()
+                    if (isLoading && isLastMessage && isEmptyAssistant) {
+                        return null
+                    }
+
+                    return (
+                        <MessageBubble
+                            key={msg.id}
+                            message={msg}
+                            avatarUrl={avatarUrl}
+                            isFullPage={isFullPage}
+                        />
+                    )
+                })}
                 {isLoading && (
                     <div className="flex justify-start items-end gap-2">
                         <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-white flex-shrink-0 mb-1 flex items-center justify-center">
@@ -291,8 +300,8 @@ function MessageBubble({ message, avatarUrl, isFullPage = false }: MessageBubble
                 <div className="flex flex-col">
                     <div
                         className={`px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${isUser
-                                ? `${isFullPage ? 'bg-gray-800' : 'bg-[#607D8B]'} text-white rounded-2xl rounded-tr-none`
-                                : 'bg-white text-gray-800 rounded-2xl rounded-tl-none border border-gray-100'
+                            ? `${isFullPage ? 'bg-gray-800' : 'bg-[#607D8B]'} text-white rounded-2xl rounded-tr-none`
+                            : 'bg-white text-gray-800 rounded-2xl rounded-tl-none border border-gray-100'
                             }`}
                     >
                         {message.content || '...'}
