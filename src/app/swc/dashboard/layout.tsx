@@ -38,7 +38,7 @@ export default async function DashboardLayout({
                     </div>
                 </main>
 
-                <AoiChatWrapper />
+                {/* <AoiChatWrapper /> */}
             </div>
         </OrganizationProvider >
     )
