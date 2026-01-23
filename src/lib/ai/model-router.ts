@@ -56,14 +56,86 @@ export const MODEL_PRICING = {
 export type ModelName = keyof typeof MODEL_PRICING
 
 // ============================================================================
-// モデルマッピング
+// コスト計算
 // ============================================================================
+
+export function calculateCost(
+    model: ModelName,
+    inputTokens: number,
+    outputTokens: number = 0
+): number {
+    const pricing = MODEL_PRICING[model]
+    const inputCost = (inputTokens / 1_000_000) * pricing.input
+    const outputCost = (outputTokens / 1_000_000) * pricing.output
+    return inputCost + outputCost
+}
+
+export function formatCost(usd: number): string {
+    if (usd < 0.01) return '<¥1'
+    const jpy = Math.ceil(usd * 150)
+    return `¥${jpy.toLocaleString('ja-JP')}`
+}
+
+export function getUsagePercentage(currentCost: number, limit: number): number {
+    if (limit === 0) return 0
+    return Math.min(Math.round((currentCost / limit) * 100), 100)
+}
+
+// ============================================================================
+// タスク種別判定
+// ============================================================================
+
+export function detectTaskType(prompt: string, context?: string): TaskComplexity {
+    const lowerPrompt = prompt.toLowerCase()
+
+    // 簡単な挨拶
+    if (
+        lowerPrompt.length < 50 ||
+        /^(こんにち|おはよう|こんばん|ありがとう|はい|いいえ)/.test(lowerPrompt)
+    ) {
+        return { type: 'simple', reason: '短い挨拶・確認' }
+    }
+
+    // 法令関連
+    if (/法令|条文|法律|規則|義務|責任|社会福祉法|定款/.test(prompt)) {
+        return { type: 'legal', reason: '法令・定款関連タスク' }
+    }
+
+    // リスク・コンプライアンス
+    if (/リスク|懸念|問題|注意|警告|危険|違反|コンプライアンス|監査/.test(prompt)) {
+        return { type: 'risk', reason: 'リスク検出・コンプライアンス' }
+    }
+
+    // 要約
+    if (/要約|まとめ|概要|サマリー|ポイント/.test(prompt)) {
+        return { type: 'summary', reason: '要約タスク' }
+    }
+
+    // フォーマット
+    if (/フォーマット|変換|整形|テンプレート|書式|議事録/.test(prompt)) {
+        return { type: 'format', reason: 'フォーマット変換' }
+    }
+
+    // 複雑な推論
+    if (/なぜ|理由|分析|考察|検討|比較|評価/.test(prompt)) {
+        return { type: 'reasoning', reason: '分析・推論タスク' }
+    }
+
+    // 大きなコンテキスト
+    if (context && context.length > 5000) {
+        return { type: 'legal', reason: '大規模コンテキスト処理' }
+    }
+
+    // デフォルト
+    return { type: 'chat', reason: '通常会話' }
+}
 
 // ============================================================================
 // モデルマッピング
 // ============================================================================
 
-const MODEL_MAP: Record<TaskType, () => LanguageModel> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const MODEL_MAP: Record<TaskType, () => any> = {
     // Hybrid Strategy: Use Gemini for cost/speed, OpenAI for precision
     chat: () => getGoogleProvider()('gemini-2.0-flash'),
     legal: () => getOpenAIProvider()('gpt-4o'),
@@ -75,9 +147,10 @@ const MODEL_MAP: Record<TaskType, () => LanguageModel> = {
 }
 
 // Fallback models for when primary fails
-const FALLBACK_MAP: Record<TaskType, () => LanguageModel> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FALLBACK_MAP: Record<TaskType, () => any> = {
     chat: () => getOpenAIProvider()('gpt-4o-mini'),
-    legal: () => getOpenAIProvider()('gpt-4o'), // No fallback for precision tasks? Or maybe 4o-mini? Keeping 4o for safety
+    legal: () => getOpenAIProvider()('gpt-4o'),
     risk: () => getOpenAIProvider()('gpt-4o'),
     summary: () => getOpenAIProvider()('gpt-4o-mini'),
     format: () => getOpenAIProvider()('gpt-4o-mini'),
@@ -92,7 +165,8 @@ const FALLBACK_MAP: Record<TaskType, () => LanguageModel> = {
 /**
  * タスク種別に応じた最適なモデルを選択
  */
-export function getModel(taskType: TaskType): LanguageModel {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getModel(taskType: TaskType): any {
     const modelFactory = MODEL_MAP[taskType]
     if (!modelFactory) {
         console.warn(`[ModelRouter] Unknown task type: ${taskType}, falling back to chat`)
@@ -104,7 +178,8 @@ export function getModel(taskType: TaskType): LanguageModel {
 /**
  * フォールバック用モデルを取得
  */
-export function getFallbackModel(taskType: TaskType): LanguageModel {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getFallbackModel(taskType: TaskType): any {
     return FALLBACK_MAP[taskType]()
 }
 
@@ -112,7 +187,8 @@ export function getFallbackModel(taskType: TaskType): LanguageModel {
  * プロンプトから自動判定してモデルを選択
  * コンテキスト長が長い場合は強制的にGeminiを選択
  */
-export function selectModelFromPrompt(prompt: string, context?: string): LanguageModel {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function selectModelFromPrompt(prompt: string, context?: string): any {
     const complexity = detectTaskType(prompt, context)
 
     // Check context length - if > 30k chars, force Gemini for 1M context window
@@ -130,10 +206,11 @@ export function selectModelFromPrompt(prompt: string, context?: string): Languag
  * ただし戻り値は ModelName 文字列ではなくなっているので注意が必要。
  * route.ts 側でこれを使っているなら修正が必要。
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function selectModel(
     userPlan: string,
     complexity: TaskComplexity
-): LanguageModel { // Changed return type
+): any { // Changed return type
     // Pro/Enterprise or long context: Use Hybrid logic
     return getModel(complexity.type)
 }
