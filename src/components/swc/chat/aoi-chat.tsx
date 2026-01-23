@@ -15,8 +15,6 @@ interface Message {
     precisionCheckResult?: any // PrecisionCheckResult
 }
 export default function AoiChat() {
-    // ... (Hooks and State remain unchanged) ...
-
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
@@ -69,10 +67,8 @@ export default function AoiChat() {
         }
     }, [messages, isOpen])
 
-    // Render logic check
-    const shouldRender = isMounted && pathname !== '/swc/dashboard/chat' && pathname !== '/swc/dashboard/organization'
-
-    if (!shouldRender) return null
+    // Handler functions need to be defined before return, but logic is fine to be here as long as hooks are above.
+    // NOTE: All hooks (useCallback, useEffect, etc.) MUST be above any conditional return.
 
     const handleFileUpload = async (file: File) => {
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: `📎 ファイルアップロード: ${file.name}` }
@@ -252,6 +248,11 @@ export default function AoiChat() {
             setIsSaving(false)
         }
     }
+
+    // Render logic check - MOVED TO END of logic, before return
+    const shouldRender = isMounted && pathname !== '/swc/dashboard/chat' && pathname !== '/swc/dashboard/organization'
+
+    if (!shouldRender) return null
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
