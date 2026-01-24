@@ -113,6 +113,7 @@ export default async function OrganizationPage() {
                                 key={member.id}
                                 member={member}
                                 isCurrentUser={member.id === user.id}
+                                currentUserRole={profile.role}
                             />
                         ))}
                         {(!members || members.length === 0) && (

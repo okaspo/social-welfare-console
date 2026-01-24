@@ -177,3 +177,58 @@ export async function updateCustomDomain(domain: string) {
     return { success: true }
 }
 
+
+export async function removeMember(memberId: string) {
+    const supabase = await createClient()
+
+    // 1. Verify Current User
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // 2. Check Permissions (Must be admin/rep of the same org)
+    const { data: requesterProfile } = await supabase
+        .from('profiles')
+        .select('organization_id, role')
+        .eq('id', user.id)
+        .single()
+
+    if (!requesterProfile?.organization_id) return { error: 'No organization found' }
+
+    if (requesterProfile.role !== 'admin' && requesterProfile.role !== 'representative') {
+        return { error: 'Permission denied' }
+    }
+
+    // 3. Verify Target Member
+    if (memberId === user.id) {
+        return { error: 'Cannot remove yourself' }
+    }
+
+    const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', memberId)
+        .single()
+
+    if (!targetProfile || targetProfile.organization_id !== requesterProfile.organization_id) {
+        return { error: 'Member not found in your organization' }
+    }
+
+    // 4. Remove Member (Update org_id to null and role to general)
+    // Note: We use Admin Client if needed, but RLS might allow this if requester is admin.
+    // However, our RLS usually allows users to update only their own profile.
+    // So we should use Admin Client for this operation to be safe.
+    const supabaseAdmin = await createAdminClient()
+
+    const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({
+            organization_id: null,
+            role: 'general'
+        })
+        .eq('id', memberId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/swc/dashboard/organization')
+    return { success: true }
+}

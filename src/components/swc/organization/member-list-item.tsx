@@ -13,7 +13,11 @@ type Member = {
     created_at: string
 }
 
-export default function MemberListItem({ member, isCurrentUser }: { member: Member, isCurrentUser: boolean }) {
+
+import { removeMember } from '@/lib/actions/organization'
+import { Trash2 } from 'lucide-react'
+
+export default function MemberListItem({ member, isCurrentUser, currentUserRole }: { member: Member, isCurrentUser: boolean, currentUserRole?: string }) {
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [name, setName] = useState(member.full_name || '')
@@ -34,6 +38,20 @@ export default function MemberListItem({ member, isCurrentUser }: { member: Memb
             setIsEditing(false)
         }
     }
+
+    const handleRemove = async () => {
+        if (!confirm(`${member.full_name || 'このメンバー'} を組織から削除しますか？\nこの操作は取り消せません。`)) return
+
+        setIsLoading(true)
+        const res = await removeMember(member.id)
+        setIsLoading(false)
+
+        if (res.error) {
+            alert(res.error)
+        }
+    }
+
+    const canRemove = (currentUserRole === 'admin' || currentUserRole === 'representative') && !isCurrentUser
 
     if (isEditing) {
         return (
@@ -82,14 +100,30 @@ export default function MemberListItem({ member, isCurrentUser }: { member: Memb
             </td>
             <td className="px-6 py-3">{new Date(member.created_at).toLocaleDateString('ja-JP')}</td>
             <td className="px-6 py-3 text-right">
-                {isCurrentUser ? (
-                    <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-indigo-600 transition-colors inline-flex items-center gap-1 text-xs">
-                        <Pencil className="h-3.5 w-3.5" /> 編集
-                    </button>
-                ) : (
-                    <button className="text-gray-400 hover:text-indigo-600 text-xs">詳細</button>
-                )}
+                <div className="flex justify-end items-center gap-2">
+                    {isCurrentUser ? (
+                        <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-indigo-600 transition-colors inline-flex items-center gap-1 text-xs">
+                            <Pencil className="h-3.5 w-3.5" /> 編集
+                        </button>
+                    ) : (
+                        <>
+                            {canRemove && (
+                                <button
+                                    onClick={handleRemove}
+                                    disabled={isLoading}
+                                    className="text-gray-400 hover:text-red-600 transition-colors inline-flex items-center gap-1 text-xs mr-2"
+                                    title="組織から削除"
+                                >
+                                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                    削除
+                                </button>
+                            )}
+                            <button className="text-gray-400 hover:text-indigo-600 text-xs">詳細</button>
+                        </>
+                    )}
+                </div>
             </td>
         </tr>
     )
 }
+

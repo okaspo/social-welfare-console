@@ -13,7 +13,6 @@ import {
     ShieldCheck,
     Building2,
     Coffee,
-    Coins,
 } from 'lucide-react'
 import { FeedbackDialog } from '@/components/swc/feedback/feedback-dialog'
 import { logout } from '@/lib/actions/auth'
@@ -54,7 +53,6 @@ export function SWCDashboardSidebar() {
                     <SidebarItem href="/swc/dashboard" icon={LayoutDashboard} label="ダッシュボード" />
                     <SidebarItem href="/swc/dashboard/meetings" icon={Calendar} label="会議管理" />
                     <SidebarItem href="/swc/dashboard/chat" icon={ShieldCheck} label="葵さん (フル画面)" />
-                    <SidebarItem href="/swc/dashboard/subsidies" icon={Coins} label="おすすめ助成金" />
                     <SidebarItem href="/swc/dashboard/break-room" icon={Coffee} label="休憩室" />
                 </div>
 
