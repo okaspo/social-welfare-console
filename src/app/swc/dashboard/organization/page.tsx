@@ -39,13 +39,30 @@ export default async function OrganizationPage() {
         )
     }
 
+    // 🔒 セキュリティチェック: organization_idがNULLの場合はアクセス拒否
+    if (!profile.organization_id) {
+        return (
+            <div className="p-8">
+                <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg">
+                    <h3 className="font-bold">組織に所属していません</h3>
+                    <p className="text-sm mt-1">
+                        このページにアクセスするには、組織に所属している必要があります。
+                        管理者にお問い合わせください。
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
     const org = profile.organization
+    const currentOrgId = profile.organization_id
 
     // 3. Get All Members of this Organization
+    // 🔒 セキュリティ: 明示的にcurrentOrgIdでフィルタ（RLSに加えてアプリレベルでも検証）
     const { data: members, error: membersError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('organization_id', org.id)
+        .eq('organization_id', currentOrgId)
         .order('created_at', { ascending: true })
 
     const orgData = {
