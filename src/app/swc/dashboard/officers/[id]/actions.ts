@@ -141,3 +141,44 @@ export async function updateOfficer(id: string, formData: FormData) {
     revalidatePath('/swc/dashboard/officers')
     return { success: true }
 }
+
+import { getAdminClient } from '@/lib/supabase/admin'
+
+export async function deleteOfficer(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    // Verify Organization Perms
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.organization_id) return { error: 'Unauthorized' }
+
+    // Use Admin Client to delete (in case of strict RLS)
+    const supabaseAdmin = getAdminClient()
+
+    // Optionally check if the officer belongs to the user's org before delete to be super safe,
+    // though RLS or WHERE clause on delete usually handles it.
+    // Here we simple do delete and assume ID is correct, or we can double check.
+
+    const { error } = await supabaseAdmin
+        .from('officers')
+        .delete()
+        .eq('id', id)
+        .eq('organization_id', profile.organization_id) // Safety check: ensure deleting only own org's officer
+
+    if (error) {
+        console.error('Delete Officer Error:', error)
+        return { error: error.message }
+    }
+
+    await logAudit('OFFICER_DELETE', `Officer removed: ${id}`, 'WARNING')
+
+    revalidatePath('/swc/dashboard/officers')
+    return { success: true }
+}

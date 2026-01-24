@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertCircle, CheckCircle, Download, Eye, EyeOff, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertCircle, CheckCircle, Download, Eye, EyeOff, FileSpreadsheet, FileText, Loader2 } from 'lucide-react'
 import { Officer, MOCK_OFFICERS, OfficerRole, getRoleLabel, getTermLimitYears } from '@/lib/officers/data'
 import NewOfficerDialog from './new-officer-dialog'
 
@@ -38,10 +38,35 @@ function GovernanceAlert({ officers }: { officers: Officer[] }) {
     )
 }
 
+import { deleteOfficer } from '@/app/swc/dashboard/officers/[id]/actions'
+import { useRouter } from 'next/navigation'
+
 export default function OfficerList({ initialOfficers, readOnly = false }: OfficerListProps) {
+    const router = useRouter()
     const [officers, setOfficers] = useState<Officer[]>(initialOfficers)
     const [filter, setFilter] = useState<OfficerRole | 'all'>('all')
     const [privacyMask, setPrivacyMask] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('この役員を削除しますか？\nこの操作は取り消せません。')) return
+
+        setIsLoading(true)
+        try {
+            const res = await deleteOfficer(id)
+            if (res.error) {
+                alert(res.error)
+            } else {
+                router.refresh()
+                // Optimistic update
+                setOfficers(prev => prev.filter(o => o.id !== id))
+            }
+        } catch (e) {
+            alert('削除中にエラーが発生しました')
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     const filteredOfficers = filter === 'all'
         ? officers
@@ -288,8 +313,13 @@ export default function OfficerList({ initialOfficers, readOnly = false }: Offic
                                             >
                                                 <Edit2 className="h-4 w-4" />
                                             </a>
-                                            <button className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
-                                                <Trash2 className="h-4 w-4" />
+                                            <button
+                                                onClick={() => handleDelete(officer.id)}
+                                                disabled={isLoading}
+                                                className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+                                                title="削除"
+                                            >
+                                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                             </button>
                                         </div>
                                     </td>
