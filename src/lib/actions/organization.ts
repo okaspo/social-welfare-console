@@ -227,7 +227,10 @@ export async function removeMember(memberId: string) {
         })
         .eq('id', memberId)
 
-    if (error) return { error: error.message }
+    if (error) {
+        console.error('Failed to remove member:', error)
+        return { error: 'Failed to remove member: ' + error.message }
+    }
 
     revalidatePath('/swc/dashboard/organization')
     return { success: true }
