@@ -99,6 +99,37 @@ export default function OfficerForm({ officer, isEdit = false, onSuccess }: Offi
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">生年月日</label>
+                    <input
+                        type="date"
+                        name="date_of_birth"
+                        defaultValue={officer?.dateOfBirth?.split('T')[0]}
+                        className="w-full px-3 py-2 border rounded-md"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">職業</label>
+                    <input
+                        name="occupation"
+                        defaultValue={officer?.occupation}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="会社役員, 医師など"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">住所</label>
+                <input
+                    name="address"
+                    defaultValue={officer?.address}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="東京都千代田区..."
+                />
+            </div>
+
             <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">メールアドレス</label>
                 <input

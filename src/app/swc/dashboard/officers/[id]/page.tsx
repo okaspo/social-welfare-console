@@ -70,6 +70,18 @@ export default async function OfficerDetailPage({ params }: { params: { id: stri
                                 <label className="text-xs text-gray-500">連絡先メールアドレス</label>
                                 <div className="font-medium">{officer.email || '未登録'}</div>
                             </div>
+                            <div>
+                                <label className="text-xs text-gray-500">生年月日</label>
+                                <div className="font-medium">{officer.date_of_birth ? new Date(officer.date_of_birth).toLocaleDateString() : '未登録'}</div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500">職業</label>
+                                <div className="font-medium">{officer.occupation || '未登録'}</div>
+                            </div>
+                            <div className="col-span-2">
+                                <label className="text-xs text-gray-500">住所</label>
+                                <div className="font-medium">{officer.address || '未登録'}</div>
+                            </div>
                         </div>
                     </div>
 

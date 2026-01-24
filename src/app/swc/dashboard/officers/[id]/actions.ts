@@ -98,6 +98,9 @@ export async function createOfficer(formData: FormData) {
         role: formData.get('role') as string,
         term_start_date: formData.get('term_start_date') as string,
         term_end_date: formData.get('term_end_date') as string,
+        date_of_birth: formData.get('date_of_birth') as string || null,
+        address: formData.get('address') as string || null,
+        occupation: formData.get('occupation') as string || null,
         expertise_tags: formData.get('expertise_tags')
             ? (formData.get('expertise_tags') as string).split(',').map(s => s.trim())
             : [],
@@ -124,6 +127,9 @@ export async function updateOfficer(id: string, formData: FormData) {
         role: formData.get('role') as string,
         term_start_date: formData.get('term_start_date') as string,
         term_end_date: formData.get('term_end_date') as string,
+        date_of_birth: formData.get('date_of_birth') as string || null,
+        address: formData.get('address') as string || null,
+        occupation: formData.get('occupation') as string || null,
         expertise_tags: formData.get('expertise_tags')
             ? (formData.get('expertise_tags') as string).split(',').map(s => s.trim())
             : [],

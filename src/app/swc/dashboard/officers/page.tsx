@@ -46,6 +46,9 @@ async function getOfficers(): Promise<Officer[]> {
             termStartDate: d.term_start || d.term_start_date, // Handle inconsistent naming if any
             termEndDate: d.term_end || d.term_end_date,
             status: 'active', // Simplified status logic, ideally calculated from dates
+            dateOfBirth: d.date_of_birth,
+            address: d.address,
+            occupation: d.occupation,
             expertise_tags: d.expertise_tags
         })) as Officer[]
 
