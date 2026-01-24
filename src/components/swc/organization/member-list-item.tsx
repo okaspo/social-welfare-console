@@ -16,8 +16,10 @@ type Member = {
 
 import { removeMember } from '@/lib/actions/organization'
 import { Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function MemberListItem({ member, isCurrentUser, currentUserRole }: { member: Member, isCurrentUser: boolean, currentUserRole?: string }) {
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [name, setName] = useState(member.full_name || '')
@@ -44,10 +46,14 @@ export default function MemberListItem({ member, isCurrentUser, currentUserRole 
 
         setIsLoading(true)
         const res = await removeMember(member.id)
-        setIsLoading(false)
 
         if (res.error) {
             alert(res.error)
+            setIsLoading(false)
+        } else {
+            // 成功したらリロードしてリストを更新
+            router.refresh()
+            // Loading状態はリロード完了まで維持（または要素が消えるまで）
         }
     }
 
