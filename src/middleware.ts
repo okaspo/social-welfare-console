@@ -48,6 +48,44 @@ export async function middleware(request: NextRequest) {
     // Route Protection Logic
     const url = request.nextUrl.clone()
 
+    // 0. Maintenance Mode Check (skip for admin users and maintenance page itself)
+    if (!url.pathname.startsWith('/maintenance') && !url.pathname.startsWith('/admin')) {
+        try {
+            const { data: maintenanceSetting } = await supabase
+                .from('system_settings')
+                .select('value')
+                .eq('key', 'maintenance_mode')
+                .single()
+
+            const maintenanceMode = maintenanceSetting?.value as { enabled?: boolean; message?: string } | null
+
+            if (maintenanceMode?.enabled) {
+                // Allow admin users to bypass maintenance mode
+                if (user) {
+                    const { data: adminRole } = await supabase
+                        .from('admin_roles')
+                        .select('role')
+                        .eq('user_id', user.id)
+                        .single()
+
+                    if (!adminRole) {
+                        // Non-admin user, redirect to maintenance page
+                        url.pathname = '/maintenance'
+                        url.searchParams.set('message', maintenanceMode.message || 'メンテナンス中です')
+                        return NextResponse.redirect(url)
+                    }
+                } else {
+                    // No user, redirect to maintenance page
+                    url.pathname = '/maintenance'
+                    url.searchParams.set('message', maintenanceMode.message || 'メンテナンス中です')
+                    return NextResponse.redirect(url)
+                }
+            }
+        } catch {
+            // If system_settings table doesn't exist yet, continue normally
+        }
+    }
+
     // 1. Admin Routes Protection
     if (url.pathname.startsWith('/admin')) {
         console.log('[Middleware] Admin route accessed:', url.pathname);
