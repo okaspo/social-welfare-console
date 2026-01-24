@@ -53,7 +53,8 @@ export default function MemberListItem({ member, isCurrentUser, currentUserRole 
         } else {
             // 成功したらリロードしてリストを更新
             router.refresh()
-            // Loading状態はリロード完了まで維持（または要素が消えるまで）
+            // Loading状態はリロードと同時に解除（スピナーを止める）
+            setIsLoading(false)
         }
     }
 
