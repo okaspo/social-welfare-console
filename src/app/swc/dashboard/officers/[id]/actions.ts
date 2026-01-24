@@ -93,6 +93,7 @@ export async function createOfficer(formData: FormData) {
 
     const rawData = {
         organization_id: profile.organization_id,
+        user_id: null, // No system user link for now
         name: formData.get('name') as string,
         role: formData.get('role') as string,
         term_start_date: formData.get('term_start_date') as string,
