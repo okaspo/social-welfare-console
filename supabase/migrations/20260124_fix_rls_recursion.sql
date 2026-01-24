@@ -8,10 +8,10 @@
 -- 1. ヘルパーファンクション作成 (SECURITY DEFINER = RLSをバイパス)
 -- ============================================================================
 
--- 既存のファンクションを削除
-DROP FUNCTION IF EXISTS public.rls_get_user_org_id(UUID);
-DROP FUNCTION IF EXISTS public.rls_is_admin_user(UUID);
-DROP FUNCTION IF EXISTS public.rls_meeting_in_user_org(UUID);
+-- 既存のファンクションを削除（依存オブジェクトも一緒に削除）
+DROP FUNCTION IF EXISTS public.rls_get_user_org_id(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.rls_is_admin_user(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.rls_meeting_in_user_org(UUID) CASCADE;
 
 -- ユーザーの組織IDを取得するファンクション
 CREATE FUNCTION public.rls_get_user_org_id(p_user_id UUID)
