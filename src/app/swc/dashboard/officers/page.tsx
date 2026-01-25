@@ -16,7 +16,9 @@ async function getOfficers(): Promise<Officer[]> {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
-        if (!user) return MOCK_OFFICERS
+        if (!user) {
+            return MOCK_OFFICERS
+        }
 
         const { data: profile } = await supabase
             .from('profiles')
@@ -24,7 +26,9 @@ async function getOfficers(): Promise<Officer[]> {
             .eq('id', user.id)
             .single()
 
-        if (!profile?.organization_id) return MOCK_OFFICERS
+        if (!profile?.organization_id) {
+            return MOCK_OFFICERS
+        }
 
         const { data, error } = await supabase
             .from('officers')
