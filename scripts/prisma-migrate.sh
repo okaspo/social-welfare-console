@@ -5,6 +5,10 @@
 
 set -e
 
+# [TEMPORARY FIX] Hardcoded DB URL to bypass Vercel env var failure (P1001)
+# This uses the Direct Connection (5432) which is confirmed working locally.
+export DATABASE_URL='postgresql://postgres:-%26A4xbg8Q%21%23G%2BSr@db.baayjlwyxjplwuteiyne.supabase.co:5432/postgres'
+
 echo "🚀 Starting Prisma migration..."
 
 # Check if DATABASE_URL is set
