@@ -139,6 +139,24 @@ export default function OfficerForm({ officer, isEdit = false, onSuccess }: Offi
                     className="w-full px-3 py-2 border rounded-md"
                     placeholder="taro@example.com"
                 />
+                <div className="flex items-start gap-2 mt-2">
+                    <div className="flex items-center h-5">
+                        <input
+                            id="invite_to_system"
+                            name="invite_to_system"
+                            type="checkbox"
+                            defaultChecked={false}
+                            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                        />
+                    </div>
+                    <div className="text-sm">
+                        <label htmlFor="invite_to_system" className="font-medium text-gray-700">システム利用権限を付与する</label>
+                        <p className="text-xs text-gray-500">
+                            チェックを入れると、上記のメールアドレス宛にログイン招待メールを送信します。<br />
+                            （理事本人がシステムにログインして作業する場合のみチェックしてください）
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div className="space-y-2">

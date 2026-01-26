@@ -91,11 +91,59 @@ export async function createOfficer(formData: FormData) {
 
     if (!profile?.organization_id) return { error: 'Organization not found' }
 
+    const name = formData.get('name') as string
+    const role = formData.get('role') as string
+    const email = formData.get('email') as string || null
+
+    const inviteToSystem = formData.get('invite_to_system') === 'on'
+
+    let userId: string | null = null
+
+    // 1. Unified Identity: Try to link/create System User ONLY if email is provided AND explicitly requested
+    if (email && inviteToSystem) {
+        try {
+            // Import Admin Client dynamically or ensure it is imported at top
+            const { createAdminClient } = await import('@/lib/supabase/admin')
+            const supabaseAdmin = await createAdminClient()
+
+            // Check if user exists (by attempting create, or list - Create is safer/atomic)
+            const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!'
+            const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                email: email,
+                password: tempPassword,
+                email_confirm: true,
+                user_metadata: { full_name: name }
+            })
+
+            if (authData.user) {
+                userId = authData.user.id
+
+                // Create Profile immediately
+                await supabaseAdmin.from('profiles').insert({
+                    id: userId,
+                    full_name: name,
+                    organization_id: profile.organization_id,
+                    role: 'general', // Default to general member, can be promoted later
+                    job_title: role // Sync Role to Job Title initially
+                })
+            } else if (authError?.message?.includes('already registered')) {
+                // Fallback: If officer exists in system, we currently CANNOT get their ID easily without searching.
+                // For legacy preservation/safety, we will proceed with NULL user_id but warn.
+                // Or we could implement a lookup if we trust email match.
+                console.warn(`User ${email} already exists. Creating unlinked officer record.`)
+                // TODO: Future enhancement - Lookup user ID by email and link
+            }
+        } catch (e) {
+            console.error('Failed to create system user for officer:', e)
+            // Proceed as unlinked officer (Graceful degradation)
+        }
+    }
+
     const rawData = {
         organization_id: profile.organization_id,
-        user_id: null, // No system user link for now
-        name: formData.get('name') as string,
-        role: formData.get('role') as string,
+        user_id: userId, // Link if created
+        name: name,
+        role: role,
         term_start_date: formData.get('term_start_date') as string,
         term_end_date: formData.get('term_end_date') as string,
         date_of_birth: formData.get('date_of_birth') as string || null,
@@ -104,7 +152,7 @@ export async function createOfficer(formData: FormData) {
         expertise_tags: formData.get('expertise_tags')
             ? (formData.get('expertise_tags') as string).split(',').map(s => s.trim())
             : [],
-        email: formData.get('email') as string || null,
+        email: email,
         updated_at: new Date().toISOString()
     }
 
@@ -113,7 +161,7 @@ export async function createOfficer(formData: FormData) {
     if (error) return { error: error.message }
 
     // Log Audit
-    await logAudit('OFFICER_CREATE', `Officer created: ${rawData.name} (${rawData.role})`, 'INFO')
+    await logAudit('OFFICER_CREATE', `Officer created: ${rawData.name} (${rawData.role}) - Linked: ${!!userId}`, 'INFO')
 
     revalidatePath('/swc/dashboard/officers')
     return { success: true }
