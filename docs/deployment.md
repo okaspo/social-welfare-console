@@ -19,6 +19,8 @@ Vercelのプロジェクト設定画面で以下の環境変数を設定して�
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabaseの匿名パブリックキー | Settings > API で確認可能 |
 | `OPENAI_API_KEY` | OpenAI APIキー | AIチャット機能に必須 |
 | `NEXT_PUBLIC_SITE_URL` | 本番環境のURL | 例: `https://social-welfare-console.vercel.app` (OAuthリダイレクト用) |
+| `DATABASE_URL` | トランザクションプーラー接続URL | Supabase Settings > Database > Connection String > Transaction Pooler (port 6543) |
+| `DIRECT_URL` | 直接接続URL | Supabase Settings > Database > Connection String > Direct Connection (port 5432) |
 
 > [!IMPORTANT]
 > `NEXT_PUBLIC_` 以外の変数はサーバーサイドでのみアクセス可能です。APIキーなどの機密情報は必ずサーバーサイド変数として扱ってください。

@@ -28,7 +28,6 @@ jobs:
       - name: Run Schema Migration
         run: npx prisma migrate deploy
         env:
-          # Using the Direct Connection URL directly to ensure connectivity.
-          # In a real scenario, this should be in Repository Secrets.
-          DATABASE_URL: "postgresql://postgres:-%26A4xbg8Q%21%23G%2BSr@db.baayjlwyxjplwuteiyne.supabase.co:5432/postgres"
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
