@@ -1,29 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireSystemAdmin } from '@/lib/auth/admin-auth'
 
 export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/login')
-    }
-
-    // Check Role - must be admin, super_admin, or representative in profiles
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-    const allowedRoles = ['super_admin', 'admin', 'representative'];
-    if (!profile || !allowedRoles.includes(profile.role)) {
-        redirect('/swc/dashboard')
-    }
+    // Check Role - strict check against admin_roles table
+    await requireSystemAdmin()
 
     // Simple layout - child routes provide their own sidebars
     return <>{children}</>

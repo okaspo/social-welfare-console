@@ -3,25 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Building2, Users, TrendingUp, Search, Filter, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { requireSystemAdmin } from '@/lib/auth/admin-auth';
 
 export default async function SwcCustomersPage() {
+    // Strict System Admin Check
+    await requireSystemAdmin();
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
         redirect('/login');
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    const allowedRoles = ['super_admin', 'admin', 'representative'];
-    if (!profile || !allowedRoles.includes(profile.role)) {
-        redirect('/chat');
     }
 
     // Fetch organizations with automatic entity_type='social_welfare' filter

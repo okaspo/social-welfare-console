@@ -5,25 +5,17 @@ import { Building2, CreditCard, Users, Zap } from 'lucide-react';
 import AdminPlanEditor from '@/components/admin/plan-editor';
 import PriceManager from '@/components/admin/price-manager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { requireSystemAdmin } from '@/lib/auth/admin-auth';
 
 export default async function SwcPlansPage() {
+    // Strict System Admin Check
+    await requireSystemAdmin();
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
         redirect('/login');
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    const allowedRoles = ['super_admin', 'admin', 'representative'];
-    if (!profile || !allowedRoles.includes(profile.role)) {
-        redirect('/chat');
     }
 
     // Fetch plans with entity_type scoping

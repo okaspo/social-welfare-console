@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSystemAdmin } from '@/lib/auth/admin-auth';
 
 export async function GET(request: NextRequest) {
     const supabase = await createClient();
@@ -9,14 +10,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'representative')) {
+    // Check admin role using strict system admin check
+    try {
+        await requireSystemAdmin();
+    } catch {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

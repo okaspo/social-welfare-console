@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Shield, Download, Filter, Clock, User, FileText } from 'lucide-react';
 import AuditLogExport from './audit-log-export';
+import { requireSystemAdmin } from '@/lib/auth/admin-auth';
 
 interface AuditLog {
     id: string;
@@ -30,21 +31,13 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default async function AuditLogsPage() {
+    // Strict System Admin Check
+    await requireSystemAdmin();
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return <div>Unauthorized</div>;
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'representative')) {
-        return <div className="p-8 text-red-600">管理者権限が必要です</div>;
-    }
 
     // Fetch audit logs
     const { data: logs, error } = await supabase
